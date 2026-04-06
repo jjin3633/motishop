@@ -318,7 +318,11 @@
       max-width: 640px; margin: 56px auto 0;
     }
     .form-row { margin-bottom: 20px; }
-    .form-row label {
+    .form-row > label:not(.checkbox-item) {
+      display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.7);
+      margin-bottom: 8px; letter-spacing: .2px; text-align: left;
+    }
+    .form-row > .form-row-title {
       display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.7);
       margin-bottom: 8px; letter-spacing: .2px; text-align: left;
     }
@@ -697,7 +701,7 @@
       </div>
 
       <div class="form-row">
-        <label>관심 기능 선택 (복수 선택 가능)</label>
+        <span class="form-row-title">관심 기능 선택 (복수 선택 가능)</span>
         <div class="checkbox-group">
           <label class="checkbox-item" onclick="toggleCheck(this)">
             <input type="checkbox" value="모아레" />
