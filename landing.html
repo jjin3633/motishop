@@ -37,12 +37,15 @@
     /* ── Nav ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%;
       height: 64px;
       background: rgba(8,14,31,.88);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; height: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
     }
     .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo-mark {
@@ -431,7 +434,8 @@
       .form-grid { grid-template-columns: 1fr; }
       .form-box { padding: 32px 24px; }
       .steps::before { display: none; }
-      nav { padding: 0 4%; }
+      .nav-inner { padding: 0 16px; }
+      .nav-logo-text { font-size: 20px; }
     }
   </style>
 </head>
@@ -439,12 +443,14 @@
 
 <!-- ── NAV ── -->
 <nav>
-  <a class="nav-logo" href="https://motiphysio.com">
-    <span class="nav-logo-text">Moti <span>Shop</span></span>
-  </a>
-  <a class="nav-cta" href="#trial">
-    1개월 무료 체험 →
-  </a>
+  <div class="nav-inner">
+    <a class="nav-logo" href="https://motiphysio.com">
+      <span class="nav-logo-text">Moti <span>Shop</span></span>
+    </a>
+    <a class="nav-cta" href="#trial">
+      1개월 무료 체험 →
+    </a>
+  </div>
 </nav>
 
 <!-- ── HERO ── -->
