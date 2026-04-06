@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Moti Shop — 미니의 숨겨진 기능을 꺼내세요</title>
+  <title>Moti Shop — 내 라인업엔 없는 기능, 이제 씁니다</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Questrial&family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
@@ -27,13 +27,13 @@
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Questrial', 'Noto Sans KR', sans-serif;
+      font-size: 18px;
       color: var(--text);
       background: var(--white);
-      line-height: 1.6;
+      line-height: 1.8;
+      letter-spacing: 0em;
       overflow-x: hidden;
     }
-
-    
 
     /* ── Nav ── */
     nav {
@@ -48,15 +48,14 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 24px;
     }
-    .nav-logo { text-decoration: none; font-size: 22px; font-weight: 900; color: white; letter-spacing: 1px; }
+    .nav-logo { text-decoration: none; font-size: 22px; font-weight: 900; color: white; letter-spacing: 0.04em; }
     .nav-logo span { color: var(--cyan); }
     .nav-right { display: flex; align-items: center; gap: 12px; }
-    
     .nav-cta {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 8px 20px; border-radius: 8px;
       background: linear-gradient(90deg, var(--blue), var(--cyan));
-      color: white; font-size: 13px; font-weight: 700;
+      color: white; font-size: 14px; font-weight: 700;
       text-decoration: none; transition: opacity .2s, transform .2s;
     }
     .nav-cta:hover { opacity: .88; transform: translateY(-1px); }
@@ -90,7 +89,7 @@
       background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.3);
       border-radius: 100px; padding: 6px 18px;
       font-size: 12px; font-weight: 700; color: var(--cyan);
-      letter-spacing: 1.5px; text-transform: uppercase;
+      letter-spacing: 0.1em; text-transform: uppercase;
       margin-bottom: 32px; position: relative;
     }
     .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); display: inline-block; animation: blink 1.5s infinite; }
@@ -99,11 +98,41 @@
       font-size: clamp(38px, 6vw, 76px);
       font-weight: 900;
       color: white;
-      line-height: 1.35;
-      letter-spacing: -2px;
-      margin-bottom: 8px;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
       position: relative;
     }
+    .hero-prefix { color: white; }
+    .hero-model-wrap {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
+      height: 1.18em;
+      position: relative;
+    }
+    .hero-model {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--blue2), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease;
+    }
+    .hero-model.slide-out {
+      transform: translateY(-110%);
+      opacity: 0;
+    }
+    .hero-model.slide-in-prepare {
+      transform: translateY(110%);
+      opacity: 0;
+      transition: none;
+    }
+    .hero-model.slide-in {
+      transform: translateY(0%);
+      opacity: 1;
+    }
+    .hero-comma { color: white; }
     .hero h1 .accent {
       background: linear-gradient(90deg, var(--blue2), var(--cyan));
       -webkit-background-clip: text;
@@ -111,24 +140,26 @@
       background-clip: text;
     }
     .hero-hook {
-      font-size: clamp(16px, 2.2vw, 22px);
-      font-weight: 500;
+      font-size: clamp(18px, 2.2vw, 22px);
+      font-weight: 400;
       color: rgba(255,255,255,.6);
-      margin-bottom: 40px;
+      line-height: 1.8;
+      margin-bottom: 44px;
       position: relative;
     }
     .hero-btns {
       display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-      position: relative; margin-bottom: 16px;
+      position: relative; margin-bottom: 20px;
     }
     .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 16px 36px; border-radius: 10px;
       background: linear-gradient(90deg, var(--blue), var(--cyan));
-      color: white; font-size: 16px; font-weight: 700;
+      color: white; font-size: 17px; font-weight: 700;
       text-decoration: none; border: none; cursor: pointer;
       transition: transform .2s, box-shadow .2s;
       box-shadow: 0 8px 32px rgba(26,107,255,.45);
+      font-family: inherit;
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 44px rgba(26,107,255,.55); }
     .btn-secondary {
@@ -136,17 +167,17 @@
       padding: 16px 36px; border-radius: 10px;
       border: 1.5px solid rgba(255,255,255,.2);
       background: rgba(255,255,255,.04);
-      color: white; font-size: 16px; font-weight: 600;
+      color: white; font-size: 17px; font-weight: 500;
       text-decoration: none; cursor: pointer;
       transition: background .2s, border-color .2s;
     }
     .btn-secondary:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.35); }
-    .hero-note { font-size: 13px; color: rgba(255,255,255,.3); position: relative; }
-        .hero-scroll {
+    .hero-note { font-size: 14px; color: rgba(255,255,255,.3); position: relative; line-height: 1.8; }
+    .hero-scroll {
       position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
-    .hero-scroll span { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,.85); font-weight: 700; }
+    .hero-scroll span { font-size: 10px; letter-spacing: 0.15em; color: rgba(255,255,255,.85); font-weight: 700; }
     .scroll-arrow {
       width: 18px; height: 18px;
       border-right: 2px solid rgba(255,255,255,.85);
@@ -158,42 +189,52 @@
     /* ── Stats Bar ── */
     .stats-bar { background: var(--navy2); border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); }
     .stats-inner {
-      max-width: 700px; margin: 0 auto;
-      display: grid; grid-template-columns: repeat(3, 1fr);
+      max-width: 860px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr);
       padding: 0 24px;
     }
     .stat-item {
-      padding: 28px 24px; text-align: center;
+      padding: 32px 16px; text-align: center;
       border-right: 1px solid rgba(255,255,255,.06);
     }
     .stat-item:last-child { border-right: none; }
-    .stat-num { font-size: 32px; font-weight: 900; color: white; letter-spacing: -1px; line-height: 1; }
-    .stat-num .unit { font-size: 18px; color: var(--cyan); }
-    .stat-label { font-size: 13px; color: rgba(255,255,255,.4); margin-top: 6px; }
+    .stat-num { font-size: 36px; font-weight: 900; color: white; letter-spacing: -0.02em; line-height: 1; }
+    .stat-num .unit { font-size: 20px; color: var(--cyan); }
+    .stat-label { font-size: 13px; color: rgba(255,255,255,.4); margin-top: 8px; line-height: 1.6; }
 
     /* ── Section Base ── */
     section { padding: 100px 24px; }
     .section-inner { max-width: 1200px; margin: 0 auto; }
     .section-label {
       display: inline-flex; align-items: center; gap: 8px;
-      font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--blue); margin-bottom: 12px;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 14px;
     }
     .section-label::before { content: ''; width: 20px; height: 2px; background: var(--blue); display: inline-block; }
     .section-title {
-      font-size: clamp(26px, 3.5vw, 44px); font-weight: 900;
-      letter-spacing: -1.5px; line-height: 1.28;
-      margin-bottom: 16px;
+      font-size: clamp(28px, 3.5vw, 44px); font-weight: 900;
+      letter-spacing: -0.03em; line-height: 1.18;
+      margin-bottom: 18px;
     }
-    .section-sub { font-size: 16px; color: var(--gray600); line-height: 1.75; }
+    .section-sub { font-size: 18px; color: var(--gray600); line-height: 1.8; }
 
-    /* ── Comparison ── */
+    /* ── Comparison (Tab Slider) ── */
     .comparison { background: var(--gray50); }
-    .compare-wrap { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .compare-card {
-      border-radius: var(--radius); overflow: hidden;
-      border: 1.5px solid var(--gray100);
+    .compare-tabs {
+      display: flex; gap: 8px; margin-top: 48px; margin-bottom: 32px;
+      flex-wrap: wrap;
     }
+    .compare-tab {
+      padding: 10px 24px; border-radius: 100px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      border: 1.5px solid var(--gray100);
+      background: white; color: var(--gray600);
+      transition: all .2s; font-family: inherit;
+    }
+    .compare-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+    .compare-slide { display: none; }
+    .compare-slide.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .compare-card { border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--gray100); }
     .compare-card.before { background: white; }
     .compare-card.after {
       background: var(--navy);
@@ -206,22 +247,19 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .compare-card.before .compare-head { border-color: var(--gray100); }
-    .compare-title { font-size: 15px; font-weight: 800; }
+    .compare-title { font-size: 15px; font-weight: 800; line-height: 1.4; }
     .compare-card.before .compare-title { color: var(--gray600); }
     .compare-card.after .compare-title { color: white; }
-    .compare-sub { font-size: 12px; color: var(--gray400); margin-top: 2px; }
+    .compare-sub { font-size: 13px; color: var(--gray400); margin-top: 3px; line-height: 1.6; }
     .compare-card.after .compare-sub { color: rgba(255,255,255,.4); }
-    .compare-tag {
-      font-size: 11px; font-weight: 700; padding: 4px 12px;
-      border-radius: 100px;
-    }
+    .compare-tag { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 100px; flex-shrink: 0; }
     .tag-before { background: var(--gray100); color: var(--gray600); }
     .tag-after { background: rgba(0,212,255,.15); color: var(--cyan); }
-    .compare-body { padding: 24px 28px; }
+    .compare-body { padding: 20px 28px; }
     .compare-row {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.05);
-      font-size: 14px;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+      font-size: 18px; line-height: 1.6;
     }
     .compare-card.before .compare-row { border-color: var(--gray100); }
     .compare-row:last-child { border-bottom: none; }
@@ -240,17 +278,21 @@
       display: flex; align-items: center; gap: 12px;
     }
     .compare-card.before .compare-footer { border-color: var(--gray100); }
-    .price-big { font-size: 28px; font-weight: 900; }
+    .price-big { font-size: 24px; font-weight: 900; }
     .compare-card.before .price-big { color: var(--gray400); }
     .compare-card.after .price-big { color: white; }
-    .price-desc { font-size: 12px; color: var(--gray400); }
+    .price-desc { font-size: 13px; color: var(--gray400); line-height: 1.6; }
     .compare-card.after .price-desc { color: rgba(255,255,255,.4); }
-    .compare-badge {
+    .compare-cta {
       margin-left: auto;
       background: linear-gradient(90deg, var(--blue), var(--cyan));
-      color: white; font-size: 12px; font-weight: 800;
-      padding: 6px 14px; border-radius: 100px;
+      color: white; font-size: 13px; font-weight: 800;
+      padding: 8px 18px; border-radius: 8px;
+      text-decoration: none; white-space: nowrap;
+      display: inline-block;
+      transition: opacity .2s, transform .2s;
     }
+    .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
     /* ── Problem ── */
     .problem { background: white; }
@@ -260,19 +302,19 @@
     }
     .problem-card {
       background: var(--gray50); border-radius: var(--radius);
-      padding: 32px; border: 1px solid var(--gray100);
+      padding: 36px 32px; border: 1px solid var(--gray100);
       position: relative; overflow: hidden;
       transition: transform .2s, box-shadow .2s;
     }
     .problem-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,.08); }
     .problem-card .num {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 72px; line-height: 1; color: var(--gray100);
-      position: absolute; top: 16px; right: 20px; letter-spacing: 2px;
+      font-size: 80px; line-height: 1; color: var(--gray100);
+      position: absolute; top: 12px; right: 16px; letter-spacing: 0.05em;
     }
-    .problem-card .icon { font-size: 28px; margin-bottom: 16px; }
-    .problem-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 10px; color: var(--text); }
-    .problem-card p { font-size: 14px; color: var(--gray600); line-height: 1.75; position: relative; }
+    .problem-card .icon { font-size: 30px; margin-bottom: 18px; }
+    .problem-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: var(--text); line-height: 1.4; letter-spacing: -0.02em; }
+    .problem-card p { font-size: 18px; color: var(--gray600); line-height: 1.8; position: relative; }
 
     /* ── Features ── */
     .features { background: var(--navy); }
@@ -287,7 +329,7 @@
     .feat-card {
       background: rgba(255,255,255,.035);
       border: 1px solid rgba(255,255,255,.07);
-      border-radius: var(--radius); padding: 28px;
+      border-radius: var(--radius); padding: 32px;
       transition: all .25s; cursor: default; position: relative; overflow: hidden;
     }
     .feat-card::before {
@@ -299,21 +341,20 @@
     .feat-card:hover::before { opacity: 1; }
     .feat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .feat-icon { font-size: 28px; }
-    .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .3px; }
+    .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .03em; }
     .badge-hot { background: rgba(255,90,90,.15); color: #FF6B6B; }
     .badge-new { background: rgba(0,212,255,.15); color: var(--cyan); }
     .badge-pro { background: rgba(245,200,66,.15); color: var(--gold); }
-    .feat-card h3 { font-size: 18px; font-weight: 800; color: white; margin-bottom: 8px; }
-    .feat-card p { font-size: 13.5px; color: rgba(255,255,255,.45); line-height: 1.75; }
+    .feat-card h3 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 10px; line-height: 1.3; letter-spacing: -0.02em; }
+    .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; }
     .feat-roi {
       margin-top: 20px; padding: 14px 16px;
       background: rgba(26,107,255,.1); border-radius: 8px;
       border-left: 3px solid var(--blue2);
-      font-size: 13px; color: rgba(255,255,255,.7);
-      line-height: 1.5;
+      font-size: 18px; color: rgba(255,255,255,.7);
+      line-height: 1.7;
     }
     .feat-roi strong { color: var(--cyan); }
-    .feat-card.wide { grid-column: span 1; }
 
     /* ── How it works ── */
     .howitworks { background: var(--gray50); }
@@ -336,15 +377,14 @@
     }
     .step-num.active {
       background: linear-gradient(135deg, var(--blue), var(--cyan));
-      border: none;
-      color: white;
+      border: none; color: white;
       box-shadow: 0 8px 24px rgba(26,107,255,.4);
     }
-    .step h3 { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
-    .step p { font-size: 13px; color: var(--gray600); line-height: 1.65; }
+    .step h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; line-height: 1.4; letter-spacing: -0.01em; }
+    .step p { font-size: 14px; color: var(--gray600); line-height: 1.8; }
     .step .step-tag {
       display: inline-block; margin-top: 12px;
-      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      font-size: 12px; font-weight: 700; padding: 3px 10px;
       border-radius: 100px; background: var(--gray100); color: var(--gray600);
     }
 
@@ -354,7 +394,6 @@
     .pricing .section-sub { color: rgba(255,255,255,.4); }
     .pricing .section-label { color: var(--cyan); }
     .pricing .section-label::before { background: var(--cyan); }
-    
     .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
     .price-card {
       background: rgba(255,255,255,.04);
@@ -365,71 +404,49 @@
       display: flex; flex-direction: column;
     }
     .price-card:hover { border-color: rgba(26,107,255,.4); transform: translateY(-3px); }
-    .price-card.featured {
-      border-color: rgba(0,212,255,.4);
-      background: rgba(26,107,255,.08);
-    }
-    .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .price-card.featured { border-color: rgba(0,212,255,.4); background: rgba(26,107,255,.08); }
+    .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .price-card .feat-icon2 { font-size: 32px; }
-    
-    .price-card h4 { font-size: 17px; font-weight: 800; color: white; margin-bottom: 8px; }
-    .price-card .desc {
-      font-size: 13px; color: rgba(255,255,255,.4); line-height: 1.6; margin-bottom: 24px;
-      height: calc(13px * 1.6 * 2); overflow: hidden;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    }
+    .price-card h4 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .price-card .desc { font-size: 18px; color: rgba(255,255,255,.4); line-height: 1.8; margin-bottom: 24px; }
     .price-rows { border-top: 1px solid rgba(255,255,255,.07); padding-top: 20px; }
     .price-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
-    .price-row .label { font-size: 12px; color: rgba(255,255,255,.35); }
-    .price-row .amount { font-size: 22px; font-weight: 900; color: white; }
+    .price-row .label { font-size: 13px; color: rgba(255,255,255,.35); }
+    .price-row .amount { font-size: 18px; font-weight: 900; color: white; }
     .price-row .amount.tbd { font-size: 14px; color: rgba(255,255,255,.25); font-weight: 400; font-style: italic; }
-    .price-row .amount .per { font-size: 12px; font-weight: 400; color: rgba(255,255,255,.3); margin-left: 2px; }
-    .price-row .save { font-size: 11px; color: var(--cyan); font-weight: 700; }
-    .price-all {
-      grid-column: 1 / -1;
-      background: linear-gradient(135deg, rgba(26,107,255,.15), rgba(0,212,255,.08));
-      border-color: rgba(26,107,255,.4);
-    }
-    .price-all-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; }
-    .price-all h4 { font-size: 20px; font-weight: 900; color: white; margin-bottom: 8px; }
-    .price-all .desc { font-size: 14px; color: rgba(255,255,255,.5); margin-bottom: 0; }
-    .price-all .bundle-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--cyan); background: rgba(0,212,255,.12); border-radius: 100px; padding: 4px 14px; margin-top: 12px; }
-    .price-right { display: flex; flex-direction: column; gap: 14px; }
-
-    
 
     /* ── Form ── */
     .trial-form { background: var(--white); }
     .form-layout { display: grid; grid-template-columns: 1fr 480px; gap: 60px; align-items: start; margin-top: 60px; }
     .form-left { padding-top: 8px; }
-    .form-left h3 { font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; }
-    .form-left p { font-size: 15px; color: var(--gray600); line-height: 1.8; margin-bottom: 24px; }
-    .form-checklist { display: flex; flex-direction: column; gap: 10px; }
-    .form-check-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--gray600); }
+    .form-left h3 { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 18px; line-height: 1.3; }
+    .form-left p { font-size: 17px; color: var(--gray600); line-height: 1.8; margin-bottom: 28px; }
+    .form-checklist { display: flex; flex-direction: column; gap: 12px; }
+    .form-check-item { display: flex; align-items: center; gap: 12px; font-size: 18px; color: var(--gray600); line-height: 1.6; }
     .form-check-item::before {
-      content: '✓'; width: 22px; height: 22px; border-radius: 50%;
+      content: '✓'; width: 24px; height: 24px; border-radius: 50%;
       background: rgba(26,107,255,.1); color: var(--blue);
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800; flex-shrink: 0;
+      font-size: 12px; font-weight: 800; flex-shrink: 0;
     }
     .form-box {
       background: var(--navy);
       border-radius: 20px; padding: 40px;
       box-shadow: 0 30px 80px rgba(6,16,30,.2);
     }
-    .form-box-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 6px; }
-    .form-box-sub { font-size: 13px; color: rgba(255,255,255,.4); margin-bottom: 28px; }
+    .form-box-title { font-size: 19px; font-weight: 800; color: white; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .form-box-sub { font-size: 14px; color: rgba(255,255,255,.4); margin-bottom: 28px; line-height: 1.6; }
     .form-row { margin-bottom: 16px; }
     .form-row label:not(.checkbox-item) {
-      display: block; font-size: 12px; font-weight: 700; color: rgba(255,255,255,.6);
-      margin-bottom: 7px; letter-spacing: .3px;
+      display: block; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.6);
+      margin-bottom: 8px; letter-spacing: 0.02em;
     }
     .form-row input, .form-row select {
       width: 100%; padding: 13px 16px; border-radius: 10px;
       border: 1.5px solid rgba(255,255,255,.1);
       background: rgba(255,255,255,.06);
-      color: white; font-size: 14px; font-family: inherit;
-      outline: none; transition: border-color .2s;
+      color: white; font-size: 15px; font-family: inherit;
+      outline: none; transition: border-color .2s; line-height: 1.6;
     }
     .form-row input::placeholder { color: rgba(255,255,255,.2); }
     .form-row input:focus, .form-row select:focus { border-color: var(--blue); background: rgba(26,107,255,.08); }
@@ -449,36 +466,33 @@
     .check-box {
       flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px;
       border: 1.5px solid rgba(255,255,255,.25); background: transparent;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
+      display: flex; align-items: center; justify-content: center; transition: all .2s;
     }
     .checkbox-item:has(input:checked) { border-color: var(--blue); background: rgba(26,107,255,.1); }
-    .checkbox-item:has(input:checked) .check-box {
-      background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent;
-    }
+    .checkbox-item:has(input:checked) .check-box { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; }
     .checkbox-item:has(input:checked) .check-box::after { content: '✓'; font-size: 11px; color: white; font-weight: 800; }
-    .check-label { font-size: 13.5px; color: rgba(255,255,255,.7); flex: 1; }
-    .form-row-title { display: block; font-size: 12px; font-weight: 700; color: rgba(255,255,255,.6); margin-bottom: 10px; letter-spacing: .3px; }
+    .check-label { font-size: 18px; color: rgba(255,255,255,.7); flex: 1; line-height: 1.6; }
+    .form-row-title { display: block; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.6); margin-bottom: 10px; letter-spacing: 0.02em; }
     .form-submit {
-      width: 100%; padding: 15px; border-radius: 10px;
+      width: 100%; padding: 16px; border-radius: 10px;
       background: linear-gradient(90deg, var(--blue), var(--cyan));
-      color: white; font-size: 15px; font-weight: 800;
-      border: none; cursor: pointer; margin-top: 8px;
+      color: white; font-size: 16px; font-weight: 800;
+      border: none; cursor: pointer; margin-top: 10px;
       transition: opacity .2s, transform .2s;
       box-shadow: 0 8px 28px rgba(26,107,255,.4);
-      font-family: inherit;
+      font-family: inherit; line-height: 1.4;
     }
     .form-submit:hover { opacity: .9; transform: translateY(-1px); }
-    .form-note { text-align: center; font-size: 11px; color: rgba(255,255,255,.2); margin-top: 12px; line-height: 1.6; }
+    .form-note { text-align: center; font-size: 13px; color: rgba(255,255,255,.25); margin-top: 14px; line-height: 1.8; }
 
     /* ── FAQ ── */
     .faq { background: var(--gray50); }
     .faq-list { max-width: 720px; margin: 56px auto 0; }
-    .faq-item { border-bottom: 1px solid var(--gray100); padding: 20px 0; }
-    .faq-q { font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .faq-q .arrow { width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 13px; transition: transform .25s, background .2s; }
+    .faq-item { border-bottom: 1px solid var(--gray100); padding: 22px 0; }
+    .faq-q { font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; line-height: 1.5; }
+    .faq-q .arrow { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 14px; transition: transform .25s, background .2s; }
     .faq-item.open .faq-q .arrow { transform: rotate(180deg); background: var(--blue); color: white; }
-    .faq-a { font-size: 14px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
+    .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
     .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; text-align: left; }
 
     /* ── CTA Banner ── */
@@ -487,49 +501,54 @@
       content: ''; position: absolute; inset: 0;
       background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(26,107,255,.25) 0%, transparent 60%);
     }
-    .cta-banner h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 900; color: white; letter-spacing: -1.5px; margin-bottom: 12px; position: relative; }
+    .cta-banner h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 900; color: white; letter-spacing: -0.03em; margin-bottom: 14px; position: relative; line-height: 1.2; }
     .cta-banner h2 .accent { color: var(--cyan); }
-    .cta-banner p { font-size: 16px; color: rgba(255,255,255,.4); margin-bottom: 36px; position: relative; }
-    
+    .cta-banner p { font-size: 18px; color: rgba(255,255,255,.4); margin-bottom: 36px; position: relative; line-height: 1.8; }
 
     /* ── Footer ── */
     footer { background: var(--navy); padding: 40px 24px; text-align: center; border-top: 1px solid rgba(255,255,255,.05); }
-    footer p { font-size: 13px; color: rgba(255,255,255,.2); line-height: 1.9; }
+    footer p { font-size: 14px; color: rgba(255,255,255,.2); line-height: 2; }
     footer a { color: rgba(255,255,255,.35); text-decoration: none; }
     footer a:hover { color: rgba(255,255,255,.6); }
 
     /* ── Responsive ── */
     @media (max-width: 1024px) {
-      .stats-inner { grid-template-columns: repeat(2, 1fr); }
       .features-grid { grid-template-columns: repeat(2, 1fr); }
       .pricing-grid { grid-template-columns: repeat(2, 1fr); }
-      .compare-wrap { grid-template-columns: 1fr; }
+      .compare-slide.active { grid-template-columns: 1fr; }
       .form-layout { grid-template-columns: 1fr; }
       .form-left { padding-top: 0; }
     }
     @media (max-width: 768px) {
+      body { font-size: 16px; }
       section { padding: 72px 20px; }
       nav { top: 0; }
-      .stats-inner { grid-template-columns: repeat(2, 1fr); }
-      .stat-item { padding: 20px 16px; }
+      .hero { padding: 100px 5% 80px; }
+      .hero h1 { font-size: clamp(32px, 9vw, 52px); }
+      .hero-hook { font-size: 17px; }
+      .stats-inner { max-width: 100%; grid-template-columns: repeat(2, 1fr); }
+      .stat-item { padding: 22px 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
       .stat-num { font-size: 26px; }
+      .stat-label { font-size: 12px; }
       .problem-grid { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: 1fr; }
-      .price-all-inner { grid-template-columns: 1fr; }
+      .compare-slide.active { grid-template-columns: 1fr; }
+      .compare-tabs { gap: 6px; }
+      .compare-tab { font-size: 13px; padding: 8px 16px; }
       .steps { grid-template-columns: 1fr; gap: 0; }
       .steps::before { display: none; }
       .step { display: flex; flex-direction: column; align-items: center; padding: 0 0 8px; }
       .step:not(:last-child)::after { content: ''; display: block; width: 2px; height: 28px; background: linear-gradient(180deg, var(--blue), var(--cyan)); margin: 14px auto; }
+      .step h3 { text-align: center; }
+      .step p { text-align: center; }
       .form-grid { grid-template-columns: 1fr; }
       .form-box { padding: 28px 20px; }
-      .urgency-bar { flex-direction: column; align-items: flex-start; }
+      .btn-primary, .btn-secondary { font-size: 16px; padding: 14px 24px; }
     }
   </style>
 </head>
 <body>
-
-<!-- ── ANNOUNCE ── -->
 
 <!-- ── NAV ── -->
 <nav>
@@ -546,12 +565,18 @@
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
   <div class="hero-badge">Moti Shop Grand Open</div>
-  <h1>Moti Physio Mini,<br><span class="accent">이제 다 됩니다.</span></h1>
+  <h1>
+    <span class="hero-prefix">Moti Physio</span>
+    <span class="hero-model-wrap">
+      <span class="hero-model" id="heroModel">Mini</span>
+    </span><span class="hero-comma">,</span><br>
+    <span class="accent">이제 다 됩니다.</span>
+  </h1>
   <p class="hero-hook">
     White · Pro 에만 있던 5가지 기능이<br>이제 Mini에서도 열립니다.
   </p>
   <div class="hero-btns">
-    <a class="btn-primary" href="#trial">1개월 무료 체험 신청하기</a>
+    <a class="btn-primary" href="#trial">30일 무료 체험 신청하기</a>
     <a class="btn-secondary" href="#features">추가 가능 기능 보기</a>
   </div>
   <p class="hero-note">신용카드 불필요 · 자동결제 없음 · 체험 종료 7일 전 사전 안내</p>
@@ -573,35 +598,46 @@
       <div class="stat-num">1<span class="unit">분</span></div>
       <div class="stat-label">신청 소요 시간</div>
     </div>
+    <div class="stat-item">
+      <div class="stat-num">3<span class="unit">개</span></div>
+      <div class="stat-label">지원 라인업<br>(Mini · White · Pro)</div>
+    </div>
   </div>
 </div>
 
 <!-- ── COMPARISON ── -->
 <section class="comparison">
   <div class="section-inner">
-    <span class="section-label">기능 비교</span>
-    <h2 class="section-title">기기는 같은데<br>기능이 다른 이유</h2>
-    <p class="section-sub">미니 기본 구성에서 Moti Shop 구독을 더하면 무엇이 달라지는지 직접 비교해 보세요.</p>
-    <div class="compare-wrap">
+    <span class="section-label">라인업별 기능 비교</span>
+    <h2 class="section-title">내 라인업엔 무엇을<br>추가할 수 있을까요?</h2>
+    <p class="section-sub">라인업을 선택하면 기본 구성과 추가 가능한 기능을 바로 확인할 수 있습니다.</p>
+    <div class="compare-tabs">
+      <button class="compare-tab active" onclick="switchTab('mini', this)">Moti Physio Mini</button>
+      <button class="compare-tab" onclick="switchTab('white', this)">Moti Physio White</button>
+      <button class="compare-tab" onclick="switchTab('pro', this)">Moti Physio Pro</button>
+    </div>
+
+    <!-- Mini -->
+    <div class="compare-slide active" id="slide-mini">
       <div class="compare-card before">
         <div class="compare-head">
           <div>
-            <div class="compare-title">Moti Physio Mini — 기본 구성</div>
+            <div class="compare-title">Mini — 기본 구성</div>
             <div class="compare-sub">현재 사용 중인 기능</div>
           </div>
           <span class="compare-tag tag-before">기본</span>
         </div>
         <div class="compare-body">
           <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">코어 기능 분석</span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">균형 능력 분석</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row" style="opacity:.5;"><span class="feat-name">모아레</span><span class="chk chk-n">✗</span></div>
-          <div class="compare-row" style="opacity:.5;"><span class="feat-name">척추 세부 분석</span><span class="chk chk-n">✗</span></div>
-          <div class="compare-row" style="opacity:.5;"><span class="feat-name">신경 · 림프 · 장기</span><span class="chk chk-n">✗</span></div>
-          <div class="compare-row" style="opacity:.5;"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
-          <div class="compare-row" style="opacity:.5;"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row"><span class="feat-name highlight">어깨 민감도</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">모아레</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">척추 세부 분석</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">신경 · 림프 · 장기</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
         </div>
         <div class="compare-footer">
           <div>
@@ -613,17 +649,17 @@
       <div class="compare-card after">
         <div class="compare-head">
           <div>
-            <div class="compare-title">Moti Physio Mini + Moti Shop 구독</div>
+            <div class="compare-title">Mini + Moti Shop 구독</div>
             <div class="compare-sub">추가 구독 시 사용 가능</div>
           </div>
-          <span class="compare-tag tag-after">✦ 구독</span>
+          <span class="compare-tag tag-after">+ 구독</span>
         </div>
         <div class="compare-body">
           <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">코어 기능 분석</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">균형 능력 분석</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">어깨 민감도</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">모아레 🆕</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">척추 세부 분석 🆕</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기 🆕</span><span class="chk chk-y-bright">✓</span></div>
@@ -635,7 +671,121 @@
             <div class="price-big">추가 구독</div>
             <div class="price-desc">필요한 기능만 선택 가능</div>
           </div>
-          <span class="compare-badge">30일 무료 →</span>
+          <a class="compare-cta" href="#trial">30일 무료 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- White -->
+    <div class="compare-slide" id="slide-white">
+      <div class="compare-card before">
+        <div class="compare-head">
+          <div>
+            <div class="compare-title">White — 기본 구성</div>
+            <div class="compare-sub">현재 사용 중인 기능</div>
+          </div>
+          <span class="compare-tag tag-before">기본</span>
+        </div>
+        <div class="compare-body">
+          <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">척추 세부 분석</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
+        </div>
+        <div class="compare-footer">
+          <div>
+            <div class="price-big">기본 포함</div>
+            <div class="price-desc">렌탈료에 포함된 기능</div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-card after">
+        <div class="compare-head">
+          <div>
+            <div class="compare-title">White + Moti Shop 구독</div>
+            <div class="compare-sub">추가 구독 시 사용 가능</div>
+          </div>
+          <span class="compare-tag tag-after">+ 구독</span>
+        </div>
+        <div class="compare-body">
+          <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석 🆕</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">손실키 🆕</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력 🆕</span><span class="chk chk-y-bright">✓</span></div>
+        </div>
+        <div class="compare-footer">
+          <div>
+            <div class="price-big">추가 구독</div>
+            <div class="price-desc">필요한 기능만 선택 가능</div>
+          </div>
+          <a class="compare-cta" href="#trial">30일 무료 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro -->
+    <div class="compare-slide" id="slide-pro">
+      <div class="compare-card before">
+        <div class="compare-head">
+          <div>
+            <div class="compare-title">Pro — 기본 구성</div>
+            <div class="compare-sub">현재 사용 중인 기능</div>
+          </div>
+          <span class="compare-tag tag-before">기본</span>
+        </div>
+        <div class="compare-body">
+          <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row" style="opacity:.45"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
+        </div>
+        <div class="compare-footer">
+          <div>
+            <div class="price-big">기본 포함</div>
+            <div class="price-desc">렌탈료에 포함된 기능</div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-card after">
+        <div class="compare-head">
+          <div>
+            <div class="compare-title">Pro + Moti Shop 구독</div>
+            <div class="compare-sub">추가 구독 시 사용 가능</div>
+          </div>
+          <span class="compare-tag tag-after">+ 구독</span>
+        </div>
+        <div class="compare-body">
+          <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">손실키 🆕</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력 🆕</span><span class="chk chk-y-bright">✓</span></div>
+        </div>
+        <div class="compare-footer">
+          <div>
+            <div class="price-big">추가 구독</div>
+            <div class="price-desc">필요한 기능만 선택 가능</div>
+          </div>
+          <a class="compare-cta" href="#trial">30일 무료 →</a>
         </div>
       </div>
     </div>
@@ -650,21 +800,21 @@
     <div class="problem-grid">
       <div class="problem-card">
         <span class="num">01</span>
-        <div class="icon">📈</div>
-        <h3>검사 단가를 높이고 싶은데 방법을 모르겠다</h3>
-        <p>같은 미니 기기를 쓰면서도 모아레·척추 세부분석 하나 추가로 프리미엄 검사 메뉴를 만들 수 있습니다. 기기 교체 없이 단가를 올리는 가장 빠른 방법입니다.</p>
+        <div class="icon">📊</div>
+        <h3>회원과의 상담에서<br>더 보여줄 수는 없을까?</h3>
+        <p>모아레·척추 세부분석이 더해지면 상담의 깊이가 달라집니다. 같은 측정 시간에 훨씬 많은 걸 보여줄 수 있어요.</p>
       </div>
       <div class="problem-card">
         <span class="num">02</span>
-        <div class="icon">🔄</div>
-        <h3>환자가 한 번 오고 재방문을 안 한다</h3>
-        <p>신경·림프·장기 분석으로 "이 센터 다르다"를 느끼게 만드세요. 분석이 깊을수록 환자는 다른 곳을 찾지 않습니다. 신뢰는 데이터에서 나옵니다.</p>
+        <div class="icon">🏅</div>
+        <h3>우리 센터만의<br>차별점을 만들 수는 없을까?</h3>
+        <p>신경·림프·장기 3D 분석으로 "이 센터 다르다"를 느끼게 만드세요. 다른 곳에서 보지 못한 것을 보여줄수록 신뢰가 쌓입니다.</p>
       </div>
       <div class="problem-card">
         <span class="num">03</span>
         <div class="icon">⚡</div>
-        <h3>새 기능을 써보고 싶은데 비용이 부담된다</h3>
-        <p>1개월 무료 체험으로 리스크 없이 먼저 써보세요. 환자 반응을 직접 확인한 후, 계속 쓸 기능만 골라서 구독하면 됩니다.</p>
+        <h3>기기 교체 없이<br>기능을 늘릴 수는 없을까?</h3>
+        <p>지금 가진 기기 그대로, 구독 하나로 기능을 추가하세요. 30일 무료로 먼저 써보고 계속 쓸지 결정하면 됩니다.</p>
       </div>
     </div>
   </div>
@@ -674,50 +824,45 @@
 <section class="features" id="features">
   <div class="section-inner">
     <span class="section-label">구독 가능 기능</span>
-    <h2 class="section-title">5가지 프리미엄 기능,<br>필요한 것만 골라 쓰세요</h2>
+    <h2 class="section-title">5가지 기능,<br>필요한 것만 골라 쓰세요</h2>
     <p class="section-sub">모두 구독하거나, 원하는 기능 하나만. 선택은 원장님이 합니다.</p>
     <div class="features-grid">
-
       <div class="feat-card">
         <div class="feat-top">
           <div class="feat-icon">🌊</div>
           <span class="feat-badge badge-hot">가장 인기</span>
         </div>
         <h3>모아레 (Moiré)</h3>
-        <p>빛의 간섭 패턴으로 척추 측만·골반 틀어짐을 등고선으로 시각화합니다. 수치보다 직관적인 영상 하나로 환자 설득이 훨씬 쉬워집니다.</p>
-        <div class="feat-roi">💡 <strong>"한눈에 보이니까 환자가 먼저 묻습니다"</strong><br>설명 시간 단축 + 고객 납득률 향상</div>
+        <p>빛의 간섭 패턴으로 척추 측만·골반 틀어짐을 등고선으로 시각화합니다. 수치보다 직관적인 영상 하나로 회원 설득이 훨씬 쉬워집니다.</p>
+        <div class="feat-roi">💡 <strong>"한눈에 보이니까 회원이 먼저 묻습니다"</strong><br>설명 시간 단축 + 납득률 향상</div>
       </div>
-
       <div class="feat-card">
         <div class="feat-top">
           <div class="feat-icon">📐</div>
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>척추 세부 분석</h3>
-        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 국내 프로·프로에듀 수준의 척추 분석을 미니 기기에서 그대로 사용할 수 있습니다.</p>
-        <div class="feat-roi">💡 <strong>척추 전문 클리닉 수준의 분석력</strong><br>기기 교체 없이 프로 스펙으로 업그레이드</div>
+        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 프로·프로에듀 수준의 척추 분석을 Mini 기기에서 그대로 사용할 수 있습니다.</p>
+        <div class="feat-roi">💡 <strong>프로 스펙을 기기 교체 없이</strong><br>상담 퀄리티가 눈에 띄게 달라집니다</div>
       </div>
-
       <div class="feat-card">
         <div class="feat-top">
           <div class="feat-icon">🫀</div>
           <span class="feat-badge badge-new">NEW</span>
         </div>
         <h3>3D 신경 · 림프 · 장기</h3>
-        <p>체형 불균형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 환자 스스로 자기 몸에 관심을 갖게 만드는 가장 강력한 도구입니다.</p>
-        <div class="feat-roi">💡 <strong>체험 후 재방문율 향상 기대</strong><br>"이런 분석 다른 데서는 못 봤어요"</div>
+        <p>체형 불균형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 회원 스스로 자기 몸에 관심을 갖게 만드는 가장 강력한 도구입니다.</p>
+        <div class="feat-roi">💡 <strong>"이런 분석 다른 센터에선 못 봤어요"</strong><br>센터 차별화의 핵심 포인트</div>
       </div>
-
       <div class="feat-card">
         <div class="feat-top">
           <div class="feat-icon">📏</div>
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>손실키 분석</h3>
-        <p>현재 자세로 인해 실제보다 작아 보이는 신장 손실을 수치로 제시합니다. "지금 자세를 교정하면 몇 cm 더 커 보입니다" — 이 한 마디의 설득력은 강력합니다.</p>
-        <div class="feat-roi">💡 <strong>수치화된 동기 부여</strong><br>키에 민감한 고객층에 특히 효과적</div>
+        <p>현재 자세로 인해 실제보다 작아 보이는 신장 손실을 수치로 제시합니다. "지금 자세를 교정하면 몇 cm 더 커 보입니다" — 강력한 동기 부여 포인트입니다.</p>
+        <div class="feat-roi">💡 <strong>수치화된 동기 부여</strong><br>체형 개선 의지를 즉각적으로 자극</div>
       </div>
-
       <div class="feat-card">
         <div class="feat-top">
           <div class="feat-icon">✨</div>
@@ -725,9 +870,8 @@
         </div>
         <h3>안면 여백 / 탄력</h3>
         <p>안면 윤곽과 탄력도를 정밀 분석합니다. 피부미용·한의원·왁싱샵 등 뷰티 연계 서비스 센터에서 완전히 새로운 차별화 포인트를 만들 수 있습니다.</p>
-        <div class="feat-roi">💡 <strong>뷰티샵·피부샵 원장님 강추</strong><br>"고객이 먼저 재방문 약속 잡고 갑니다"</div>
+        <div class="feat-roi">💡 <strong>뷰티샵·피부샵 원장님 강추</strong><br>현재 이 기능 제공 장치 전무</div>
       </div>
-
     </div>
   </div>
 </section>
@@ -754,7 +898,7 @@
       <div class="step">
         <div class="step-num active">3</div>
         <h3>30일 무료 사용</h3>
-        <p>모든 프리미엄 기능을 마음껏 써보세요. 종료 7일 전 알림을 드립니다.</p>
+        <p>모든 선택 기능을 마음껏 써보세요. 종료 7일 전 알림을 드립니다.</p>
         <span class="step-tag">30일간</span>
       </div>
       <div class="step">
@@ -775,9 +919,7 @@
     <p class="section-sub">요금은 영업팀 협의 후 확정 예정입니다. 무료 체험으로 먼저 가치를 확인하세요.</p>
     <div class="pricing-grid">
       <div class="price-card">
-        <div class="price-card-top">
-          <span class="feat-icon2">🌊</span>
-        </div>
+        <div class="price-card-top"><span class="feat-icon2">🌊</span></div>
         <h4>모아레</h4>
         <p class="desc">척추·골반 불균형을 등고선으로 시각화. 가장 먼저 체감 효과가 나타납니다.</p>
         <div class="price-rows">
@@ -786,42 +928,34 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top">
-          <span class="feat-icon2">📐</span>
-        </div>
+        <div class="price-card-top"><span class="feat-icon2">📐</span></div>
         <h4>척추 세부 분석</h4>
-        <p class="desc">경추·흉추·요추 마디별 각도 세분화. 척추 전문 클리닉 수준의 분석.</p>
+        <p class="desc">경추·흉추·요추 마디별 각도 세분화. 프로 수준의 척추 분석.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount tbd">협의 예정</span></div>
           <div class="price-row"><span class="label">연 구독</span><span class="amount tbd">협의 예정</span></div>
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top">
-          <span class="feat-icon2">🫀</span>
-        </div>
+        <div class="price-card-top"><span class="feat-icon2">🫀</span></div>
         <h4>신경 · 림프 · 장기</h4>
-        <p class="desc">체형과 내부 시스템 연관성 3D 시각화. 재방문율 향상의 핵심.</p>
+        <p class="desc">체형과 내부 시스템 연관성 3D 시각화. 센터 차별화의 핵심.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount tbd">협의 예정</span></div>
           <div class="price-row"><span class="label">연 구독</span><span class="amount tbd">협의 예정</span></div>
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top">
-          <span class="feat-icon2">📏</span>
-        </div>
+        <div class="price-card-top"><span class="feat-icon2">📏</span></div>
         <h4>손실키 분석</h4>
-        <p class="desc">자세로 인한 신장 손실 수치화. 고객 동기 부여에 즉각적 효과.</p>
+        <p class="desc">자세로 인한 신장 손실 수치화. 회원 동기 부여에 즉각적 효과.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount tbd">협의 예정</span></div>
           <div class="price-row"><span class="label">연 구독</span><span class="amount tbd">협의 예정</span></div>
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top">
-          <span class="feat-icon2">✨</span>
-        </div>
+        <div class="price-card-top"><span class="feat-icon2">✨</span></div>
         <h4>안면 여백 / 탄력</h4>
         <p class="desc">안면 윤곽·탄력도 분석. 뷰티·한의원 연계 차별화 포인트.</p>
         <div class="price-rows">
@@ -830,9 +964,7 @@
         </div>
       </div>
       <div class="price-card featured">
-        <div class="price-card-top">
-          <span class="feat-icon2">⭐</span>
-        </div>
+        <div class="price-card-top"><span class="feat-icon2">⭐</span></div>
         <h4>ALL IN ONE</h4>
         <p class="desc">5개 기능 전체 묶음. 개별 합산 대비 약 25~30% 저렴하게 이용하세요.</p>
         <div class="price-rows">
@@ -865,7 +997,7 @@
           <div class="form-box-sub">접수 후 1~2 영업일 내 연락드립니다</div>
           <div class="form-row">
             <label>업체명 *</label>
-            <input type="text" placeholder="예) OO필라테스, OO재활의원" />
+            <input type="text" placeholder="예) OO필라테스, OO스튜디오" />
           </div>
           <div class="form-grid">
             <div class="form-row">
@@ -876,6 +1008,16 @@
               <label>연락처 *</label>
               <input type="tel" placeholder="010-0000-0000" />
             </div>
+          </div>
+          <div class="form-row">
+            <label>현재 사용 중인 라인업 *</label>
+            <select>
+              <option value="" disabled selected>선택해주세요</option>
+              <option>Moti Physio Mini</option>
+              <option>Moti Physio White</option>
+              <option>Moti Physio Pro</option>
+              <option>기타</option>
+            </select>
           </div>
           <div class="form-row">
             <label>기기 시리얼 번호 *</label>
@@ -892,7 +1034,7 @@
               <label class="checkbox-item"><input type="checkbox" /><span class="check-box"></span><span class="check-label">⭐ 전체 다 써볼게요 (ALL IN ONE)</span></label>
             </div>
           </div>
-          <button class="form-submit" onclick="handleSubmit(event)">1개월 무료 체험 시작하기 →</button>
+          <button class="form-submit" onclick="handleSubmit(event)">30일 무료 체험 시작하기 →</button>
           <p class="form-note">개인정보는 체험 운영 외 목적으로 사용되지 않습니다<br>070-4365-7740 · 평일 10:00–19:00</p>
         </div>
       </div>
@@ -928,7 +1070,7 @@
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>화이트·프로 라인업도 신청 가능한가요?</span><span class="arrow">▾</span></div>
-        <div class="faq-a">라인업에 따라 추가 가능한 기능이 다릅니다. 화이트는 척추 세부 분석 · 손실 키 등, 프로는 손실 키 등을 추가 구독 가능합니다.</div>
+        <div class="faq-a">네, 라인업에 따라 추가 가능한 기능이 다릅니다. 위 비교표에서 내 라인업을 선택하면 추가 가능한 기능을 바로 확인할 수 있습니다. 신청 폼에서 현재 라인업을 선택하시면 담당자가 맞춤 안내드립니다.</div>
       </div>
     </div>
   </div>
@@ -936,23 +1078,65 @@
 
 <!-- ── CTA BANNER ── -->
 <section class="cta-banner">
-  <h2>지금 신청하는 원장님만<br><span class="accent">1개월 무료</span>입니다</h2>
-  <p>이미 가진 기기로, 더 많은 걸 할 수 있습니다.</p>
+  <h2>기기는 이미 있습니다.<br><span class="accent">기능만 열면 됩니다.</span></h2>
+  <p>30일 무료로 먼저 써보고, 쓸지 말지 결정하세요.</p>
   <a class="btn-primary" href="#trial" style="display:inline-flex;">무료 체험 신청하기 →</a>
 </section>
 
 <!-- ── FOOTER ── -->
 <footer>
   <p>
-    <strong style="color:rgba(255,255,255,.45); font-size:14px;">(주)엠지솔루션스</strong><br><br>
+    <strong style="color:rgba(255,255,255,.45); font-size:15px;">(주)엠지솔루션스</strong><br><br>
     대표자: 박재현 &nbsp;|&nbsp; 사업자등록번호: 217-86-00674<br>
     주소: 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오<br>
     대표번호: <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00 (점심 13:00–14:00)
   </p>
-  <p style="margin-top:16px; font-size:12px;">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
+  <p style="margin-top:16px; font-size:13px;">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
 </footer>
 
 <script>
+  // Hero model cycling
+  const models = ['Mini', 'White', 'Pro'];
+  let modelIdx = 0;
+  const modelEl = document.getElementById('heroModel');
+
+  // 가장 넓은 단어(White) 기준으로 wrap 너비 고정 → 레이아웃 밀림 방지
+  (function fixWrapWidth() {
+    const wrap = modelEl.parentElement;
+    const tmp = document.createElement('span');
+    tmp.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:inherit;font-weight:inherit;letter-spacing:inherit;font-size:inherit';
+    wrap.appendChild(tmp);
+    const maxW = Math.max(...models.map(m => { tmp.textContent = m; return tmp.offsetWidth; }));
+    tmp.remove();
+    wrap.style.width = maxW + 'px';
+    wrap.style.textAlign = 'left';
+  })();
+
+  function cycleModel() {
+    // slide out
+    modelEl.classList.add('slide-out');
+    setTimeout(() => {
+      modelIdx = (modelIdx + 1) % models.length;
+      // prepare below
+      modelEl.classList.remove('slide-out');
+      modelEl.classList.add('slide-in-prepare');
+      modelEl.textContent = models[modelIdx];
+      // force reflow
+      void modelEl.offsetHeight;
+      modelEl.classList.remove('slide-in-prepare');
+      modelEl.classList.add('slide-in');
+      setTimeout(() => modelEl.classList.remove('slide-in'), 500);
+    }, 420);
+  }
+  setInterval(cycleModel, 2200);
+
+  function switchTab(id, el) {
+    document.querySelectorAll('.compare-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.compare-slide').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('slide-' + id).classList.add('active');
+  }
+
   function toggleFaq(el) {
     const item = el.closest('.faq-item');
     const isOpen = item.classList.contains('open');
@@ -967,10 +1151,9 @@
     btn.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
     btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
     btn.disabled = true;
-    // TODO: 실제 폼 제출 로직 연결 (Google Forms / 자체 API)
   }
 
-  // Scroll reveal
+  // Scroll reveal — 아래에서 위로 (translateY only)
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
