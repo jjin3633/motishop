@@ -438,9 +438,32 @@
       section { padding: 72px 20px; }
       .form-grid { grid-template-columns: 1fr; }
       .form-box { padding: 32px 20px; }
-      .steps::before { display: none; }
       .nav-inner { padding: 0 16px; }
       .nav-logo-text { font-size: 20px; }
+
+      /* Steps 모바일: 단일 열 */
+      .steps {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+      .steps::before { display: none; }
+      .step {
+        display: flex; flex-direction: row; align-items: flex-start;
+        gap: 20px; padding: 0 0 32px 0;
+        position: relative;
+      }
+      .step:not(:last-child)::after {
+        content: '';
+        position: absolute; left: 35px; top: 72px; bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, var(--blue), var(--cyan));
+      }
+      .step-num {
+        margin: 0; flex-shrink: 0;
+        width: 72px; height: 72px;
+      }
+      .step-text { padding-top: 8px; }
+      .step h3 { margin-bottom: 6px; }
     }
   </style>
 </head>
@@ -589,18 +612,24 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <h3>무료 체험 신청</h3>
-        <p>아래 폼에 업체명 · 연락처 · 기기 시리얼만 입력하면 끝. 30초면 됩니다.</p>
+        <div class="step-text">
+          <h3>무료 체험 신청</h3>
+          <p>아래 폼에 업체명 · 연락처 · 기기 시리얼만 입력하면 끝. 30초면 됩니다.</p>
+        </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <h3>1개월 무료 사용</h3>
-        <p>신청 후 모든 프리미엄 기능이 즉시 활성화됩니다. 마음껏 써보세요.</p>
+        <div class="step-text">
+          <h3>1개월 무료 사용</h3>
+          <p>신청 후 모든 프리미엄 기능이 즉시 활성화됩니다. 마음껏 써보세요.</p>
+        </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <h3>구독 또는 종료</h3>
-        <p>체험 종료 7일 전 안내 드립니다. 계속 쓰실 기능만 선택해 구독하세요.</p>
+        <div class="step-text">
+          <h3>구독 또는 종료</h3>
+          <p>체험 종료 7일 전 안내 드립니다. 계속 쓰실 기능만 선택해 구독하세요.</p>
+        </div>
       </div>
     </div>
   </div>
