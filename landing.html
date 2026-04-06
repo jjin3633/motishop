@@ -441,29 +441,27 @@
       .nav-inner { padding: 0 16px; }
       .nav-logo-text { font-size: 20px; }
 
-      /* Steps 모바일: 단일 열 */
+      /* Steps 모바일: 단일 열 가운데 정렬 */
       .steps {
         grid-template-columns: 1fr;
         gap: 0;
       }
       .steps::before { display: none; }
       .step {
-        display: flex; flex-direction: row; align-items: flex-start;
-        gap: 20px; padding: 0 0 32px 0;
-        position: relative;
+        display: flex; flex-direction: column; align-items: center;
+        text-align: center; padding: 0 0 8px 0; position: relative;
       }
       .step:not(:last-child)::after {
         content: '';
-        position: absolute; left: 35px; top: 72px; bottom: 0;
-        width: 2px;
+        display: block;
+        width: 2px; height: 32px;
         background: linear-gradient(180deg, var(--blue), var(--cyan));
+        margin: 16px auto;
       }
-      .step-num {
-        margin: 0; flex-shrink: 0;
-        width: 72px; height: 72px;
-      }
-      .step-text { padding-top: 8px; }
-      .step h3 { margin-bottom: 6px; }
+      .step-num { margin: 0 auto 20px; }
+      .step-text { text-align: center; }
+      .step h3 { text-align: center; margin-bottom: 6px; }
+      .step p { text-align: center; }
     }
   </style>
 </head>
