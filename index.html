@@ -146,11 +146,11 @@
       position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
-    .hero-scroll span { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,.3); }
+    .hero-scroll span { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,.85); }
     .scroll-arrow {
       width: 18px; height: 18px;
-      border-right: 2px solid rgba(255,255,255,.3);
-      border-bottom: 2px solid rgba(255,255,255,.3);
+      border-right: 2px solid rgba(255,255,255,.85);
+      border-bottom: 2px solid rgba(255,255,255,.85);
       transform: rotate(45deg); animation: scrolldown 1.6s infinite;
     }
     @keyframes scrolldown { 0%,100%{opacity:.2;transform:rotate(45deg) translateY(-3px)} 50%{opacity:.7;transform:rotate(45deg) translateY(3px)} }
@@ -176,7 +176,7 @@
     .section-inner { max-width: 1200px; margin: 0 auto; }
     .section-label {
       display: inline-flex; align-items: center; gap: 8px;
-      font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
       color: var(--blue); margin-bottom: 12px;
     }
     .section-label::before { content: ''; width: 20px; height: 2px; background: var(--blue); display: inline-block; }
@@ -327,15 +327,19 @@
     .step { text-align: center; padding: 0 16px; }
     .step-num {
       width: 70px; height: 70px; border-radius: 50%;
-      background: var(--navy);
-      color: white; font-size: 22px; font-weight: 900;
+      background: rgba(26,107,255,.12);
+      color: rgba(255,255,255,.4); font-size: 22px; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.2);
       position: relative; z-index: 1;
-      border: 3px solid var(--blue);
+      border: 2px solid rgba(26,107,255,.3);
     }
-    .step-num.active { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; }
+    .step-num.active {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border: none;
+      color: white;
+      box-shadow: 0 8px 24px rgba(26,107,255,.4);
+    }
     .step h3 { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
     .step p { font-size: 13px; color: var(--gray600); line-height: 1.65; }
     .step .step-tag {
@@ -539,7 +543,7 @@
   <div class="hero-badge">Moti Shop Grand Open</div>
   <h1>Moti Physio Mini,<br><span class="accent">이제 다 됩니다.</span></h1>
   <p class="hero-hook">
-    화이트·프로에만 있던 5가지 기능이<br>이제 Mini에서도 열립니다.
+    White·Pro 에만 있던 5가지 기능이<br>이제 Mini에서도 열립니다.
   </p>
   <div class="hero-btns">
     <a class="btn-primary" href="#trial">1개월 무료 체험 신청하기</a>
@@ -577,7 +581,7 @@
       <div class="compare-card before">
         <div class="compare-head">
           <div>
-            <div class="compare-title">국내 미니 — 기본 구성</div>
+            <div class="compare-title">Moti Physio Mini — 기본 구성</div>
             <div class="compare-sub">현재 사용 중인 기능</div>
           </div>
           <span class="compare-tag tag-before">기본</span>
@@ -604,7 +608,7 @@
       <div class="compare-card after">
         <div class="compare-head">
           <div>
-            <div class="compare-title">미니 + Moti Shop 구독</div>
+            <div class="compare-title">Moti Physio Mini + Moti Shop 구독</div>
             <div class="compare-sub">추가 구독 시 사용 가능</div>
           </div>
           <span class="compare-tag tag-after">✦ 구독</span>
@@ -867,16 +871,6 @@
               <label>연락처 *</label>
               <input type="tel" placeholder="010-0000-0000" />
             </div>
-          </div>
-          <div class="form-row">
-            <label>현재 사용 중인 라인업 *</label>
-            <select>
-              <option value="" disabled selected>선택해주세요</option>
-              <option>국내 - 미니</option>
-              <option>국내 - 화이트</option>
-              <option>국내 - 프로</option>
-              <option>국내 - 기타</option>
-            </select>
           </div>
           <div class="form-row">
             <label>기기 시리얼 번호 *</label>
