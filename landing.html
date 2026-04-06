@@ -348,12 +348,12 @@
       display: flex; align-items: center; justify-content: center;
       transition: background .2s, border-color .2s;
     }
-    .checkbox-item.checked { border-color: var(--blue); background: rgba(26,107,255,.12); }
-    .checkbox-item.checked .check-box {
+    .checkbox-item:has(input:checked) { border-color: var(--blue); background: rgba(26,107,255,.12); }
+    .checkbox-item:has(input:checked) .check-box {
       background: linear-gradient(135deg, var(--blue), var(--cyan));
       border-color: transparent;
     }
-    .checkbox-item.checked .check-box::after {
+    .checkbox-item:has(input:checked) .check-box::after {
       content: '✓'; font-size: 12px; color: white; font-weight: 700;
     }
     .checkbox-item .check-label {
@@ -703,32 +703,32 @@
       <div class="form-row">
         <span class="form-row-title">관심 기능 선택 (복수 선택 가능)</span>
         <div class="checkbox-group">
-          <label class="checkbox-item" onclick="toggleCheck(this)">
+          <label class="checkbox-item">
             <input type="checkbox" value="모아레" />
             <span class="check-box"></span>
             <span class="check-label">🧍 모아레</span>
           </label>
-          <label class="checkbox-item" onclick="toggleCheck(this)">
+          <label class="checkbox-item">
             <input type="checkbox" value="척추 세부 분석" />
             <span class="check-box"></span>
             <span class="check-label">📐 척추 세부 분석</span>
           </label>
-          <label class="checkbox-item" onclick="toggleCheck(this)">
+          <label class="checkbox-item">
             <input type="checkbox" value="신경·림프·장기" />
             <span class="check-box"></span>
             <span class="check-label">🫀 신경 · 림프 · 장기</span>
           </label>
-          <label class="checkbox-item" onclick="toggleCheck(this)">
+          <label class="checkbox-item">
             <input type="checkbox" value="손실키" />
             <span class="check-box"></span>
             <span class="check-label">📏 손실키</span>
           </label>
-          <label class="checkbox-item" onclick="toggleCheck(this)">
+          <label class="checkbox-item">
             <input type="checkbox" value="안면여백/탄력" />
             <span class="check-box"></span>
             <span class="check-label">✨ 안면 여백 / 탄력</span>
           </label>
-          <label class="checkbox-item" onclick="toggleCheck(this)">
+          <label class="checkbox-item">
             <input type="checkbox" value="전체" />
             <span class="check-box"></span>
             <span class="check-label">⭐ 전체 다 써볼게요</span>
@@ -811,12 +811,6 @@
 </footer>
 
 <script>
-  function toggleCheck(el) {
-    el.classList.toggle('checked');
-    const cb = el.querySelector('input[type="checkbox"]');
-    cb.checked = !cb.checked;
-  }
-
   function toggleFaq(el) {
     const item = el.closest('.faq-item');
     const isOpen = item.classList.contains('open');
