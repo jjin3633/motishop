@@ -182,9 +182,9 @@
       width: 18px; height: 18px;
       border-right: 2px solid rgba(255,255,255,.85);
       border-bottom: 2px solid rgba(255,255,255,.85);
-      transform: rotate(45deg); animation: scrolldown 1.6s infinite;
+      transform: rotate(45deg); animation: scrolldown 1.6s ease-in-out infinite;
     }
-    @keyframes scrolldown { 0%,100%{opacity:.2;transform:rotate(45deg) translateY(-3px)} 50%{opacity:.7;transform:rotate(45deg) translateY(3px)} }
+    @keyframes scrolldown { 0%,100%{opacity:.15} 50%{opacity:.9} }
 
     /* ── Stats Bar ── */
     .stats-bar { background: var(--navy2); border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); }
