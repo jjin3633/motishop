@@ -79,18 +79,19 @@
         radial-gradient(ellipse 50% 40% at 80% 60%, rgba(0,198,255,.12) 0%, transparent 60%);
     }
     .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 16px; border-radius: 100px;
-      border: 1px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.06);
-      color: var(--cyan); font-size: 12px; font-weight: 600; letter-spacing: .5px;
-      margin-bottom: 28px; text-transform: uppercase;
+      font-size: clamp(13px, 1.4vw, 16px);
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
       position: relative;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
-    .hero-badge::before {
-      content: ''; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--cyan);
-      animation: pulse 2s infinite;
+    .hero-badge::before, .hero-badge::after {
+      content: ''; width: 28px; height: 1.5px;
+      background: var(--cyan); opacity: .5;
+      display: inline-block;
     }
     @keyframes pulse {
       0%,100% { opacity: 1; transform: scale(1); }
@@ -170,7 +171,7 @@
     .section-inner { max-width: 1100px; margin: 0 auto; }
     .section-label {
       display: inline-block;
-      font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
       color: var(--blue); margin-bottom: 16px;
     }
     .section-title {
@@ -317,8 +318,38 @@
     .form-row { margin-bottom: 20px; }
     .form-row label {
       display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.7);
-      margin-bottom: 8px; letter-spacing: .2px;
+      margin-bottom: 8px; letter-spacing: .2px; text-align: left;
     }
+    .form-box { text-align: left; }
+    .checkbox-group {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .checkbox-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      cursor: pointer; transition: border-color .2s, background .2s;
+      user-select: none;
+    }
+    .checkbox-item:hover { border-color: rgba(26,107,255,.5); background: rgba(26,107,255,.08); }
+    .checkbox-item input[type="checkbox"] { display: none; }
+    .checkbox-item .check-box {
+      width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+      border: 1.5px solid rgba(255,255,255,.3);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, border-color .2s;
+    }
+    .checkbox-item.checked { border-color: var(--blue); background: rgba(26,107,255,.12); }
+    .checkbox-item.checked .check-box {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border-color: transparent;
+    }
+    .checkbox-item.checked .check-box::after {
+      content: '✓'; font-size: 11px; color: white; font-weight: 700;
+    }
+    .checkbox-item .check-label { font-size: 14px; color: rgba(255,255,255,.75); }
     .form-row input, .form-row select {
       width: 100%; padding: 14px 18px; border-radius: 10px;
       border: 1.5px solid rgba(255,255,255,.12);
@@ -361,7 +392,7 @@
     .faq-a {
       font-size: 14px; color: var(--gray600); line-height: 1.75;
       max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease;
-      padding-top: 0;
+      padding-top: 0; text-align: left;
     }
     .faq-item.open .faq-a { max-height: 200px; padding-top: 14px; }
 
@@ -642,7 +673,7 @@
     <p class="section-sub" style="margin:0 auto;">신용카드 정보 불필요. 체험 종료 7일 전 안내드립니다.</p>
     <div class="form-box">
       <div class="form-row">
-        <label>병원(업체)명 *</label>
+        <label>업체명 *</label>
         <input type="text" placeholder="예) ○○ 한의원, ○○ 척추 의원" />
       </div>
       <div class="form-grid">
@@ -671,16 +702,39 @@
         </select>
       </div>
       <div class="form-row">
-        <label>가장 관심 있는 기능 (복수 선택 가능)</label>
-        <select>
-          <option value="">기능 선택</option>
-          <option>모아레</option>
-          <option>척추 세부 분석</option>
-          <option>신경 · 림프 · 장기</option>
-          <option>손실키</option>
-          <option>안면 여백 / 탄력</option>
-          <option>전체 다 써보고 싶어요</option>
-        </select>
+        <label>관심 기능 선택 (복수 선택 가능)</label>
+        <div class="checkbox-group">
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="모아레" />
+            <span class="check-box"></span>
+            <span class="check-label">🌊 모아레</span>
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="척추 세부 분석" />
+            <span class="check-box"></span>
+            <span class="check-label">🦴 척추 세부 분석</span>
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="신경·림프·장기" />
+            <span class="check-box"></span>
+            <span class="check-label">🫀 신경 · 림프 · 장기</span>
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="손실키" />
+            <span class="check-box"></span>
+            <span class="check-label">🔑 손실키</span>
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="안면여백/탄력" />
+            <span class="check-box"></span>
+            <span class="check-label">✨ 안면 여백 / 탄력</span>
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="전체" />
+            <span class="check-box"></span>
+            <span class="check-label">⭐ 전체 다 써볼게요</span>
+          </label>
+        </div>
       </div>
       <button class="form-submit" onclick="handleSubmit(event)">
         1개월 무료 체험 시작하기 →
@@ -753,6 +807,12 @@
 </footer>
 
 <script>
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+    const cb = el.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+  }
+
   function toggleFaq(el) {
     const item = el.closest('.faq-item');
     const isOpen = item.classList.contains('open');
