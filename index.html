@@ -232,6 +232,7 @@
       transition: all .2s; font-family: inherit;
     }
     .compare-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+    .tab-short { display: none; }
     .compare-slide { display: none; }
     .compare-slide.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .compare-card { border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--gray100); }
@@ -562,6 +563,28 @@
       .cta-banner p { font-size: 15px; }
       .faq-q { font-size: 15px; }
       .faq-a { font-size: 15px; }
+      .faq-item { padding: 16px 0; }
+      /* Hero 여백 */
+      .hero-badge { margin-bottom: 20px; }
+      .hero-hook { margin-bottom: 28px; }
+      /* 비교 탭 — 짧은 이름 */
+      .tab-full { display: none; }
+      .tab-short { display: inline; }
+      /* 기능 카드 */
+      .feat-card { padding: 20px; }
+      .feat-card p, .feat-roi { font-size: 15px; }
+      /* 문제 카드 */
+      .problem-card h3 { font-size: 17px; }
+      .problem-card p { font-size: 15px; }
+      /* 요금 카드 */
+      .price-card { padding: 20px; }
+      .price-card .desc { font-size: 15px; }
+      /* 폼 */
+      .form-left p { font-size: 15px; }
+      .form-check-item { font-size: 15px; }
+      .check-label { font-size: 15px; }
+      /* CTA 배너 자체 padding 모바일 강제 */
+      .cta-banner { padding: 60px 20px; }
     }
   </style>
 </head>
@@ -713,9 +736,9 @@
     <h2 class="section-title">내 라인업엔 무엇을<br>추가할 수 있을까요?</h2>
     <p class="section-sub">라인업을 선택하면 기본 구성과 추가 가능한 기능을 바로 확인할 수 있습니다.</p>
     <div class="compare-tabs">
-      <button class="compare-tab active" onclick="switchTab('mini', this)">Moti Physio Mini</button>
-      <button class="compare-tab" onclick="switchTab('white', this)">Moti Physio White</button>
-      <button class="compare-tab" onclick="switchTab('pro', this)">Moti Physio Pro</button>
+      <button class="compare-tab active" onclick="switchTab('mini', this)"><span class="tab-full">Moti Physio Mini</span><span class="tab-short">Mini</span></button>
+      <button class="compare-tab" onclick="switchTab('white', this)"><span class="tab-full">Moti Physio White</span><span class="tab-short">White</span></button>
+      <button class="compare-tab" onclick="switchTab('pro', this)"><span class="tab-full">Moti Physio Pro</span><span class="tab-short">Pro</span></button>
     </div>
 
     <!-- Mini -->
