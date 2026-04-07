@@ -490,9 +490,7 @@
     .faq-list { max-width: 720px; margin: 56px auto 0; }
     .faq-item { border-bottom: 1px solid var(--gray100); padding: 22px 0; }
     .faq-q { font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; line-height: 1.5; }
-    .faq-q .arrow { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 0; transition: transform .25s, background .2s; }
-    .faq-q .arrow::after { content: ''; display: block; width: 8px; height: 8px; border-right: 2.5px solid var(--gray600); border-bottom: 2.5px solid var(--gray600); transform: rotate(45deg); margin-top: -4px; }
-    .faq-item.open .faq-q .arrow::after { border-color: white; margin-top: 2px; }
+    .faq-q .arrow { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; transition: transform .25s, background .2s; }
     .faq-item.open .faq-q .arrow { transform: rotate(180deg); background: var(--blue); color: white; }
     .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
     .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; text-align: left; }
@@ -523,11 +521,17 @@
     }
     @media (max-width: 768px) {
       body { font-size: 16px; }
-      section { padding: 72px 20px; }
+      section { padding: 60px 20px; }
       nav { top: 0; }
+      .nav-inner { padding: 0 20px; }
       .hero { padding: 100px 5% 80px; }
       .hero h1 { font-size: clamp(32px, 9vw, 52px); }
       .hero-hook { font-size: 17px; }
+      .hero-btns { flex-direction: column; align-items: stretch; gap: 12px; }
+      .btn-primary, .btn-secondary { font-size: 15px; padding: 14px 20px; text-align: center; }
+      .section-label { font-size: 13px; margin-bottom: 8px; }
+      .section-title { font-size: clamp(22px, 6vw, 32px); }
+      .section-sub { font-size: 14px; }
       .stats-inner { max-width: 100%; grid-template-columns: repeat(2, 1fr); }
       .stat-item { padding: 22px 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
       .stat-num { font-size: 26px; }
@@ -536,8 +540,9 @@
       .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: 1fr; }
       .compare-slide.active { grid-template-columns: 1fr; }
-      .compare-tabs { gap: 6px; }
-      .compare-tab { font-size: 13px; padding: 8px 16px; }
+      .compare-tabs { gap: 6px; flex-wrap: wrap; }
+      .compare-tab { font-size: 12px; padding: 7px 12px; flex: 1 1 auto; text-align: center; }
+      .compare-card { padding: 20px 16px; }
       .steps { grid-template-columns: 1fr; gap: 0; }
       .steps::before { display: none; }
       .step { display: flex; flex-direction: column; align-items: center; padding: 0 0 8px; }
@@ -545,8 +550,9 @@
       .step h3 { text-align: center; }
       .step p { text-align: center; }
       .form-grid { grid-template-columns: 1fr; }
-      .form-box { padding: 28px 20px; }
-      .btn-primary, .btn-secondary { font-size: 16px; padding: 14px 24px; }
+      .form-box { padding: 24px 16px; }
+      .faq-q { font-size: 15px; }
+      .faq-a { font-size: 15px; }
     }
   </style>
 </head>
@@ -601,8 +607,8 @@
       <div class="stat-label">신청 소요 시간</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num">3<span class="unit">개</span></div>
-      <div class="stat-label">지원 라인업<br>(Mini · White · Pro)</div>
+      <div class="stat-num">3</div>
+      <div class="stat-label">지원 라인업<br>Mini · White · Pro</div>
     </div>
   </div>
 </div>
@@ -775,11 +781,12 @@
         <div class="compare-body">
           <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">어깨 민감도</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row" style="opacity:.45"><span class="feat-name">척추 세부 분석</span><span class="chk chk-n">✗</span></div>
+          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row" style="opacity:.45"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
           <div class="compare-row" style="opacity:.45"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
         </div>
@@ -832,10 +839,11 @@
         <div class="compare-body">
           <div class="compare-row"><span class="feat-name highlight">정적분석</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">동적 분석<br><small style="font-weight:400;opacity:.7;">(코어 기능 분석 + 균형 능력 분석)</small></span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">어깨 민감도</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row" style="opacity:.45"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
           <div class="compare-row" style="opacity:.45"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
@@ -1018,7 +1026,7 @@
           <div class="form-row">
             <span class="form-row-title">관심 기능 선택 (복수 가능)</span>
             <div class="checkbox-group">
-              <label class="checkbox-item"><input type="checkbox" /><span class="check-box"></span><span class="check-label">🌊 모아레</span></label>
+              <label class="checkbox-item"><input type="checkbox" /><span class="check-box"></span><span class="check-label">🧍 모아레</span></label>
               <label class="checkbox-item"><input type="checkbox" /><span class="check-box"></span><span class="check-label">📐 척추 세부 분석</span></label>
               <label class="checkbox-item"><input type="checkbox" /><span class="check-box"></span><span class="check-label">🫀 신경 · 림프 · 장기</span></label>
               <label class="checkbox-item"><input type="checkbox" /><span class="check-box"></span><span class="check-label">📏 손실키 분석</span></label>
