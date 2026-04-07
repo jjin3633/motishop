@@ -1026,7 +1026,7 @@
             </div>
             <div class="form-row">
               <label>연락처 *</label>
-              <input type="tel" placeholder="010-0000-0000" />
+              <input type="tel" placeholder="010-0000-0000" inputmode="numeric" pattern="[0-9\-]*" oninput="this.value=this.value.replace(/[^0-9\-]/g,'')" />
             </div>
           </div>
           <div class="form-row">
