@@ -1119,7 +1119,7 @@
     const maxW = Math.max(...models.map(m => { tmp.textContent = m; return tmp.offsetWidth; }));
     tmp.remove();
     wrap.style.width = maxW + 'px';
-    wrap.style.textAlign = 'left';
+    wrap.style.textAlign = 'center';
   })();
 
   function cycleModel() {
