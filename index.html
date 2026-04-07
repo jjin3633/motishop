@@ -1111,7 +1111,7 @@
   const modelEl = document.getElementById('heroModel');
 
   // 가장 넓은 단어(White) 기준으로 wrap 너비 고정 → 레이아웃 밀림 방지
-  (function fixWrapWidth() {
+  function fixWrapWidth() {
     const wrap = modelEl.parentElement;
     const tmp = document.createElement('span');
     tmp.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:inherit;font-weight:inherit;letter-spacing:inherit;font-size:inherit';
@@ -1120,7 +1120,11 @@
     tmp.remove();
     wrap.style.width = maxW + 'px';
     wrap.style.textAlign = 'center';
-  })();
+  }
+  // 폰트 로드 완료 후 정확히 측정, 리사이즈 시 재계산
+  document.fonts.ready.then(fixWrapWidth);
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fixWrapWidth, 150); });
 
   function cycleModel() {
     // slide out
