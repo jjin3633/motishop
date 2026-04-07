@@ -413,10 +413,12 @@
     .price-card h4 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
     .price-card .desc { font-size: 18px; color: rgba(255,255,255,.4); line-height: 1.8; margin-bottom: 24px; }
     .price-rows { border-top: 1px solid rgba(255,255,255,.07); padding-top: 20px; }
-    .price-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+    .price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .price-row .label { font-size: 13px; color: rgba(255,255,255,.35); }
     .price-row .amount { font-size: 18px; font-weight: 900; color: white; }
-    .price-row .amount.tbd { font-size: 14px; color: rgba(255,255,255,.25); font-weight: 400; font-style: italic; }
+    .price-row.annual .amount { color: var(--cyan); }
+    .save-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: rgba(0,212,255,.15); color: var(--cyan); margin-left: 6px; letter-spacing: 0.02em; }
+    .price-row .amount-wrap { display: flex; align-items: center; }
 
     /* ── Form ── */
     .trial-form { background: var(--white); }
@@ -880,8 +882,8 @@
           <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력</span><span class="chk chk-y">✓</span></div>
           <div class="compare-row" style="opacity:.45"><span class="feat-name">손실키</span><span class="chk chk-n">✗</span></div>
-          <div class="compare-row" style="opacity:.45"><span class="feat-name">안면 여백 / 탄력</span><span class="chk chk-n">✗</span></div>
         </div>
         <div class="compare-footer">
           <div>
@@ -907,8 +909,8 @@
           <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">손실키</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">손실키</span><span class="chk chk-y-bright">✓</span></div>
         </div>
         <div class="compare-footer">
           <div>
@@ -970,7 +972,7 @@
         <p class="desc">척추·골반 불균형을 등고선으로 시각화. 가장 먼저 체감 효과가 나타납니다.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">19,900원</span></div>
-          <div class="price-row"><span class="label">연 구독 (월 환산)</span><span class="amount">14,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">14,900원</span><span class="save-badge">-25%</span></span></div>
         </div>
       </div>
       <div class="price-card">
@@ -979,7 +981,7 @@
         <p class="desc">경추·흉추·요추 마디별 각도 세분화. 프로 수준의 척추 분석.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">39,900원</span></div>
-          <div class="price-row"><span class="label">연 구독 (월 환산)</span><span class="amount">32,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">32,900원</span><span class="save-badge">-18%</span></span></div>
         </div>
       </div>
       <div class="price-card">
@@ -988,7 +990,7 @@
         <p class="desc">체형과 내부 시스템 연관성 3D 시각화. 센터 차별화의 핵심.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">29,900원</span></div>
-          <div class="price-row"><span class="label">연 구독 (월 환산)</span><span class="amount">24,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">24,900원</span><span class="save-badge">-17%</span></span></div>
         </div>
       </div>
       <div class="price-card">
@@ -997,7 +999,7 @@
         <p class="desc">자세로 인한 신장 손실 수치화. 회원 동기 부여에 즉각적 효과.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">66,000원</span></div>
-          <div class="price-row"><span class="label">연 구독 (월 환산)</span><span class="amount">54,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">54,900원</span><span class="save-badge">-17%</span></span></div>
         </div>
       </div>
       <div class="price-card">
@@ -1006,7 +1008,7 @@
         <p class="desc">안면 윤곽·탄력도 분석. 뷰티·한의원 연계 차별화 포인트.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">24,900원</span></div>
-          <div class="price-row"><span class="label">연 구독 (월 환산)</span><span class="amount">19,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">19,900원</span><span class="save-badge">-20%</span></span></div>
         </div>
       </div>
       <div class="price-card featured">
@@ -1015,7 +1017,7 @@
         <p class="desc">5개 기능 전체 묶음. 개별 합산 대비 월 50% 이상 절감.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">89,900원</span></div>
-          <div class="price-row"><span class="label">연 구독 (월 환산)</span><span class="amount">74,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">74,900원</span><span class="save-badge">-17%</span></span></div>
         </div>
       </div>
     </div>
