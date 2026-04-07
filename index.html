@@ -207,7 +207,7 @@
     .section-inner { max-width: 1200px; margin: 0 auto; }
     .section-label {
       display: inline-flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 18px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--blue); margin-bottom: 14px;
     }
     .section-label::before { content: ''; width: 20px; height: 2px; background: var(--blue); display: inline-block; }
@@ -490,7 +490,9 @@
     .faq-list { max-width: 720px; margin: 56px auto 0; }
     .faq-item { border-bottom: 1px solid var(--gray100); padding: 22px 0; }
     .faq-q { font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; line-height: 1.5; }
-    .faq-q .arrow { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 14px; transition: transform .25s, background .2s; }
+    .faq-q .arrow { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 0; transition: transform .25s, background .2s; }
+    .faq-q .arrow::after { content: ''; display: block; width: 8px; height: 8px; border-right: 2.5px solid var(--gray600); border-bottom: 2.5px solid var(--gray600); transform: rotate(45deg); margin-top: -4px; }
+    .faq-item.open .faq-q .arrow::after { border-color: white; margin-top: 2px; }
     .faq-item.open .faq-q .arrow { transform: rotate(180deg); background: var(--blue); color: white; }
     .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
     .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; text-align: left; }
@@ -683,7 +685,7 @@
         </div>
         <h3>안면 여백 / 탄력</h3>
         <p>안면 윤곽과 탄력도를 정밀 분석합니다. 피부미용·한의원·왁싱샵 등 뷰티 연계 서비스 센터에서 완전히 새로운 차별화 포인트를 만들 수 있습니다.</p>
-        <div class="feat-roi">💡 <strong>뷰티샵·피부샵 원장님 강추</strong><br>현재 이 기능 제공 장치 전무</div>
+        <div class="feat-roi">💡 <strong>뷰티샵·피부샵 원장님 강추</strong><br>피부 상태 + 체형 분석, 한번에 두 가지를 보여주세요</div>
       </div>
     </div>
   </div>
@@ -726,7 +728,7 @@
         <div class="compare-footer">
           <div>
             <div class="price-big">기본 포함</div>
-            <div class="price-desc">렌탈료에 포함된 기능</div>
+            <div class="price-desc">기본 제공 기능</div>
           </div>
         </div>
       </div>
@@ -744,11 +746,11 @@
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">어깨 민감도</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">모아레 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">손실키 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력 🆕</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">모아레</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">손실키</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력</span><span class="chk chk-y-bright">✓</span></div>
         </div>
         <div class="compare-footer">
           <div>
@@ -784,7 +786,7 @@
         <div class="compare-footer">
           <div>
             <div class="price-big">기본 포함</div>
-            <div class="price-desc">렌탈료에 포함된 기능</div>
+            <div class="price-desc">기본 제공 기능</div>
           </div>
         </div>
       </div>
@@ -803,9 +805,9 @@
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">손실키 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력 🆕</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">척추 세부 분석</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">손실키</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력</span><span class="chk chk-y-bright">✓</span></div>
         </div>
         <div class="compare-footer">
           <div>
@@ -841,7 +843,7 @@
         <div class="compare-footer">
           <div>
             <div class="price-big">기본 포함</div>
-            <div class="price-desc">렌탈료에 포함된 기능</div>
+            <div class="price-desc">기본 제공 기능</div>
           </div>
         </div>
       </div>
@@ -861,8 +863,8 @@
           <div class="compare-row"><span class="feat-name highlight">안면비대칭</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">바디라인</span><span class="chk chk-y-bright">✓</span></div>
           <div class="compare-row"><span class="feat-name highlight">신경 · 림프 · 장기</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">손실키 🆕</span><span class="chk chk-y-bright">✓</span></div>
-          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력 🆕</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">손실키</span><span class="chk chk-y-bright">✓</span></div>
+          <div class="compare-row"><span class="feat-name highlight">안면 여백 / 탄력</span><span class="chk chk-y-bright">✓</span></div>
         </div>
         <div class="compare-footer">
           <div>
@@ -919,7 +921,7 @@
     <p class="section-sub">요금은 영업팀 협의 후 확정 예정입니다. 무료 체험으로 먼저 가치를 확인하세요.</p>
     <div class="pricing-grid">
       <div class="price-card">
-        <div class="price-card-top"><span class="feat-icon2">🌊</span></div>
+        <div class="price-card-top"><span class="feat-icon2">🧍</span></div>
         <h4>모아레</h4>
         <p class="desc">척추·골반 불균형을 등고선으로 시각화. 가장 먼저 체감 효과가 나타납니다.</p>
         <div class="price-rows">
@@ -1008,16 +1010,6 @@
               <label>연락처 *</label>
               <input type="tel" placeholder="010-0000-0000" />
             </div>
-          </div>
-          <div class="form-row">
-            <label>현재 사용 중인 라인업 *</label>
-            <select>
-              <option value="" disabled selected>선택해주세요</option>
-              <option>Moti Physio Mini</option>
-              <option>Moti Physio White</option>
-              <option>Moti Physio Pro</option>
-              <option>기타</option>
-            </select>
           </div>
           <div class="form-row">
             <label>기기 시리얼 번호 *</label>
