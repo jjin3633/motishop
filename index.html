@@ -338,8 +338,9 @@
     .feat-card::before {
       content: ''; position: absolute; inset: 0;
       background: linear-gradient(135deg, rgba(26,107,255,.08) 0%, transparent 60%);
-      opacity: 0; transition: opacity .25s;
+      opacity: 0; transition: opacity .25s; pointer-events: none;
     }
+    .feat-card > * { position: relative; z-index: 1; }
     .feat-card:hover { background: rgba(255,255,255,.06); border-color: rgba(26,107,255,.35); transform: translateY(-3px); }
     .feat-card:hover::before { opacity: 1; }
     .feat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
@@ -726,7 +727,7 @@
       <div class="feat-card">
         <div class="feat-top">
           <div class="feat-icon">✨</div>
-          <span class="feat-badge badge-new">NEW</span>
+          <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>안면 여백 / 탄력</h3>
         <p>안면 윤곽과 탄력도를 정밀 분석합니다. 피부미용·한의원·왁싱샵 등 뷰티 연계 서비스 센터에서 완전히 새로운 차별화 포인트를 만들 수 있습니다.</p>
