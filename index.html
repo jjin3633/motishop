@@ -1231,7 +1231,7 @@
     if (!isOpen) item.classList.add('open');
   }
 
-  const SCRIPT_URL = 'https://script.google.com/a/macros/motiphysio.com/s/AKfycbzN350zMUT80ne_6uthCrvk7LhzwUcG227aRgQuiqRgqE0oBxDg2QrhQesHHse8AmuczA/exec';
+  const SCRIPT_URL = 'https://script.google.com/a/macros/motiphysio.com/s/AKfycbySDB0tfM0xqkCpNmi3YzD3rztH223xKk7QK6BCd_LgTq0zKY-LnFY6XJQFzboEHWznCQ/exec';
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -1252,12 +1252,9 @@
     btn.textContent = '전송 중...';
     btn.disabled = true;
 
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ company, name, phone, features: checked || '미선택' })
-    }).then(() => {
+    const params = new URLSearchParams({ company, name, phone, features: checked || '미선택' });
+    fetch(`${SCRIPT_URL}?${params}`, { method: 'GET', mode: 'no-cors' })
+    .then(() => {
       btn.textContent = '✅ 신청이 접수되었습니다! 1~2 영업일 내 연락드립니다';
       btn.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
       btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
