@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moti Shop — 내 라인업엔 없는 기능, 이제 씁니다</title>
+  <link rel="icon" type="image/png" href="사이트_png_파비콘.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Questrial&family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
@@ -333,8 +334,34 @@
       background: rgba(255,255,255,.035);
       border: 1px solid rgba(255,255,255,.07);
       border-radius: var(--radius); padding: 32px;
-      transition: all .25s; cursor: default; position: relative; overflow: hidden;
+      transition: all .25s; cursor: pointer; position: relative; overflow: hidden;
     }
+    .feat-card:active { transform: scale(.98); }
+
+    /* ── Feature Modal ── */
+    .feat-modal {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.8); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .feat-modal.open { display: flex; }
+    .feat-modal-box {
+      position: relative; max-width: 90vw; max-height: 88vh;
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6);
+    }
+    .feat-modal-img { display: block; max-width: 90vw; max-height: 88vh; object-fit: contain; border-radius: 16px; }
+    .feat-modal-close {
+      position: absolute; top: 12px; right: 12px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.15);
+      cursor: pointer; color: white; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1; transition: background .2s, transform .15s;
+      line-height: 1;
+    }
+    .feat-modal-close:hover { background: rgba(255,255,255,.2); transform: scale(1.1); }
     .feat-card::before {
       content: ''; position: absolute; inset: 0;
       background: linear-gradient(135deg, rgba(26,107,255,.08) 0%, transparent 60%);
@@ -688,7 +715,7 @@
     <h2 class="section-title">5가지 기능,<br>필요한 것만 골라 쓰세요</h2>
     <p class="section-sub">모두 구독하거나, 원하는 기능 하나만. 선택은 원장님이 합니다.</p>
     <div class="features-grid">
-      <div class="feat-card">
+      <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
         <div class="feat-top">
           <div class="feat-icon">🧍</div>
           <span class="feat-badge badge-hot">가장 인기</span>
@@ -697,7 +724,7 @@
         <p>빛의 간섭 패턴으로 척추 측만·골반 틀어짐을 등고선으로 시각화합니다. 수치보다 직관적인 사진 하나로 회원 설득이 훨씬 쉬워집니다.</p>
         <div class="feat-roi">💡 <strong>"한눈에 보이니까 회원이 먼저 묻습니다"</strong><br>설명 시간 단축 + 납득률 향상</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card" onclick="openFeatModal('nerve.png')">
         <div class="feat-top">
           <div class="feat-icon">🫀</div>
           <span class="feat-badge badge-new">NEW</span>
@@ -706,7 +733,7 @@
         <p>체형 불균형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 회원 스스로 자기 몸에 관심을 갖게 만드는 가장 강력한 도구입니다.</p>
         <div class="feat-roi">💡 <strong>"이런 분석 다른 센터에선 못 봤어요"</strong><br>센터 차별화의 핵심 포인트</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card" onclick="openFeatModal('spine.png')">
         <div class="feat-top">
           <div class="feat-icon">📐</div>
           <span class="feat-badge badge-pro">프리미엄</span>
@@ -715,7 +742,7 @@
         <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 프로·프로에듀 수준의 척추 분석을 Mini 기기에서 그대로 사용할 수 있습니다.</p>
         <div class="feat-roi">💡 <strong>프로 스펙을 기기 교체 없이</strong><br>상담 퀄리티가 눈에 띄게 달라집니다</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card" onclick="openFeatModal('lossheight..png')">
         <div class="feat-top">
           <div class="feat-icon">📏</div>
           <span class="feat-badge badge-pro">프리미엄</span>
@@ -724,7 +751,7 @@
         <p>현재 자세로 인해 실제보다 작아 보이는 신장 손실을 수치로 제시합니다. "지금 자세를 교정하면 몇 cm 더 커 보입니다" — 강력한 동기 부여 포인트입니다.</p>
         <div class="feat-roi">💡 <strong>수치화된 동기 부여</strong><br>체형 개선 의지를 즉각적으로 자극</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card" onclick="openFeatModal('faece.png')">
         <div class="feat-top">
           <div class="feat-icon">✨</div>
           <span class="feat-badge badge-pro">프리미엄</span>
@@ -1113,6 +1140,14 @@
   <a class="btn-primary" href="#trial" style="display:inline-flex;">무료 체험 신청하기 →</a>
 </section>
 
+<!-- ── FEATURE MODAL ── -->
+<div class="feat-modal" id="featModal" onclick="closeFeatModalOverlay(event)">
+  <div class="feat-modal-box">
+    <button class="feat-modal-close" onclick="closeFeatModal()">✕</button>
+    <img class="feat-modal-img" id="featModalImg" src="" alt="기능 예시 이미지" />
+  </div>
+</div>
+
 <!-- ── FOOTER ── -->
 <footer>
   <p>
@@ -1186,6 +1221,21 @@
     btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
     btn.disabled = true;
   }
+
+  // Feature card modal
+  function openFeatModal(src) {
+    document.getElementById('featModalImg').src = src;
+    document.getElementById('featModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeFeatModal() {
+    document.getElementById('featModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeFeatModalOverlay(e) {
+    if (e.target === document.getElementById('featModal')) closeFeatModal();
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFeatModal(); });
 
   // Scroll reveal — 아래에서 위로 (translateY only)
   const observer = new IntersectionObserver((entries) => {
