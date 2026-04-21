@@ -337,20 +337,19 @@
       transition: all .25s; cursor: pointer; position: relative; overflow: hidden;
     }
     .feat-card:active { transform: scale(.98); }
+
     .feat-card::after {
-      content: '🔍'; position: absolute; inset: 0;
+      content: '미리보기';
+      position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 36px; border-radius: var(--radius);
-      background: rgba(26,107,255,.18);
-      opacity: 0; transition: opacity .2s; pointer-events: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 22px; font-weight: 700; letter-spacing: 0.1em;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(0,212,255,.6), 0 2px 12px rgba(0,0,0,.8);
+      opacity: 0; transition: opacity .25s ease;
+      pointer-events: none;
     }
     .feat-card:hover::after { opacity: 1; }
-    .feat-hint {
-      margin-top: 16px; font-size: 13px; font-weight: 700;
-      color: var(--blue2); letter-spacing: 0.03em;
-      display: flex; align-items: center; gap: 4px;
-      position: relative; z-index: 1;
-    }
 
     /* ── Feature Modal ── */
     .feat-modal {
@@ -368,8 +367,7 @@
       border-radius: 16px; overflow: hidden;
       box-shadow: 0 32px 80px rgba(0,0,0,.6);
     }
-    .feat-modal-img { display: block; width: 480px; height: 640px; object-fit: contain; border-radius: 16px; background: var(--navy2); }
-    @media (max-width: 768px) { .feat-modal-img { width: 88vw; height: 72vw; } }
+    .feat-modal-img { display: block; width: 1279px; height: 722px; max-width: 92vw; max-height: 90vh; object-fit: contain; border-radius: 16px; background: var(--navy2); }
     .feat-modal-close {
       position: absolute; top: -14px; right: -14px;
       width: 36px; height: 36px; border-radius: 50%;
@@ -382,11 +380,11 @@
     .feat-modal-close:hover { background: rgba(255,255,255,.2); transform: scale(1.1); }
     .feat-card::before {
       content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(26,107,255,.08) 0%, transparent 60%);
+      background: rgba(255,255,255,.12); backdrop-filter: blur(4px);
       opacity: 0; transition: opacity .25s; pointer-events: none;
     }
     .feat-card > * { position: relative; z-index: 1; }
-    .feat-card:hover { background: rgba(255,255,255,.06); border-color: rgba(26,107,255,.35); transform: translateY(-3px); }
+    .feat-card:hover { background: rgba(255,255,255,.06); border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 0 0 1px var(--cyan), 0 0 28px rgba(0,212,255,.25), 0 12px 40px rgba(0,0,0,.3); }
     .feat-card:hover::before { opacity: 1; }
     .feat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .feat-icon { font-size: 28px; }
@@ -741,7 +739,6 @@
         <h3>모아레 (Moiré)</h3>
         <p>빛의 간섭 패턴으로 척추 측만·골반 틀어짐을 등고선으로 시각화합니다. 수치보다 직관적인 사진 하나로 회원 설득이 훨씬 쉬워집니다.</p>
         <div class="feat-roi">💡 <strong>"한눈에 보이니까 회원이 먼저 묻습니다"</strong><br>설명 시간 단축 + 납득률 향상</div>
-        <div class="feat-hint">📷 예시 이미지 보기 →</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('nerve.png')">
         <div class="feat-top">
@@ -751,7 +748,6 @@
         <h3>3D 신경 · 림프 · 장기</h3>
         <p>체형 불균형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 회원 스스로 자기 몸에 관심을 갖게 만드는 가장 강력한 도구입니다.</p>
         <div class="feat-roi">💡 <strong>"이런 분석 다른 센터에선 못 봤어요"</strong><br>센터 차별화의 핵심 포인트</div>
-        <div class="feat-hint">📷 예시 이미지 보기 →</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
         <div class="feat-top">
@@ -761,7 +757,6 @@
         <h3>척추 세부 분석</h3>
         <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 프로·프로에듀 수준의 척추 분석을 Mini 기기에서 그대로 사용할 수 있습니다.</p>
         <div class="feat-roi">💡 <strong>프로 스펙을 기기 교체 없이</strong><br>상담 퀄리티가 눈에 띄게 달라집니다</div>
-        <div class="feat-hint">📷 예시 이미지 보기 →</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('lossheight..png')">
         <div class="feat-top">
@@ -771,7 +766,6 @@
         <h3>손실키 분석</h3>
         <p>현재 자세로 인해 실제보다 작아 보이는 신장 손실을 수치로 제시합니다. "지금 자세를 교정하면 몇 cm 더 커 보입니다" — 강력한 동기 부여 포인트입니다.</p>
         <div class="feat-roi">💡 <strong>수치화된 동기 부여</strong><br>체형 개선 의지를 즉각적으로 자극</div>
-        <div class="feat-hint">📷 예시 이미지 보기 →</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('faece.png')">
         <div class="feat-top">
@@ -781,7 +775,6 @@
         <h3>안면 여백 / 탄력</h3>
         <p>안면 윤곽과 탄력도를 정밀 분석합니다. 피부미용·한의원·왁싱샵 등 뷰티 연계 서비스 센터에서 완전히 새로운 차별화 포인트를 만들 수 있습니다.</p>
         <div class="feat-roi">💡 <strong>뷰티샵·피부샵 원장님 강추</strong><br>피부 상태 + 체형 분석, 한번에 두 가지를 보여주세요</div>
-        <div class="feat-hint">📷 예시 이미지 보기 →</div>
       </div>
     </div>
   </div>
@@ -1099,16 +1092,16 @@
           <div class="form-box-sub">접수 후 1~2 영업일 내 연락드립니다</div>
           <div class="form-row">
             <label>업체명 *</label>
-            <input type="text" placeholder="모티 필라테스" />
+            <input id="f-company" type="text" placeholder="모티 필라테스" />
           </div>
           <div class="form-grid">
             <div class="form-row">
               <label>원장님 성함 *</label>
-              <input type="text" placeholder="김모티" />
+              <input id="f-name" type="text" placeholder="김모티" />
             </div>
             <div class="form-row">
               <label>연락처 *</label>
-              <input type="tel" placeholder="010-0000-0000" inputmode="numeric" pattern="[0-9\-]*" oninput="this.value=this.value.replace(/[^0-9\-]/g,'')" />
+              <input id="f-phone" type="tel" placeholder="010-0000-0000" inputmode="numeric" pattern="[0-9\-]*" oninput="this.value=this.value.replace(/[^0-9\-]/g,'')" />
             </div>
           </div>
           <div class="form-row">
@@ -1238,13 +1231,41 @@
     if (!isOpen) item.classList.add('open');
   }
 
+  const SCRIPT_URL = 'https://script.google.com/a/macros/motiphysio.com/s/AKfycbzN350zMUT80ne_6uthCrvk7LhzwUcG227aRgQuiqRgqE0oBxDg2QrhQesHHse8AmuczA/exec';
+
   function handleSubmit(e) {
     e.preventDefault();
     const btn = e.target;
-    btn.textContent = '✅ 신청이 접수되었습니다! 1~2 영업일 내 연락드립니다';
-    btn.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
-    btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
+
+    const company = document.getElementById('f-company').value.trim();
+    const name    = document.getElementById('f-name').value.trim();
+    const phone   = document.getElementById('f-phone').value.trim();
+    const checked = [...document.querySelectorAll('.checkbox-group input:checked')]
+                      .map(cb => cb.closest('.check-label') ? cb.closest('label').querySelector('.check-label').textContent : '')
+                      .filter(Boolean).join(', ');
+
+    if (!company || !name || !phone) {
+      alert('업체명, 원장님 성함, 연락처를 모두 입력해주세요.');
+      return;
+    }
+
+    btn.textContent = '전송 중...';
     btn.disabled = true;
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company, name, phone, features: checked || '미선택' })
+    }).then(() => {
+      btn.textContent = '✅ 신청이 접수되었습니다! 1~2 영업일 내 연락드립니다';
+      btn.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+      btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
+    }).catch(() => {
+      btn.textContent = '❌ 오류가 발생했습니다. 전화로 문의해주세요.';
+      btn.style.background = 'linear-gradient(90deg,#ef4444,#dc2626)';
+      btn.disabled = false;
+    });
   }
 
   // Feature card modal
