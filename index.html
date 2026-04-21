@@ -341,21 +341,25 @@
     /* ── Feature Modal ── */
     .feat-modal {
       display: none; position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,.8); backdrop-filter: blur(8px);
+      background: rgba(6,16,30,.55); backdrop-filter: blur(24px) saturate(1.4);
       align-items: center; justify-content: center;
       padding: 24px;
     }
     .feat-modal.open { display: flex; }
+    .feat-modal-wrap {
+      position: relative; display: inline-flex;
+    }
     .feat-modal-box {
-      position: relative; max-width: 90vw; max-height: 88vh;
+      max-width: 90vw; max-height: 88vh;
       border-radius: 16px; overflow: hidden;
       box-shadow: 0 32px 80px rgba(0,0,0,.6);
     }
-    .feat-modal-img { display: block; max-width: 90vw; max-height: 88vh; object-fit: contain; border-radius: 16px; }
+    .feat-modal-img { display: block; width: 480px; height: 640px; object-fit: contain; border-radius: 16px; background: var(--navy2); }
+    @media (max-width: 768px) { .feat-modal-img { width: 88vw; height: 72vw; } }
     .feat-modal-close {
-      position: absolute; top: 12px; right: 12px;
+      position: absolute; top: -14px; right: -14px;
       width: 36px; height: 36px; border-radius: 50%;
-      background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.15);
+      background: #1a1a2e; border: 1.5px solid rgba(255,255,255,.25);
       cursor: pointer; color: white; font-size: 15px;
       display: flex; align-items: center; justify-content: center;
       z-index: 1; transition: background .2s, transform .15s;
@@ -1142,9 +1146,11 @@
 
 <!-- ── FEATURE MODAL ── -->
 <div class="feat-modal" id="featModal" onclick="closeFeatModalOverlay(event)">
-  <div class="feat-modal-box">
+  <div class="feat-modal-wrap">
     <button class="feat-modal-close" onclick="closeFeatModal()">✕</button>
-    <img class="feat-modal-img" id="featModalImg" src="" alt="기능 예시 이미지" />
+    <div class="feat-modal-box">
+      <img class="feat-modal-img" id="featModalImg" src="" alt="기능 예시 이미지" />
+    </div>
   </div>
 </div>
 
