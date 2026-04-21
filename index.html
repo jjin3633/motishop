@@ -1253,16 +1253,20 @@
     btn.disabled = true;
 
     const params = new URLSearchParams({ company, name, phone, features: checked || '미선택' });
-    fetch(`${SCRIPT_URL}?${params}`, { method: 'GET', mode: 'no-cors' })
-    .then(() => {
+    const img = new Image();
+    img.src = `${SCRIPT_URL}?${params}`;
+    img.onload = img.onerror = () => {
       btn.textContent = '✅ 신청이 접수되었습니다! 1~2 영업일 내 연락드립니다';
       btn.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
       btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
-    }).catch(() => {
-      btn.textContent = '❌ 오류가 발생했습니다. 전화로 문의해주세요.';
-      btn.style.background = 'linear-gradient(90deg,#ef4444,#dc2626)';
-      btn.disabled = false;
-    });
+    };
+    setTimeout(() => {
+      if (btn.disabled && btn.textContent === '전송 중...') {
+        btn.textContent = '✅ 신청이 접수되었습니다! 1~2 영업일 내 연락드립니다';
+        btn.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+        btn.style.boxShadow = '0 8px 28px rgba(34,197,94,.4)';
+      }
+    }, 3000);
   }
 
   // Feature card modal
