@@ -451,7 +451,8 @@
       position: relative; overflow: hidden;
       display: flex; flex-direction: column;
     }
-    .price-card:hover { border-color: rgba(26,107,255,.4); transform: translateY(-3px); }
+    .price-card { cursor: default; }
+    .price-card:hover { border-color: rgba(26,107,255,.3); }
     .price-card.featured { border-color: rgba(0,212,255,.4); background: rgba(26,107,255,.08); }
     .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .price-card .feat-icon2 { font-size: 32px; }
@@ -608,8 +609,19 @@
     .faq-list { max-width: 720px; margin: 56px auto 0; }
     .faq-item { border-bottom: 1px solid var(--gray100); padding: 22px 0; }
     .faq-q { font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; line-height: 1.5; }
-    .faq-q .arrow { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--gray100); display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; transition: transform .25s, background .2s; }
-    .faq-item.open .faq-q .arrow { transform: rotate(180deg); background: var(--blue); color: white; }
+    .faq-q .arrow {
+      width: 24px; height: 24px; flex-shrink: 0; position: relative;
+      transition: transform .25s;
+    }
+    .faq-q .arrow::before,
+    .faq-q .arrow::after {
+      content: ''; position: absolute; background: var(--gray400);
+      border-radius: 2px; transition: all .25s;
+    }
+    .faq-q .arrow::before { width: 14px; height: 1.5px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .faq-q .arrow::after  { width: 1.5px; height: 14px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .faq-item.open .faq-q .arrow::after { transform: translate(-50%,-50%) rotate(90deg); opacity: 0; }
+    .faq-item.open .faq-q .arrow::before { background: var(--blue); }
     .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
     .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; text-align: left; }
 
@@ -788,7 +800,7 @@
     <a class="btn-secondary" href="#features">기능 살펴보기</a>
   </div>
   <p class="hero-note">30일 무료 · 체험 후 자동 전환 · 언제든 해지</p>
-  <div class="hero-scroll"><span>SCROLL</span><div class="scroll-arrow"></div></div>
+  <div class="hero-scroll"><div class="scroll-arrow"></div></div>
 </section>
 
 <!-- ── STATS ── -->
@@ -823,19 +835,16 @@
         <span class="num">01</span>
         <div class="icon">📊</div>
         <h3>회원과의 상담에서<br>더 보여줄 수는 없을까?</h3>
-        <p>모아레·척추 세부분석이 더해지면 상담의 깊이가 달라집니다. 같은 측정 시간에 훨씬 많은 걸 보여줄 수 있어요.</p>
       </div>
       <div class="problem-card">
         <span class="num">02</span>
         <div class="icon">🏅</div>
         <h3>우리 센터만의<br>차별점을 만들 수는 없을까?</h3>
-        <p>신경·림프·장기 3D 분석으로 "이 센터 다르다"를 느끼게 만드세요. 다른 곳에서 보지 못한 것을 보여줄수록 신뢰가 쌓입니다.</p>
       </div>
       <div class="problem-card">
         <span class="num">03</span>
         <div class="icon">⚡</div>
         <h3>기기 교체 없이<br>기능을 늘릴 수는 없을까?</h3>
-        <p>지금 가진 기기 그대로, 구독 하나로 기능을 추가하세요. 30일 무료로 먼저 써보고 계속 쓸지 결정하면 됩니다.</p>
       </div>
     </div>
   </div>
@@ -1097,7 +1106,7 @@
     <div class="steps">
       <div class="step">
         <div class="step-num active">1</div>
-        <h3>정보 입력 + 카드 등록</h3>
+        <h3>카드 등록</h3>
         <p>업체명·연락처 입력 후 카드를 등록합니다.<br>카드 유효성 확인 10원은 즉시 취소됩니다.</p>
         <span class="step-tag">오늘 바로</span>
       </div>
@@ -1382,7 +1391,6 @@
       <div class="form-step" id="fstep4">
         <div id="card-form-area">
           <div class="form-step-title">카드 정보를 입력해주세요</div>
-          <div class="form-step-sub">유효성 확인 10원이 결제되며 즉시 자동 취소됩니다</div>
           <div class="card-secure-note">🔒 카드 정보는 암호화 전송되며 서버에 저장되지 않습니다</div>
           <div class="form-row">
             <label>카드번호 *</label>
@@ -1400,7 +1408,7 @@
           </div>
           <div class="form-row">
             <label>생년월일 6자리 · 법인 사업자번호 10자리 *</label>
-            <input id="f-idnum" type="text" inputmode="numeric" placeholder="개인 901231  ·  법인 1234567890" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+            <input id="f-idnum" type="text" inputmode="numeric" placeholder="예) 901231" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
           </div>
           <div class="form-btn-row">
             <button class="form-btn-back" onclick="goStep(3)">이전</button>
