@@ -45,8 +45,13 @@ app.post('/api/subscribe', (req, res) => {
   }
 });
 
-// 관리자용 가입자 목록 조회
-app.get('/api/subscribers', (req, res) => {
+// 관리자용 API — localhost에서만 접근 가능
+function localOnly(req, res, next) {
+  if (req.ip === '127.0.0.1' || req.ip === '::1') return next();
+  res.status(403).json({ ok: false, msg: 'Forbidden' });
+}
+
+app.get('/api/subscribers', localOnly, (req, res) => {
   const rows = db.prepare(`
     SELECT id, company, name, phone, features, billing_type,
            charge_amount, trial_start, next_billing_date, status, created_at
@@ -55,8 +60,7 @@ app.get('/api/subscribers', (req, res) => {
   res.json(rows);
 });
 
-// 결제 로그 조회
-app.get('/api/logs', (req, res) => {
+app.get('/api/logs', localOnly, (req, res) => {
   const rows = db.prepare(`
     SELECT l.*, s.company, s.name
     FROM billing_logs l
@@ -66,8 +70,7 @@ app.get('/api/logs', (req, res) => {
   res.json(rows);
 });
 
-// 구독 해지
-app.post('/api/cancel', (req, res) => {
+app.post('/api/cancel', localOnly, (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ ok: false });
   db.prepare(`UPDATE subscribers SET status = 'cancelled' WHERE id = ?`).run(id);
