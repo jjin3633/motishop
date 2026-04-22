@@ -70,36 +70,47 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
 });
 
 app.get('/api/revenue', adminAuth, (req, res) => {
-  // 월별 수익 (성공 결제만)
-  const monthly = db.prepare(`
-    SELECT strftime('%Y-%m', billed_at) as month,
-           SUM(amount) as total,
-           COUNT(*) as count
-    FROM billing_logs
-    WHERE result_code = '00'
-    GROUP BY month
-    ORDER BY month ASC
-  `).all();
-
   const now = new Date();
   const thisMonth = now.toISOString().slice(0, 7);
   const thisYear  = now.getFullYear().toString();
 
-  const thisMonthTotal = db.prepare(`
-    SELECT COALESCE(SUM(amount),0) as total FROM billing_logs
-    WHERE result_code='00' AND strftime('%Y-%m', billed_at)=?
-  `).get(thisMonth)?.total || 0;
+  const thisMonthTotal = db.prepare(
+    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00' AND strftime('%Y-%m',billed_at)=?`
+  ).get(thisMonth)?.v || 0;
 
-  const thisYearTotal = db.prepare(`
-    SELECT COALESCE(SUM(amount),0) as total FROM billing_logs
+  const thisYearTotal = db.prepare(
+    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00' AND strftime('%Y',billed_at)=?`
+  ).get(thisYear)?.v || 0;
+
+  const allTimeTotal = db.prepare(
+    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00'`
+  ).get()?.v || 0;
+
+  const yearly = db.prepare(`
+    SELECT strftime('%Y', billed_at) as year,
+           SUM(amount) as total, COUNT(*) as count
+    FROM billing_logs WHERE result_code='00'
+    GROUP BY year ORDER BY year DESC
+  `).all();
+
+  const monthly = db.prepare(`
+    SELECT strftime('%Y-%m', billed_at) as month,
+           SUM(amount) as total, COUNT(*) as count
+    FROM billing_logs WHERE result_code='00'
+    GROUP BY month ORDER BY month ASC
+  `).all();
+
+  // 연도별 월 상세 (연도 파라미터)
+  const year = req.query.year || thisYear;
+  const monthlyByYear = db.prepare(`
+    SELECT strftime('%Y-%m', billed_at) as month,
+           SUM(amount) as total, COUNT(*) as count
+    FROM billing_logs
     WHERE result_code='00' AND strftime('%Y', billed_at)=?
-  `).get(thisYear)?.total || 0;
+    GROUP BY month ORDER BY month ASC
+  `).all(year);
 
-  const allTimeTotal = db.prepare(`
-    SELECT COALESCE(SUM(amount),0) as total FROM billing_logs WHERE result_code='00'
-  `).get()?.total || 0;
-
-  res.json({ monthly, thisMonthTotal, thisYearTotal, allTimeTotal });
+  res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, yearly, monthly, monthlyByYear, selectedYear: year });
 });
 
 app.get('/api/logs', adminAuth, (req, res) => {
