@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MotiShop 관리자</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -75,6 +76,22 @@
   .features-cell { max-width: 200px; font-size: 12px; color: var(--gray600); line-height: 1.6; }
   .empty { text-align: center; padding: 60px; color: var(--gray400); font-size: 14px; }
   .amount { font-weight: 700; }
+
+  /* Revenue */
+  .revenue-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+  .rev-card { background: white; border-radius: 12px; padding: 24px 28px; border: 1px solid var(--gray100); }
+  .rev-card .label { font-size: 12px; color: var(--gray400); font-weight: 600; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .rev-card .amount { font-size: 30px; font-weight: 900; color: var(--navy); letter-spacing: -0.03em; }
+  .rev-card .amount span { font-size: 16px; color: var(--gray400); font-weight: 500; margin-left: 2px; }
+  .rev-card .sub { font-size: 12px; color: var(--gray400); margin-top: 6px; }
+  .rev-card.highlight { background: var(--navy); border-color: var(--navy); }
+  .rev-card.highlight .label { color: rgba(255,255,255,.4); }
+  .rev-card.highlight .amount { color: var(--cyan); }
+  .rev-card.highlight .amount span { color: rgba(255,255,255,.4); }
+  .rev-card.highlight .sub { color: rgba(255,255,255,.3); }
+  .chart-wrap { background: white; border-radius: 12px; border: 1px solid var(--gray100); padding: 28px; }
+  .chart-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 20px; }
+  .chart-empty { text-align:center; padding: 60px; color: var(--gray400); font-size:14px; }
 </style>
 </head>
 <body>
@@ -111,6 +128,7 @@
     <div class="tabs">
       <button class="tab active" onclick="switchTab('subscribers', this)">가입자 목록</button>
       <button class="tab" onclick="switchTab('logs', this)">결제 로그</button>
+      <button class="tab" onclick="switchTab('revenue', this)">수익 현황</button>
     </div>
 
     <!-- 가입자 -->
@@ -126,6 +144,31 @@
           </thead>
           <tbody id="tbody-subscribers"><tr><td colspan="11" class="empty">불러오는 중...</td></tr></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- 수익 현황 -->
+    <div class="panel" id="panel-revenue">
+      <div class="revenue-stats">
+        <div class="rev-card">
+          <div class="label">이번 달 수익</div>
+          <div class="amount" id="rev-month">—<span>원</span></div>
+          <div class="sub" id="rev-month-sub"></div>
+        </div>
+        <div class="rev-card">
+          <div class="label">올해 누적 수익</div>
+          <div class="amount" id="rev-year">—<span>원</span></div>
+          <div class="sub" id="rev-year-sub"></div>
+        </div>
+        <div class="rev-card highlight">
+          <div class="label">전체 누적 수익</div>
+          <div class="amount" id="rev-total">—<span>원</span></div>
+          <div class="sub">서비스 오픈 이후</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">월별 수익</div>
+        <div id="chart-area"><canvas id="revenueChart" height="80"></canvas></div>
       </div>
     </div>
 
@@ -190,9 +233,65 @@
     return res.json();
   }
 
+  let revenueChart = null;
+
   async function loadAll() {
     document.getElementById('lastRefresh').textContent = '갱신: ' + new Date().toLocaleTimeString('ko-KR');
-    await Promise.all([loadSubscribers(), loadLogs()]);
+    await Promise.all([loadSubscribers(), loadLogs(), loadRevenue()]);
+  }
+
+  async function loadRevenue() {
+    const d = await api('/api/revenue').catch(() => null);
+    if (!d) return;
+
+    document.getElementById('rev-month').innerHTML = fmt(d.thisMonthTotal) + '<span>원</span>';
+    document.getElementById('rev-year').innerHTML  = fmt(d.thisYearTotal)  + '<span>원</span>';
+    document.getElementById('rev-total').innerHTML = fmt(d.allTimeTotal)   + '<span>원</span>';
+
+    const now = new Date();
+    document.getElementById('rev-month-sub').textContent = now.getFullYear() + '년 ' + (now.getMonth()+1) + '월';
+    document.getElementById('rev-year-sub').textContent  = now.getFullYear() + '년 합계';
+
+    if (!d.monthly.length) {
+      document.getElementById('chart-area').innerHTML = '<div class="chart-empty">결제 내역이 없습니다</div>';
+      return;
+    }
+
+    const labels  = d.monthly.map(r => r.month);
+    const amounts = d.monthly.map(r => r.total);
+
+    if (revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(document.getElementById('revenueChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '수익 (원)',
+          data: amounts,
+          backgroundColor: 'rgba(26,107,255,.75)',
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => '  ' + Number(ctx.raw).toLocaleString() + '원'
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: { callback: v => (v/10000).toFixed(0) + '만' },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
   }
 
   async function loadSubscribers() {

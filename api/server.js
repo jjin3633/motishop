@@ -69,6 +69,39 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
   res.json(rows);
 });
 
+app.get('/api/revenue', adminAuth, (req, res) => {
+  // 월별 수익 (성공 결제만)
+  const monthly = db.prepare(`
+    SELECT strftime('%Y-%m', billed_at) as month,
+           SUM(amount) as total,
+           COUNT(*) as count
+    FROM billing_logs
+    WHERE result_code = '00'
+    GROUP BY month
+    ORDER BY month ASC
+  `).all();
+
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0, 7);
+  const thisYear  = now.getFullYear().toString();
+
+  const thisMonthTotal = db.prepare(`
+    SELECT COALESCE(SUM(amount),0) as total FROM billing_logs
+    WHERE result_code='00' AND strftime('%Y-%m', billed_at)=?
+  `).get(thisMonth)?.total || 0;
+
+  const thisYearTotal = db.prepare(`
+    SELECT COALESCE(SUM(amount),0) as total FROM billing_logs
+    WHERE result_code='00' AND strftime('%Y', billed_at)=?
+  `).get(thisYear)?.total || 0;
+
+  const allTimeTotal = db.prepare(`
+    SELECT COALESCE(SUM(amount),0) as total FROM billing_logs WHERE result_code='00'
+  `).get()?.total || 0;
+
+  res.json({ monthly, thisMonthTotal, thisYearTotal, allTimeTotal });
+});
+
 app.get('/api/logs', adminAuth, (req, res) => {
   const rows = db.prepare(`
     SELECT l.*, s.company, s.name
