@@ -630,6 +630,34 @@
     footer a { color: rgba(255,255,255,.35); text-decoration: none; }
     footer a:hover { color: rgba(255,255,255,.6); }
 
+    /* ── Hero Orbs ── */
+    .hero-orb { position: absolute; border-radius: 50%; pointer-events: none; }
+    .hero-orb-1 { width: 340px; height: 340px; top: 6%; left: 2%; background: radial-gradient(circle, rgba(26,107,255,.18) 0%, transparent 70%); animation: orbFloat 9s ease-in-out infinite; }
+    .hero-orb-2 { width: 260px; height: 260px; top: 42%; right: 3%; background: radial-gradient(circle, rgba(0,212,255,.13) 0%, transparent 70%); animation: orbFloat 7s ease-in-out infinite; animation-delay: -3s; }
+    .hero-orb-3 { width: 180px; height: 180px; bottom: 14%; left: 32%; background: radial-gradient(circle, rgba(26,107,255,.1) 0%, transparent 70%); animation: orbFloat 11s ease-in-out infinite; animation-delay: -6s; }
+    @keyframes orbFloat { 0%,100%{transform:translateY(0) scale(1)} 33%{transform:translateY(-20px) scale(1.04)} 66%{transform:translateY(9px) scale(.97)} }
+
+    /* ── Card Input ── */
+    .card-secure-note {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: rgba(255,255,255,.4);
+      margin-bottom: 20px; padding: 10px 14px;
+      background: rgba(34,197,94,.06); border-radius: 8px; border: 1px solid rgba(34,197,94,.15);
+    }
+    /* ── Card Success ── */
+    .card-success { text-align: center; padding: 16px 0; }
+    .card-success-icon { font-size: 56px; margin-bottom: 18px; display: block; animation: successPop .6s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes successPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    .card-success-title { font-size: 24px; font-weight: 900; color: white; margin-bottom: 10px; letter-spacing: -0.02em; }
+    .card-success-sub { font-size: 15px; color: rgba(255,255,255,.45); line-height: 1.8; margin-bottom: 28px; }
+    .card-success-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); border-radius: 100px; padding: 10px 24px; font-size: 14px; font-weight: 700; color: #4ade80; }
+    /* ── Stat hover ── */
+    .stat-item { transition: background .2s; }
+    .stat-item:hover { background: rgba(255,255,255,.03); }
+    /* ── Featured price card glow ── */
+    .price-card.featured { box-shadow: 0 0 0 1px rgba(0,212,255,.25), 0 20px 60px rgba(26,107,255,.15); }
+    .price-card.featured:hover { box-shadow: 0 0 0 1px rgba(0,212,255,.5), 0 28px 70px rgba(26,107,255,.25); }
+
     /* ── Responsive ── */
     @media (max-width: 1024px) {
       .features-grid { grid-template-columns: repeat(2, 1fr); }
@@ -722,6 +750,9 @@
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
   <div class="hero-badge">Moti Shop Grand Open</div>
   <h1>
     <span class="hero-prefix">Moti Physio</span>
@@ -734,8 +765,8 @@
     기기는 그대로<br>기능은 자유자재로!
   </p>
   <div class="hero-btns">
-    <a class="btn-primary" href="#trial">카드 등록하고 30일 무료 시작하기</a>
-    <a class="btn-secondary" href="#features">추가 가능 기능 보기</a>
+    <a class="btn-primary" href="#trial">무료로 시작하기 →</a>
+    <a class="btn-secondary" href="#features">기능 살펴보기</a>
   </div>
   <p class="hero-note">카드 등록 → 30일 무료 체험 → 자동 전환 · 언제든 해지 가능</p>
   <div class="hero-scroll"><span>SCROLL</span><div class="scroll-arrow"></div></div>
@@ -1048,7 +1079,7 @@
       <div class="step">
         <div class="step-num active">1</div>
         <h3>정보 입력 + 카드 등록</h3>
-        <p>업체명·연락처 입력 후 ARS로 카드를 등록합니다.<br>카드 유효성 확인 10원은 즉시 취소됩니다.</p>
+        <p>업체명·연락처 입력 후 카드를 등록합니다.<br>카드 유효성 확인 10원은 즉시 취소됩니다.</p>
         <span class="step-tag">오늘 바로</span>
       </div>
       <div class="step">
@@ -1211,23 +1242,46 @@
         </div>
         <div class="form-btn-row">
           <button class="form-btn-back" onclick="goStep(2)">← 이전</button>
-          <button class="form-btn-next" id="btn-register" onclick="submitARS()">카드 등록하기 →</button>
+          <button class="form-btn-next" onclick="goStep(4)">다음 — 카드 입력 →</button>
         </div>
         <p class="form-note">070-4365-7740 · 평일 10:00–19:00</p>
       </div>
 
       <!-- STEP 4 -->
       <div class="form-step" id="fstep4">
-        <div class="ars-box">
-          <div class="ars-icon">📞</div>
-          <div class="ars-title">아래 번호로 전화해주세요</div>
-          <div class="ars-desc">ARS 안내에 따라 카드 정보를 입력하시면<br>카드 등록이 완료됩니다</div>
-          <div class="ars-number-box">
-            <div class="ars-number-label">ARS 등록 번호</div>
-            <div class="ars-number" id="ars-number">연결 중...</div>
-            <div class="ars-deadline" id="ars-deadline"></div>
+        <div id="card-form-area">
+          <div class="form-step-title">카드 정보를 입력해주세요</div>
+          <div class="form-step-sub">유효성 확인 10원이 결제되며 즉시 자동 취소됩니다</div>
+          <div class="card-secure-note">🔒 카드 정보는 암호화 전송되며 서버에 저장되지 않습니다</div>
+          <div class="form-row">
+            <label>카드번호 *</label>
+            <input id="f-cardnum" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNum(this)" />
           </div>
-          <div class="ars-tip">📌 등록 마감 시간 내에 전화해주세요<br>📌 카드번호·유효기간·비밀번호 앞 2자리·생년월일(개인) 또는 사업자번호(법인) 준비<br>📌 등록 완료 후 담당자가 1~2 영업일 내 기능을 활성화해 드립니다</div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>유효기간 (MM/YY) *</label>
+              <input id="f-cardexp" type="text" inputmode="numeric" placeholder="01/28" maxlength="5" oninput="formatExpiry(this)" />
+            </div>
+            <div class="form-row">
+              <label>비밀번호 앞 2자리 *</label>
+              <input id="f-cardpwd" type="password" inputmode="numeric" placeholder="••" maxlength="2" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label>생년월일 6자리 · 법인 사업자번호 10자리 *</label>
+            <input id="f-idnum" type="text" inputmode="numeric" placeholder="개인 901231  ·  법인 1234567890" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+          </div>
+          <div class="form-btn-row">
+            <button class="form-btn-back" onclick="goStep(3)">← 이전</button>
+            <button class="form-btn-next" id="btn-pay" onclick="submitCard()">카드 등록하기 →</button>
+          </div>
+          <p class="form-note">💳 InnoPay 보안 결제 &nbsp;·&nbsp; 문의 070-4365-7740</p>
+        </div>
+        <div id="card-success-area" class="card-success" style="display:none">
+          <span class="card-success-icon">✅</span>
+          <div class="card-success-title">카드 등록이 완료되었습니다!</div>
+          <div class="card-success-sub">30일 무료 체험이 시작됩니다.<br>담당자가 1~2 영업일 내 기능을 활성화해 드립니다.</div>
+          <div class="card-success-pill">🎉 30일 무료 체험 시작</div>
         </div>
       </div>
 
@@ -1250,8 +1304,8 @@
         <div class="faq-a">30일 무료 체험 기간 내 해지하시면 비용이 전혀 청구되지 않습니다. 유료 전환 후 해지 시에는 잔여 기간 일할 계산 환불이 가능합니다. 해지는 담당자에게 연락 주시면 됩니다.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>ARS 카드 등록이란 무엇인가요?</span><span class="arrow">▾</span></div>
-        <div class="faq-a">자동결제 등록 시 보안을 위해 ARS(자동응답시스템) 전화를 이용합니다. 신청 완료 후 표시되는 번호로 전화하시면 안내에 따라 카드 정보를 입력하실 수 있습니다. 카드 정보가 인터넷에 전송되지 않아 안전합니다.</div>
+        <div class="faq-q" onclick="toggleFaq(this)"><span>카드 정보가 안전한가요?</span><span class="arrow">▾</span></div>
+        <div class="faq-a">네. 카드 정보는 국내 공인 PG사 InnoPay의 보안 서버로 암호화 전송되며, 저희 서버에는 저장되지 않습니다. 카드 유효성 확인용 10원이 결제되지만 즉시 자동 취소되므로 실제 청구되지 않습니다.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>기능을 하나씩 따로 구독할 수 있나요?</span><span class="arrow">▾</span></div>
@@ -1420,13 +1474,35 @@
 
   function toggleTerms(el) { el.classList.toggle('checked'); }
 
-  async function submitARS() {
-    const allOk = [...document.querySelectorAll('.terms-item')].every(t => t.classList.contains('checked'));
-    if (!allOk) { alert('모든 약관에 동의해주세요.'); return; }
+  function formatCardNum(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 16);
+    el.value = v.replace(/(.{4})/g, '$1 ').trim();
+  }
 
-    const btn = document.getElementById('btn-register');
+  function formatExpiry(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+    el.value = v;
+  }
+
+  async function submitCard() {
+    const btn = document.getElementById('btn-pay');
+    const cardNum = document.getElementById('f-cardnum').value.replace(/\s/g, '');
+    const cardExpRaw = document.getElementById('f-cardexp').value.replace('/', '');
+    const cardPwd = document.getElementById('f-cardpwd').value;
+    const idNum   = document.getElementById('f-idnum').value;
+
+    if (cardNum.length !== 16) { alert('카드번호 16자리를 입력해주세요.'); return; }
+    if (cardExpRaw.length !== 4) { alert('유효기간을 MM/YY 형식으로 입력해주세요.'); return; }
+    if (cardPwd.length !== 2) { alert('비밀번호 앞 2자리를 입력해주세요.'); return; }
+    if (idNum.length < 6) { alert('생년월일(6자리) 또는 사업자번호(10자리)를 입력해주세요.'); return; }
+
     btn.textContent = '등록 중...';
     btn.disabled = true;
+
+    const mm = cardExpRaw.slice(0, 2);
+    const yy = cardExpRaw.slice(2, 4);
+    const cardExpire = yy + mm;
 
     const company = document.getElementById('f-company').value.trim();
     const name    = document.getElementById('f-name').value.trim();
@@ -1435,12 +1511,9 @@
 
     const pad = n => String(n).padStart(2, '0');
     const now = new Date();
-    const ds  = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate());
-    const moid = ds + Math.floor(1000 + Math.random() * 9000);
-    const exp  = new Date(now.getTime() + 30 * 60 * 1000);
-    const payExpDate = exp.getFullYear() + pad(exp.getMonth()+1) + pad(exp.getDate()) + pad(exp.getHours()) + pad(exp.getMinutes()) + pad(exp.getSeconds());
+    const moid = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + Math.floor(1000 + Math.random() * 9000);
 
-    const payload = { mid: INNOPAY_MID, moid, buyerName: name, buyerHp: phone, payExpDate, arsConnType: '02', userId: phone };
+    const payload = { mid: INNOPAY_MID, moid, buyerName: name, cardNum, cardExpire, cardPwd, idNum, userId: phone, arsUseYn: 'N' };
 
     try {
       const res  = await fetch('https://api.innopay.co.kr/api/regAutoCardBill', {
@@ -1451,19 +1524,17 @@
       const data = await res.json();
 
       if (data.resultCode === '00') {
-        document.getElementById('ars-number').textContent = data.arsNo || '—';
-        const dl = data.payExpDate || payExpDate;
-        document.getElementById('ars-deadline').textContent = '마감: ' + dl.slice(0,4)+'-'+dl.slice(4,6)+'-'+dl.slice(6,8)+' '+dl.slice(8,10)+':'+dl.slice(10,12);
-        new Image().src = SHEET_URL + '?' + new URLSearchParams({ company, name, phone, features: feats, billing: billingType, moid, arsNo: data.arsNo||'' });
-        goStep(4);
+        new Image().src = SHEET_URL + '?' + new URLSearchParams({ company, name, phone, features: feats, billing: billingType, moid, billKey: data.billKey || '' });
+        document.getElementById('card-form-area').style.display = 'none';
+        document.getElementById('card-success-area').style.display = 'block';
       } else {
-        alert('카드 등록 요청 실패: ' + (data.resultMsg || '알 수 없는 오류') + '\n담당자 연락: 070-4365-7740');
+        alert('카드 등록 실패: ' + (data.resultMsg || '입력 정보를 다시 확인해주세요.') + '\n문의: 070-4365-7740');
         btn.textContent = '카드 등록하기 →';
         btn.disabled = false;
       }
     } catch (err) {
       console.error(err);
-      alert('네트워크 오류가 발생했습니다.\n담당자 연락: 070-4365-7740');
+      alert('네트워크 오류가 발생했습니다.\n문의: 070-4365-7740');
       btn.textContent = '카드 등록하기 →';
       btn.disabled = false;
     }
