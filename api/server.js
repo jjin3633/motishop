@@ -6,7 +6,7 @@ const { scheduleBilling } = require('./scheduler');
 const app = express();
 app.use(express.json());
 
-const ADMIN_PW = 'motiAdmin2026!';
+const ADMIN_PW = 'tmdwls12!@';
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://shop.motiphysio.com');
