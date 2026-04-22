@@ -1723,7 +1723,20 @@
       const data = await res.json();
 
       if (data.resultCode === '00') {
-        new Image().src = SHEET_URL + '?' + new URLSearchParams({ company, name, phone, features: feats, billing: billingType, moid, billKey: data.billKey || '' });
+        const billKey = data.billKey || '';
+        const amount = [...document.querySelectorAll('.feat-select-item.selected')]
+          .reduce((s, i) => s + parseInt(i.dataset[billingType]), 0);
+
+        // Google Sheets 기록 (fire-and-forget)
+        new Image().src = SHEET_URL + '?' + new URLSearchParams({ company, name, phone, features: feats, billing: billingType, moid, billKey });
+
+        // 구독 DB 저장
+        fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company, name, phone, features: feats, billingType, billKey, moid, amount })
+        }).catch(e => console.error('subscribe API 오류:', e));
+
         document.getElementById('card-form-area').style.display = 'none';
         document.getElementById('card-success-area').style.display = 'block';
       } else {
