@@ -66,13 +66,16 @@ nav { background:var(--navy); padding:0 32px; height:60px; display:flex; align-i
   padding:8px 14px; border-radius:8px; border:1px solid var(--gray100);
   background:white; font-size:13px; font-family:inherit; color:var(--text); outline:none;
 }
-.toolbar select { padding-right:32px; }
+.toolbar select { padding-right:36px; }
 .toolbar input { width:220px; }
 .toolbar input:focus, .toolbar select:focus { border-color:var(--blue); }
 .toolbar-right { margin-left:auto; display:flex; gap:8px; }
 .btn-sm { padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; border:1px solid var(--gray100); background:white; font-family:inherit; color:var(--gray600); }
 .btn-sm:hover { background:var(--gray50); }
 .btn-sm.primary { background:var(--navy); color:white; border-color:var(--navy); }
+.btn-sm.loading { opacity:.6; cursor:not-allowed; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.spin { display:inline-block; animation:spin .7s linear infinite; }
 
 /* ── Table ── */
 .table-wrap { background:white; border-radius:12px; border:1px solid var(--gray100); overflow:hidden; }
@@ -192,7 +195,7 @@ tr:hover td { background:var(--gray50); }
         </select>
         <div class="toolbar-right">
           <button class="btn-sm" onclick="exportCSV()">CSV 내보내기</button>
-          <button class="btn-sm primary" onclick="loadAll()">새로고침</button>
+          <button class="btn-sm primary" onclick="loadAll(this)">새로고침</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -265,7 +268,7 @@ tr:hover td { background:var(--gray50); }
     <!-- ── 결제 로그 ── -->
     <div class="panel" id="panel-logs">
       <div class="toolbar">
-        <div class="toolbar-right"><button class="btn-sm primary" onclick="loadLogs()">새로고침</button></div>
+        <div class="toolbar-right"><button class="btn-sm primary" onclick="loadLogs(this)">새로고침</button></div>
       </div>
       <div class="table-wrap">
         <table>
@@ -325,9 +328,11 @@ async function apiFetch(path) {
   return res.json();
 }
 
-async function loadAll() {
+async function loadAll(btn) {
+  if (btn) { btn.innerHTML = '<span class="spin">↻</span> 새로고침'; btn.classList.add('loading'); btn.disabled = true; }
   document.getElementById('lastRefresh').textContent = new Date().toLocaleString('ko-KR', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + ' 기준';
   await Promise.all([loadSubscribers(), loadRevenue(), loadLogs()]);
+  if (btn) { btn.innerHTML = '새로고침'; btn.classList.remove('loading'); btn.disabled = false; }
 }
 
 // ── 가입자 ──
@@ -490,8 +495,10 @@ function selectYear(year) {
 }
 
 // ── 결제 로그 ──
-async function loadLogs() {
+async function loadLogs(btn) {
+  if (btn) { btn.innerHTML = '<span class="spin">↻</span> 새로고침'; btn.classList.add('loading'); btn.disabled = true; }
   const rows = await apiFetch('/api/logs').catch(() => []);
+  if (btn) { btn.innerHTML = '새로고침'; btn.classList.remove('loading'); btn.disabled = false; }
   const tbody = document.getElementById('tbody-logs');
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">결제 내역이 없습니다</td></tr>'; return; }
   tbody.innerHTML = rows.map(r => `
