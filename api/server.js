@@ -1,9 +1,12 @@
 const express = require('express');
+const path = require('path');
 const db = require('./db');
 const { scheduleBilling } = require('./scheduler');
 
 const app = express();
 app.use(express.json());
+
+const ADMIN_PW = 'motiAdmin2026!';
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://shop.motiphysio.com');
@@ -45,13 +48,19 @@ app.post('/api/subscribe', (req, res) => {
   }
 });
 
-// 관리자용 API — localhost에서만 접근 가능
-function localOnly(req, res, next) {
-  if (req.ip === '127.0.0.1' || req.ip === '::1') return next();
+// 관리자 페이지
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// 관리자 API — Authorization 헤더 검증
+function adminAuth(req, res, next) {
+  const auth = req.headers['x-admin-pw'];
+  if (auth === ADMIN_PW) return next();
   res.status(403).json({ ok: false, msg: 'Forbidden' });
 }
 
-app.get('/api/subscribers', localOnly, (req, res) => {
+app.get('/api/subscribers', adminAuth, (req, res) => {
   const rows = db.prepare(`
     SELECT id, company, name, phone, features, billing_type,
            charge_amount, trial_start, next_billing_date, status, created_at
@@ -60,7 +69,7 @@ app.get('/api/subscribers', localOnly, (req, res) => {
   res.json(rows);
 });
 
-app.get('/api/logs', localOnly, (req, res) => {
+app.get('/api/logs', adminAuth, (req, res) => {
   const rows = db.prepare(`
     SELECT l.*, s.company, s.name
     FROM billing_logs l
@@ -70,7 +79,7 @@ app.get('/api/logs', localOnly, (req, res) => {
   res.json(rows);
 });
 
-app.post('/api/cancel', localOnly, (req, res) => {
+app.post('/api/cancel', adminAuth, (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ ok: false });
   db.prepare(`UPDATE subscribers SET status = 'cancelled' WHERE id = ?`).run(id);

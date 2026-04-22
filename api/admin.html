@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MotiShop 관리자</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #06101E; --blue: #1A6BFF; --cyan: #00D4FF;
+    --green: #22c55e; --red: #ef4444; --gold: #F5C842;
+    --gray50: #F4F6FB; --gray100: #E5EAF4; --gray400: #8A96B0; --gray600: #4A5570;
+  }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: var(--gray50); color: #0E1525; font-size: 14px; }
+
+  /* Login */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--navy); }
+  .login-box { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 48px 40px; width: 360px; }
+  .login-logo { font-size: 22px; font-weight: 900; color: white; margin-bottom: 8px; }
+  .login-logo span { color: var(--cyan); }
+  .login-sub { font-size: 13px; color: rgba(255,255,255,.4); margin-bottom: 32px; }
+  .login-box input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,.1); background: rgba(255,255,255,.06); color: white; font-size: 15px; outline: none; margin-bottom: 12px; }
+  .login-box input:focus { border-color: var(--blue); }
+  .login-box button { width: 100%; padding: 13px; border-radius: 10px; background: linear-gradient(90deg, var(--blue), var(--cyan)); color: white; font-size: 15px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; }
+  .login-err { font-size: 13px; color: #f87171; margin-top: 10px; text-align: center; display: none; }
+
+  /* Layout */
+  .app { display: none; }
+  nav { background: var(--navy); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.07); }
+  .nav-logo { font-size: 18px; font-weight: 900; color: white; }
+  .nav-logo span { color: var(--cyan); }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .nav-badge { font-size: 12px; color: rgba(255,255,255,.4); }
+  .btn-logout { font-size: 13px; color: rgba(255,255,255,.4); background: none; border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+  .btn-logout:hover { color: white; border-color: rgba(255,255,255,.35); }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: white; border-radius: 12px; padding: 20px 24px; border: 1px solid var(--gray100); }
+  .stat-card .label { font-size: 12px; color: var(--gray400); font-weight: 600; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .stat-card .val { font-size: 28px; font-weight: 900; color: var(--navy); }
+  .stat-card .val span { font-size: 14px; color: var(--gray400); font-weight: 500; margin-left: 4px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; background: white; color: var(--gray400); border: 1px solid var(--gray100); }
+  .tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+  /* Table */
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .table-wrap { background: white; border-radius: 12px; border: 1px solid var(--gray100); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--gray50); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--gray400); letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--gray100); white-space: nowrap; }
+  td { padding: 14px 16px; border-bottom: 1px solid var(--gray100); font-size: 13px; color: #0E1525; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray50); }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+  .badge-trial  { background: rgba(245,200,66,.15); color: #b45309; }
+  .badge-active { background: rgba(34,197,94,.12); color: #15803d; }
+  .badge-cancelled { background: var(--gray100); color: var(--gray400); }
+  .badge-monthly { background: rgba(26,107,255,.1); color: var(--blue); }
+  .badge-annual  { background: rgba(0,212,255,.1); color: #0891b2; }
+  .badge-ok  { background: rgba(34,197,94,.12); color: #15803d; }
+  .badge-fail{ background: rgba(239,68,68,.1); color: var(--red); }
+
+  .btn-cancel { padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(239,68,68,.3); background: rgba(239,68,68,.06); color: var(--red); }
+  .btn-cancel:hover { background: rgba(239,68,68,.12); }
+  .btn-cancel:disabled { opacity: .4; cursor: not-allowed; }
+
+  .features-cell { max-width: 200px; font-size: 12px; color: var(--gray600); line-height: 1.6; }
+  .empty { text-align: center; padding: 60px; color: var(--gray400); font-size: 14px; }
+  .amount { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">Moti <span>Shop</span></div>
+    <div class="login-sub">관리자 로그인</div>
+    <input type="password" id="pwInput" placeholder="비밀번호" onkeydown="if(event.key==='Enter')login()" />
+    <button onclick="login()">로그인</button>
+    <div class="login-err" id="loginErr">비밀번호가 올바르지 않습니다</div>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <nav>
+    <div class="nav-logo">Moti <span>Shop</span> <span style="font-size:13px;color:rgba(255,255,255,.3);font-weight:400;margin-left:8px;">관리자</span></div>
+    <div class="nav-right">
+      <span class="nav-badge" id="lastRefresh"></span>
+      <button class="btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat-card"><div class="label">전체 가입자</div><div class="val" id="st-total">—</div></div>
+      <div class="stat-card"><div class="label">체험 중</div><div class="val" id="st-trial">—</div></div>
+      <div class="stat-card"><div class="label">구독 중</div><div class="val" id="st-active">—</div></div>
+      <div class="stat-card"><div class="label">이번 달 결제액</div><div class="val" id="st-revenue">—<span>원</span></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('subscribers', this)">가입자 목록</button>
+      <button class="tab" onclick="switchTab('logs', this)">결제 로그</button>
+    </div>
+
+    <!-- 가입자 -->
+    <div class="panel active" id="panel-subscribers">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>업체명</th><th>원장님</th><th>연락처</th>
+              <th>구독 기능</th><th>타입</th><th>결제액</th>
+              <th>상태</th><th>다음 결제일</th><th>가입일</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-subscribers"><tr><td colspan="11" class="empty">불러오는 중...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 결제 로그 -->
+    <div class="panel" id="panel-logs">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>업체명</th><th>원장님</th><th>결제액</th><th>결과</th><th>메시지</th><th>결제일시</th></tr>
+          </thead>
+          <tbody id="tbody-logs"><tr><td colspan="7" class="empty">불러오는 중...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ADMIN_PW = 'motiAdmin2026!';
+  let token = sessionStorage.getItem('admin_token');
+
+  function login() {
+    const pw = document.getElementById('pwInput').value;
+    if (pw === ADMIN_PW) {
+      token = btoa(pw);
+      sessionStorage.setItem('admin_token', token);
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadAll();
+    } else {
+      document.getElementById('loginErr').style.display = 'block';
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('admin_token');
+    location.reload();
+  }
+
+  if (token && atob(token) === ADMIN_PW) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAll();
+  }
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  function fmt(n) { return Number(n).toLocaleString(); }
+  function fmtDate(s) { return s ? s.slice(0,10) : '—'; }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      ...opts,
+      headers: { 'x-admin-pw': atob(token), 'Content-Type': 'application/json', ...(opts.headers || {}) }
+    });
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
+  }
+
+  async function loadAll() {
+    document.getElementById('lastRefresh').textContent = '갱신: ' + new Date().toLocaleTimeString('ko-KR');
+    await Promise.all([loadSubscribers(), loadLogs()]);
+  }
+
+  async function loadSubscribers() {
+    const rows = await api('/api/subscribers').catch(() => []);
+    const tbody = document.getElementById('tbody-subscribers');
+
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty">가입자가 없습니다</td></tr>'; updateStats([]); return; }
+
+    updateStats(rows);
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td style="color:var(--gray400)">${r.id}</td>
+        <td><strong>${r.company}</strong></td>
+        <td>${r.name}</td>
+        <td>${r.phone}</td>
+        <td class="features-cell">${r.features}</td>
+        <td><span class="badge badge-${r.billing_type}">${r.billing_type === 'monthly' ? '월구독' : '연구독'}</span></td>
+        <td class="amount">${fmt(r.charge_amount)}원</td>
+        <td><span class="badge badge-${r.status}">${{trial:'체험중',active:'구독중',cancelled:'해지'}[r.status]||r.status}</span></td>
+        <td>${fmtDate(r.next_billing_date)}</td>
+        <td style="color:var(--gray400)">${fmtDate(r.created_at)}</td>
+        <td>${r.status !== 'cancelled' ? `<button class="btn-cancel" onclick="cancelSub(${r.id}, this)">해지</button>` : ''}</td>
+      </tr>
+    `).join('');
+  }
+
+  function updateStats(rows) {
+    document.getElementById('st-total').textContent = rows.length;
+    document.getElementById('st-trial').textContent = rows.filter(r => r.status === 'trial').length;
+    document.getElementById('st-active').textContent = rows.filter(r => r.status === 'active').length;
+    const thisMonth = new Date().toISOString().slice(0,7);
+    // 이달 결제 예정액 (active 상태 기준)
+    const rev = rows.filter(r => r.status === 'active').reduce((s,r) => s + r.charge_amount, 0);
+    document.getElementById('st-revenue').innerHTML = fmt(rev) + '<span>원</span>';
+  }
+
+  async function loadLogs() {
+    const rows = await api('/api/logs').catch(() => []);
+    const tbody = document.getElementById('tbody-logs');
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">결제 내역이 없습니다</td></tr>'; return; }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td style="color:var(--gray400)">${r.id}</td>
+        <td>${r.company}</td>
+        <td>${r.name}</td>
+        <td class="amount">${fmt(r.amount)}원</td>
+        <td><span class="badge badge-${r.result_code==='00'?'ok':'fail'}">${r.result_code==='00'?'성공':'실패'}</span></td>
+        <td style="color:var(--gray400);font-size:12px">${r.result_msg||'—'}</td>
+        <td style="color:var(--gray400)">${r.billed_at?.slice(0,16)||'—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function cancelSub(id, btn) {
+    if (!confirm('구독을 해지하시겠습니까?')) return;
+    btn.disabled = true;
+    await api('/api/cancel', { method: 'POST', body: JSON.stringify({id}) });
+    await loadSubscribers();
+  }
+
+  // 5분마다 자동 갱신
+  setInterval(loadAll, 300000);
+</script>
+</body>
+</html>
