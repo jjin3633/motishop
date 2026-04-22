@@ -335,7 +335,7 @@ async function apiFetch(path) {
 }
 
 async function loadAll(btn) {
-  if (btn) { btn.innerHTML = '<span class="spin">↻</span> 새로고침'; btn.classList.add('loading'); btn.disabled = true; }
+  if (btn) { btn.innerHTML = '<span class="spin" style="font-size:15px;display:inline-block;">↻</span>'; btn.classList.add('loading'); btn.disabled = true; }
   document.getElementById('lastRefresh').textContent = new Date().toLocaleString('ko-KR', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + ' 기준';
   await Promise.all([loadSubscribers(), loadRevenue(), loadLogs()]);
   if (btn) { btn.innerHTML = '새로고침'; btn.classList.remove('loading'); btn.disabled = false; }
@@ -502,7 +502,7 @@ function selectYear(year) {
 
 // ── 결제 로그 ──
 async function loadLogs(btn) {
-  if (btn) { btn.innerHTML = '<span class="spin">↻</span> 새로고침'; btn.classList.add('loading'); btn.disabled = true; }
+  if (btn) { btn.innerHTML = '<span class="spin" style="font-size:15px;display:inline-block;">↻</span>'; btn.classList.add('loading'); btn.disabled = true; }
   const rows = await apiFetch('/api/logs').catch(() => []);
   if (btn) { btn.innerHTML = '새로고침'; btn.classList.remove('loading'); btn.disabled = false; }
   const tbody = document.getElementById('tbody-logs');
