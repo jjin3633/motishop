@@ -299,26 +299,50 @@
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
     /* ── Problem ── */
-    .problem { background: white; }
+    .problem { background: var(--navy); }
+    .problem .section-title { color: white; }
+    .problem .section-label { color: var(--cyan); }
+    .problem .section-label::before { background: var(--cyan); }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 20px; margin-top: 56px;
+      gap: 16px; margin-top: 56px;
     }
     .problem-card {
-      background: var(--gray50); border-radius: var(--radius);
-      padding: 36px 32px; border: 1px solid var(--gray100);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding: 40px 32px 32px;
       position: relative; overflow: hidden;
-      transition: transform .2s, box-shadow .2s;
+      transition: transform .25s, box-shadow .25s, border-color .25s;
     }
-    .problem-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,.08); }
-    .problem-card .num {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 80px; line-height: 1; color: var(--gray100);
-      position: absolute; top: 12px; right: 16px; letter-spacing: 0.05em;
+    .problem-card:hover { transform: translateY(-5px); box-shadow: 0 28px 64px rgba(0,0,0,.35); border-color: rgba(255,255,255,.18); }
+    .problem-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     }
-    .problem-card .icon { font-size: 30px; margin-bottom: 18px; }
-    .problem-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: var(--text); line-height: 1.4; letter-spacing: -0.02em; }
-    .problem-card p { font-size: 18px; color: var(--gray600); line-height: 1.8; position: relative; }
+    .problem-card:nth-child(1)::before { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .problem-card:nth-child(2)::before { background: linear-gradient(90deg, var(--cyan), #00ffcc); }
+    .problem-card:nth-child(3)::before { background: linear-gradient(90deg, var(--gold), #ff9f43); }
+    .problem-deco {
+      font-family: Georgia, serif; font-size: 140px; line-height: 1;
+      position: absolute; top: -16px; right: 20px;
+      opacity: .06; color: white; user-select: none; pointer-events: none;
+    }
+    .problem-card .icon { font-size: 36px; margin-bottom: 22px; display: block; position: relative; }
+    .problem-card h3 {
+      font-size: 20px; font-weight: 800; color: white;
+      line-height: 1.5; letter-spacing: -0.02em;
+      margin-bottom: 24px; position: relative;
+      font-style: italic;
+    }
+    .problem-solve {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700;
+      padding: 6px 14px; border-radius: 100px;
+      letter-spacing: 0.02em; position: relative;
+    }
+    .problem-card:nth-child(1) .problem-solve { color: var(--blue2); border: 1px solid rgba(26,107,255,.35); background: rgba(26,107,255,.1); }
+    .problem-card:nth-child(2) .problem-solve { color: var(--cyan); border: 1px solid rgba(0,212,255,.35); background: rgba(0,212,255,.1); }
+    .problem-card:nth-child(3) .problem-solve { color: var(--gold); border: 1px solid rgba(245,200,66,.35); background: rgba(245,200,66,.1); }
 
     /* ── Features ── */
     .features { background: var(--navy); }
@@ -751,8 +775,8 @@
       .feat-card { padding: 20px; }
       .feat-card p, .feat-roi { font-size: 15px; }
       /* 문제 카드 */
+      .problem-card { padding: 32px 24px 26px; }
       .problem-card h3 { font-size: 17px; }
-      .problem-card p { font-size: 15px; }
       /* 요금 카드 */
       .price-card { padding: 20px; }
       .price-card .desc { font-size: 15px; }
@@ -828,23 +852,26 @@
 <!-- ── PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <span class="section-label">왜 지금인가</span>
-    <h2 class="section-title">이런 고민,<br>해보신 적 있으신가요?</h2>
+    <span class="section-label">이런 고민, 있으신가요?</span>
+    <h2 class="section-title" style="color:white;">많은 원장님들이<br>똑같이 물어보셨습니다</h2>
     <div class="problem-grid">
       <div class="problem-card">
-        <span class="num">01</span>
-        <div class="icon">📊</div>
-        <h3>회원과의 상담에서<br>더 보여줄 수는 없을까?</h3>
+        <div class="problem-deco">"</div>
+        <span class="icon">📊</span>
+        <h3>"측정 결과를 보여줘도<br>회원이 잘 납득을 못 해요.<br>더 직관적으로 설명할 수 없을까요?"</h3>
+        <span class="problem-solve">→ 모아레 · 척추 세부 분석</span>
       </div>
       <div class="problem-card">
-        <span class="num">02</span>
-        <div class="icon">🏅</div>
-        <h3>우리 센터만의<br>차별점을 만들 수는 없을까?</h3>
+        <div class="problem-deco">"</div>
+        <span class="icon">🏅</span>
+        <h3>"근처에 비슷한 센터가 생겼어요.<br>우리 센터만의 확실한<br>차별점이 필요합니다."</h3>
+        <span class="problem-solve">→ 3D 신경 · 림프 · 장기</span>
       </div>
       <div class="problem-card">
-        <span class="num">03</span>
-        <div class="icon">⚡</div>
-        <h3>기기 교체 없이<br>기능을 늘릴 수는 없을까?</h3>
+        <div class="problem-deco">"</div>
+        <span class="icon">⚡</span>
+        <h3>"기기를 새로 살 여유는 없는데<br>기능은 더 쓰고 싶어요.<br>방법이 없을까요?"</h3>
+        <span class="problem-solve">→ Moti Shop 구독</span>
       </div>
     </div>
   </div>
