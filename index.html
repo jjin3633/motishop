@@ -1200,7 +1200,7 @@
           <div class="form-row"><label>원장님 성함 *</label><input id="f-name" type="text" placeholder="김모티" /></div>
           <div class="form-row"><label>연락처 *</label><input id="f-phone" type="tel" placeholder="010-0000-0000" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9\-]/g,'')" /></div>
         </div>
-        <div class="form-btn-row"><button class="form-btn-next" onclick="goStep(2)">다음 — 기능 선택</button></div>
+        <div class="form-btn-row"><button class="form-btn-next" onclick="goStep(2)">계속하기</button></div>
         <p class="form-note">개인정보는 체험 운영 외 목적으로 사용되지 않습니다</p>
       </div>
 
@@ -1225,8 +1225,8 @@
           <div style="text-align:right;"><div class="price-summary-amount" id="price-total">0원</div><div class="price-summary-note" id="price-note">기능을 선택해주세요</div></div>
         </div>
         <div class="form-btn-row">
-          <button class="form-btn-back" onclick="goStep(1)">← 이전</button>
-          <button class="form-btn-next" onclick="goStep(3)">다음 — 약관 동의</button>
+          <button class="form-btn-back" onclick="goStep(1)">이전</button>
+          <button class="form-btn-next" onclick="goStep(3)">계속하기</button>
         </div>
       </div>
 
@@ -1241,8 +1241,8 @@
           <div class="terms-item" onclick="toggleTerms(this)"><div class="terms-check"></div><div class="terms-text"><strong>[필수] 카드 유효성 확인 10원 결제 및 즉시 취소 확인</strong>카드 등록 시 유효성 확인용 10원이 결제되며 즉시 취소됨을 확인합니다.</div></div>
         </div>
         <div class="form-btn-row">
-          <button class="form-btn-back" onclick="goStep(2)">← 이전</button>
-          <button class="form-btn-next" onclick="goStep(4)">다음 — 카드 입력</button>
+          <button class="form-btn-back" onclick="goStep(2)">이전</button>
+          <button class="form-btn-next" onclick="goStep(4)">계속하기</button>
         </div>
         <p class="form-note">070-4365-7740 · 평일 10:00–19:00</p>
       </div>
@@ -1272,7 +1272,7 @@
             <input id="f-idnum" type="text" inputmode="numeric" placeholder="개인 901231  ·  법인 1234567890" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
           </div>
           <div class="form-btn-row">
-            <button class="form-btn-back" onclick="goStep(3)">← 이전</button>
+            <button class="form-btn-back" onclick="goStep(3)">이전</button>
             <button class="form-btn-next" id="btn-pay" onclick="submitCard()">카드 등록하기</button>
           </div>
           <p class="form-note">💳 InnoPay 보안 결제 &nbsp;·&nbsp; 문의 070-4365-7740</p>
