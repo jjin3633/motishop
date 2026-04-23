@@ -370,7 +370,10 @@ function renderSubscribers(rows) {
       <td><span class="badge b-${r.status}">${{trial:'체험중',active:'구독중',cancelled:'해지'}[r.status]||r.status}</span></td>
       <td>${(r.next_billing_date||'').slice(0,10)}</td>
       <td style="color:var(--gray400)">${(r.created_at||'').slice(0,10)}</td>
-      <td>${r.status!=='cancelled'?`<button class="btn-cancel" onclick="cancelSub(${r.id},this)">해지</button>`:''}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${r.status!=='cancelled'?`<button class="btn-cancel" onclick="cancelSub(${r.id},this)">해지</button>`:''}
+        <button class="btn-cancel" style="border-color:rgba(26,107,255,.3);background:rgba(26,107,255,.06);color:var(--blue);" onclick="openPwModal(${r.id},'${r.name}',${r.has_password})">${r.has_password?'비번재설정':'비번설정'}</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -520,6 +523,42 @@ async function loadLogs(btn) {
 }
 
 setInterval(loadAll, 300000);
+
+// ── 비밀번호 설정 모달 ──
+let pwTargetId = null;
+function openPwModal(id, name, hasPw) {
+  pwTargetId = id;
+  document.getElementById('pw-modal-title').textContent = (hasPw ? '비밀번호 재설정' : '초기 비밀번호 설정') + ' — ' + name;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').style.display = 'none';
+  document.getElementById('pw-modal').style.display = 'flex';
+}
+function closePwModal() { document.getElementById('pw-modal').style.display = 'none'; }
+async function savePw() {
+  const pw = document.getElementById('pw-input').value.trim();
+  const err = document.getElementById('pw-err');
+  if (pw.length < 4) { err.textContent = '4자 이상 입력해주세요.'; err.style.display = 'block'; return; }
+  const data = await fetch('/api/admin/set-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-pw': ADMIN_PW },
+    body: JSON.stringify({ id: pwTargetId, password: pw })
+  }).then(r => r.json());
+  if (data.ok) { alert(`설정 완료. 고객에게 전달할 비밀번호: ${pw}`); closePwModal(); loadSubscribers(); }
+  else { err.textContent = data.msg || '오류 발생'; err.style.display = 'block'; }
+}
 </script>
+
+<!-- 비밀번호 설정 모달 -->
+<div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(6,16,30,.6);align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:16px;padding:32px 28px;width:100%;max-width:380px;margin:20px;">
+    <div id="pw-modal-title" style="font-size:16px;font-weight:900;color:var(--text);margin-bottom:20px;"></div>
+    <input id="pw-input" type="text" placeholder="설정할 비밀번호 입력" style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid var(--gray100);font-size:14px;font-family:inherit;outline:none;margin-bottom:8px;" />
+    <div id="pw-err" style="font-size:12px;color:var(--red);margin-bottom:10px;display:none;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closePwModal()" style="flex:1;padding:11px;border-radius:8px;border:1px solid var(--gray100);background:white;font-size:14px;font-weight:700;color:var(--gray600);cursor:pointer;font-family:inherit;">취소</button>
+      <button onclick="savePw()" style="flex:2;padding:11px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--blue),var(--cyan));color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">저장 및 복사</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

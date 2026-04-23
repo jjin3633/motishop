@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>마이페이지 — Moti Shop</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:#06101E; --navy2:#0C1B30; --blue:#1A6BFF; --cyan:#00D4FF;
+  --green:#22c55e; --red:#ef4444; --gold:#F5C842;
+  --gray50:#F4F6FB; --gray100:#E5EAF4; --gray400:#8A96B0; --gray600:#4A5570;
+  --text:#0E1525;
+}
+body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: var(--gray50); color: var(--text); font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+/* ── Login ── */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--navy); padding: 24px; }
+.login-box { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 380px; }
+.login-logo { font-size: 22px; font-weight: 900; color: white; margin-bottom: 4px; }
+.login-logo span { color: var(--cyan); }
+.login-sub { font-size: 13px; color: rgba(255,255,255,.4); margin-bottom: 36px; }
+.login-box input { width: 100%; padding: 13px 16px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,.1); background: rgba(255,255,255,.06); color: white; font-size: 15px; outline: none; margin-bottom: 12px; font-family: inherit; transition: border-color .2s; }
+.login-box input:focus { border-color: var(--blue); }
+.login-box input::placeholder { color: rgba(255,255,255,.25); }
+.login-box button { width: 100%; padding: 14px; border-radius: 10px; background: linear-gradient(90deg, var(--blue), var(--cyan)); color: white; font-size: 15px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+.login-err { font-size: 13px; color: #f87171; margin-top: 10px; text-align: center; display: none; }
+.login-note { font-size: 12px; color: rgba(255,255,255,.25); text-align: center; margin-top: 20px; line-height: 1.8; }
+
+/* ── App ── */
+.app { display: none; min-height: 100vh; }
+nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.07); position: sticky; top: 0; z-index: 10; }
+.nav-logo { font-size: 17px; font-weight: 900; color: white; display: flex; align-items: center; gap: 8px; }
+.nav-logo span { color: var(--cyan); }
+.nav-tag { font-size: 11px; color: rgba(255,255,255,.3); background: rgba(255,255,255,.07); padding: 3px 10px; border-radius: 100px; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-user { font-size: 13px; color: rgba(255,255,255,.5); }
+.btn-logout { font-size: 13px; color: rgba(255,255,255,.5); background: none; border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 6px 14px; cursor: pointer; font-family: inherit; }
+.btn-logout:hover { color: white; border-color: rgba(255,255,255,.4); }
+
+.container { max-width: 720px; margin: 0 auto; padding: 32px 20px; }
+
+/* ── Status Card ── */
+.status-card { background: var(--navy); border-radius: 20px; padding: 32px 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
+.status-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 90% 50%, rgba(0,212,255,.12) 0%, transparent 60%); pointer-events: none; }
+.status-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; position: relative; }
+.status-company { font-size: 20px; font-weight: 900; color: white; margin-bottom: 4px; }
+.status-name { font-size: 14px; color: rgba(255,255,255,.45); }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge-trial { background: rgba(245,200,66,.15); color: var(--gold); }
+.badge-active { background: rgba(34,197,94,.12); color: #4ade80; }
+.badge-cancelled { background: rgba(255,255,255,.08); color: rgba(255,255,255,.4); }
+.status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; position: relative; }
+.status-item .lbl { font-size: 11px; color: rgba(255,255,255,.35); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+.status-item .val { font-size: 18px; font-weight: 900; color: white; }
+.status-item .val small { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.4); margin-left: 2px; }
+.status-item .val.cyan { color: var(--cyan); }
+
+/* ── Features ── */
+.section-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.feat-list { background: white; border-radius: 14px; border: 1px solid var(--gray100); overflow: hidden; margin-bottom: 20px; }
+.feat-row { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--gray100); }
+.feat-row:last-child { border-bottom: none; }
+.feat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+.feat-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.feat-empty { text-align: center; padding: 32px; color: var(--gray400); font-size: 14px; }
+
+/* ── Billing Logs ── */
+.log-list { background: white; border-radius: 14px; border: 1px solid var(--gray100); overflow: hidden; margin-bottom: 20px; }
+.log-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; border-bottom: 1px solid var(--gray100); }
+.log-row:last-child { border-bottom: none; }
+.log-date { font-size: 13px; color: var(--gray400); }
+.log-amount { font-size: 14px; font-weight: 700; color: var(--text); }
+.badge-ok { background: rgba(34,197,94,.1); color: #15803d; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+.badge-fail { background: rgba(239,68,68,.1); color: var(--red); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+
+/* ── Action Buttons ── */
+.action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.btn-action { flex: 1; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700; border: 1px solid var(--gray100); background: white; color: var(--gray600); cursor: pointer; font-family: inherit; transition: all .15s; }
+.btn-action:hover { background: var(--gray50); }
+.btn-action.danger { border-color: rgba(239,68,68,.3); color: var(--red); background: rgba(239,68,68,.04); }
+.btn-action.danger:hover { background: rgba(239,68,68,.08); }
+
+.contact-box { background: white; border-radius: 14px; border: 1px solid var(--gray100); padding: 20px; text-align: center; }
+.contact-box p { font-size: 13px; color: var(--gray400); line-height: 1.8; }
+.contact-box a { color: var(--blue); font-weight: 700; text-decoration: none; }
+
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(6,16,30,.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: white; border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 400px; }
+.modal h3 { font-size: 18px; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--gray400); margin-bottom: 24px; line-height: 1.7; }
+.modal input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--gray100); font-size: 14px; font-family: inherit; outline: none; margin-bottom: 12px; transition: border-color .2s; }
+.modal input:focus { border-color: var(--blue); }
+.modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+.modal-cancel { flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid var(--gray100); background: white; font-size: 14px; font-weight: 700; color: var(--gray600); cursor: pointer; font-family: inherit; }
+.modal-confirm { flex: 2; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(90deg, var(--blue), var(--cyan)); color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.modal-confirm.danger { background: var(--red); }
+.modal-err { font-size: 12px; color: var(--red); margin-top: -6px; margin-bottom: 10px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">Moti <span>Shop</span></div>
+    <div class="login-sub">마이페이지 로그인</div>
+    <input type="tel" id="loginPhone" placeholder="전화번호 (숫자만)" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')login()" />
+    <input type="password" id="loginPw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')login()" />
+    <button onclick="login()">로그인</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-note">초기 비밀번호는 담당자에게 문의해주세요.<br>070-4365-7740</div>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <nav>
+    <div class="nav-logo">Moti <span>Shop</span><span class="nav-tag">마이페이지</span></div>
+    <div class="nav-right">
+      <span class="nav-user" id="navUser"></span>
+      <button class="btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- 구독 현황 -->
+    <div class="status-card">
+      <div class="status-top">
+        <div>
+          <div class="status-company" id="myCompany">—</div>
+          <div class="status-name" id="myName">—</div>
+        </div>
+        <span class="status-badge" id="myBadge">—</span>
+      </div>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="lbl">다음 결제일</div>
+          <div class="val" id="myNextBilling">—</div>
+        </div>
+        <div class="status-item">
+          <div class="lbl">결제 금액</div>
+          <div class="val cyan" id="myAmount">—<small>원</small></div>
+        </div>
+        <div class="status-item">
+          <div class="lbl">구독 유형</div>
+          <div class="val" id="myBillingType">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 구독 기능 -->
+    <div class="section-title">구독 중인 기능</div>
+    <div class="feat-list" id="featList"></div>
+
+    <!-- 액션 버튼 -->
+    <div class="action-row">
+      <button class="btn-action" onclick="openPwModal()">비밀번호 변경</button>
+      <button class="btn-action danger" onclick="openCancelModal()" id="cancelBtn">구독 해지</button>
+    </div>
+
+    <!-- 결제 내역 -->
+    <div class="section-title">결제 내역</div>
+    <div class="log-list" id="logList"></div>
+
+    <!-- 추가 구독 / 문의 -->
+    <div class="contact-box">
+      <p>기능 추가 구독 또는 구독 변경은 담당자에게 문의해주세요.<br>
+      <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- 비밀번호 변경 모달 -->
+<div class="modal-overlay" id="pwModal">
+  <div class="modal">
+    <h3>비밀번호 변경</h3>
+    <p>현재 비밀번호를 확인한 후 새 비밀번호를 설정합니다.</p>
+    <input type="password" id="currentPw" placeholder="현재 비밀번호" />
+    <input type="password" id="newPw" placeholder="새 비밀번호 (6자 이상)" />
+    <input type="password" id="newPw2" placeholder="새 비밀번호 확인" />
+    <div class="modal-err" id="pwErr"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closePwModal()">취소</button>
+      <button class="modal-confirm" onclick="changePassword()">변경하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 해지 확인 모달 -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal">
+    <h3>구독을 해지하시겠습니까?</h3>
+    <p>해지 후에는 다음 결제일부터 청구되지 않습니다. 현재 체험/구독 중인 기능은 기간이 끝날 때까지 유지됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeCancelModal()">취소</button>
+      <button class="modal-confirm danger" onclick="cancelSubscription()">해지하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let sessionToken = sessionStorage.getItem('moti_token');
+const fmt = n => Number(n||0).toLocaleString();
+
+async function apiFetch(path, options = {}) {
+  const res = await fetch(path, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'x-session-token': sessionToken, ...(options.headers||{}) }
+  });
+  return res.json();
+}
+
+async function login() {
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  const err   = document.getElementById('loginErr');
+  err.style.display = 'none';
+
+  if (!phone || !pw) { err.textContent = '전화번호와 비밀번호를 입력해주세요.'; err.style.display = 'block'; return; }
+
+  const data = await fetch('/api/mypage/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, password: pw })
+  }).then(r => r.json()).catch(() => ({ ok: false, msg: '네트워크 오류' }));
+
+  if (data.ok) {
+    sessionToken = data.token;
+    sessionStorage.setItem('moti_token', sessionToken);
+    showApp();
+  } else {
+    err.textContent = data.msg;
+    err.style.display = 'block';
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem('moti_token');
+  location.reload();
+}
+
+async function showApp() {
+  const data = await apiFetch('/api/mypage/me');
+  if (!data.ok) { logout(); return; }
+
+  const s = data.subscriber;
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  document.getElementById('navUser').textContent = s.company;
+  document.getElementById('myCompany').textContent = s.company;
+  document.getElementById('myName').textContent = s.name + ' 원장님';
+  document.getElementById('myAmount').innerHTML = fmt(s.charge_amount) + '<small>원</small>';
+  document.getElementById('myBillingType').textContent = s.billing_type === 'monthly' ? '월 구독' : '연 구독';
+  document.getElementById('myNextBilling').textContent = (s.next_billing_date||'').slice(0,10);
+
+  const badge = document.getElementById('myBadge');
+  const badgeMap = { trial: ['badge-trial','체험 중'], active: ['badge-active','구독 중'], cancelled: ['badge-cancelled','해지됨'] };
+  const [cls, txt] = badgeMap[s.status] || ['badge-cancelled', s.status];
+  badge.className = 'status-badge ' + cls;
+  badge.textContent = txt;
+
+  if (s.status === 'cancelled') document.getElementById('cancelBtn').style.display = 'none';
+
+  // 기능 목록
+  const featList = document.getElementById('featList');
+  const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  if (feats.length) {
+    featList.innerHTML = feats.map(f => `
+      <div class="feat-row">
+        <div class="feat-dot"></div>
+        <div class="feat-name">${f}</div>
+      </div>`).join('');
+  } else {
+    featList.innerHTML = '<div class="feat-empty">구독 중인 기능이 없습니다</div>';
+  }
+
+  // 결제 내역
+  const logList = document.getElementById('logList');
+  if (data.billingLogs.length) {
+    logList.innerHTML = data.billingLogs.map(l => `
+      <div class="log-row">
+        <div>
+          <div class="log-date">${(l.billed_at||'').slice(0,10)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="log-amount">${fmt(l.amount)}원</span>
+          <span class="${l.result_code==='00'?'badge-ok':'badge-fail'}">${l.result_code==='00'?'성공':'실패'}</span>
+        </div>
+      </div>`).join('');
+  } else {
+    logList.innerHTML = '<div class="feat-empty">아직 결제 내역이 없습니다</div>';
+  }
+}
+
+// 비밀번호 변경
+function openPwModal() { document.getElementById('pwModal').classList.add('open'); }
+function closePwModal() {
+  document.getElementById('pwModal').classList.remove('open');
+  ['currentPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pwErr').style.display = 'none';
+}
+async function changePassword() {
+  const cur  = document.getElementById('currentPw').value;
+  const nw   = document.getElementById('newPw').value;
+  const nw2  = document.getElementById('newPw2').value;
+  const err  = document.getElementById('pwErr');
+  err.style.display = 'none';
+
+  if (nw !== nw2) { err.textContent = '새 비밀번호가 일치하지 않습니다.'; err.style.display = 'block'; return; }
+  if (nw.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 합니다.'; err.style.display = 'block'; return; }
+
+  const data = await apiFetch('/api/mypage/change-password', {
+    method: 'POST', body: JSON.stringify({ currentPw: cur, newPw: nw })
+  });
+  if (data.ok) { alert('비밀번호가 변경되었습니다.'); closePwModal(); }
+  else { err.textContent = data.msg; err.style.display = 'block'; }
+}
+
+// 해지
+function openCancelModal() { document.getElementById('cancelModal').classList.add('open'); }
+function closeCancelModal() { document.getElementById('cancelModal').classList.remove('open'); }
+async function cancelSubscription() {
+  const data = await apiFetch('/api/mypage/cancel', { method: 'POST' });
+  if (data.ok) { alert('구독이 해지되었습니다.'); logout(); }
+  else alert('오류가 발생했습니다. 담당자에게 문의해주세요.');
+}
+
+// 자동 로그인
+if (sessionToken) showApp();
+</script>
+</body>
+</html>

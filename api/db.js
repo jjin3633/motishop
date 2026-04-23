@@ -30,6 +30,18 @@ db.exec(`
     billed_at     TEXT DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
   );
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL,
+    token         TEXT NOT NULL UNIQUE,
+    expires_at    TEXT NOT NULL,
+    created_at    TEXT DEFAULT (datetime('now', '+9 hours'))
+  );
 `);
+
+// 컬럼 마이그레이션 (이미 존재하면 무시)
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN pw_hash TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN pw_salt TEXT`); } catch(e) {}
 
 module.exports = db;
