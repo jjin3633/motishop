@@ -243,6 +243,30 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
   res.json({ ok: true, features: featStr, charge_amount: newAmount });
 });
 
+// 구독 유형 변경 (월↔연)
+app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
+  const { billingType } = req.body;
+  if (billingType !== 'monthly' && billingType !== 'annual')
+    return res.status(400).json({ ok: false, msg: '잘못된 구독 유형입니다.' });
+
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  const prices = FEATURE_PRICES[billingType];
+  const features = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
+
+  let newAmount;
+  if (features.includes('⭐ ALL IN ONE')) {
+    newAmount = prices['⭐ ALL IN ONE'];
+  } else {
+    newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+  }
+
+  db.prepare(`UPDATE subscribers SET billing_type=?, charge_amount=? WHERE id=?`)
+    .run(billingType, newAmount, req.subscriberId);
+
+  console.log(`[구독유형변경] ${sub.company} → ${billingType} / ${newAmount}원`);
+  res.json({ ok: true, billing_type: billingType, charge_amount: newAmount });
+});
+
 scheduleBilling();
 
 app.listen(3001, '127.0.0.1', () => {

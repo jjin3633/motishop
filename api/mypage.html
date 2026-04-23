@@ -92,6 +92,19 @@ nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; ali
 .contact-box p { font-size: 13px; color: var(--gray400); line-height: 1.8; }
 .contact-box a { color: var(--blue); font-weight: 700; text-decoration: none; }
 
+/* ── Billing Type Switch ── */
+.billing-switch-box {
+  background: white; border-radius: 14px; border: 1px solid var(--gray100);
+  padding: 18px 20px; margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.billing-switch-info { flex: 1; }
+.billing-switch-info .label { font-size: 11px; font-weight: 700; color: var(--gray400); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+.billing-switch-info .current { font-size: 15px; font-weight: 800; color: var(--text); }
+.billing-switch-info .save-hint { font-size: 12px; color: #15803d; font-weight: 600; margin-top: 2px; }
+.btn-switch { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--blue); background: rgba(26,107,255,.06); color: var(--blue); cursor: pointer; font-family: inherit; white-space: nowrap; }
+.btn-switch:hover { background: rgba(26,107,255,.12); }
+
 /* ── Modal ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(6,16,30,.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
 .modal-overlay.open { display: flex; }
@@ -169,6 +182,16 @@ nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; ali
       <button class="btn-action danger" onclick="openCancelModal()" id="cancelBtn">전체 해지</button>
     </div>
 
+    <!-- 구독 유형 전환 -->
+    <div class="billing-switch-box" id="billingSwitchBox">
+      <div class="billing-switch-info">
+        <div class="label">구독 유형</div>
+        <div class="current" id="billingSwitchCurrent">—</div>
+        <div class="save-hint" id="billingSwitchHint"></div>
+      </div>
+      <button class="btn-switch" id="billingSwitchBtn" onclick="openBillingModal()">—</button>
+    </div>
+
     <!-- 결제 내역 -->
     <div class="section-title">결제 내역</div>
     <div class="log-list" id="logList"></div>
@@ -194,6 +217,18 @@ nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; ali
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closePwModal()">취소</button>
       <button class="modal-confirm" onclick="changePassword()">변경하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 구독 유형 변경 모달 -->
+<div class="modal-overlay" id="billingModal">
+  <div class="modal">
+    <h3 id="billingModalTitle">구독 유형 변경</h3>
+    <p id="billingModalDesc"></p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeBillingModal()">취소</button>
+      <button class="modal-confirm" id="billingModalConfirm" onclick="changeBillingType()">변경하기</button>
     </div>
   </div>
 </div>
@@ -286,6 +321,7 @@ async function showApp() {
 
   currentSubscriber = s;
   renderFeatList();
+  renderBillingSwitch();
 
   // 결제 내역
   const logList = document.getElementById('logList');
@@ -342,6 +378,66 @@ function renderFeatList() {
 
   if (!html) html = '<div class="feat-empty">구독 중인 기능이 없습니다</div>';
   featList.innerHTML = html;
+}
+
+// 구독 유형 UI 렌더링
+function renderBillingSwitch() {
+  const s = currentSubscriber;
+  if (!s || s.status === 'cancelled') { document.getElementById('billingSwitchBox').style.display = 'none'; return; }
+
+  const isMonthly = s.billing_type !== 'annual';
+  const targetType = isMonthly ? 'annual' : 'monthly';
+  const prices = FEATURE_PRICES[targetType];
+  const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  let targetAmount = feats.includes('⭐ ALL IN ONE')
+    ? prices['⭐ ALL IN ONE']
+    : feats.reduce((sum, f) => sum + (prices[f] || 0), 0);
+
+  document.getElementById('billingSwitchCurrent').textContent = isMonthly ? '월 구독 중' : '연 구독 중';
+  document.getElementById('billingSwitchBtn').textContent = isMonthly ? '연 구독으로 전환' : '월 구독으로 전환';
+
+  if (isMonthly && targetAmount < s.charge_amount) {
+    const save = Math.round((1 - targetAmount / s.charge_amount) * 100);
+    document.getElementById('billingSwitchHint').textContent = `연 구독 전환 시 월 ${fmt(s.charge_amount - targetAmount)}원 절감 (약 ${save}%)`;
+  } else {
+    document.getElementById('billingSwitchHint').textContent = '';
+  }
+}
+
+function openBillingModal() {
+  const s = currentSubscriber;
+  const isMonthly = s.billing_type !== 'annual';
+  const targetType = isMonthly ? 'annual' : 'monthly';
+  const prices = FEATURE_PRICES[targetType];
+  const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  let targetAmount = feats.includes('⭐ ALL IN ONE')
+    ? prices['⭐ ALL IN ONE']
+    : feats.reduce((sum, f) => sum + (prices[f] || 0), 0);
+
+  document.getElementById('billingModalTitle').textContent = isMonthly ? '연 구독으로 전환' : '월 구독으로 전환';
+  document.getElementById('billingModalDesc').textContent =
+    `현재 월 ${fmt(s.charge_amount)}원 → 전환 후 월 ${fmt(targetAmount)}원으로 변경됩니다.\n다음 결제일부터 적용됩니다.`;
+  document.getElementById('billingModal').classList.add('open');
+}
+function closeBillingModal() { document.getElementById('billingModal').classList.remove('open'); }
+
+async function changeBillingType() {
+  const s = currentSubscriber;
+  const targetType = s.billing_type !== 'annual' ? 'annual' : 'monthly';
+  const data = await apiFetch('/api/mypage/change-billing-type', {
+    method: 'POST', body: JSON.stringify({ billingType: targetType })
+  });
+  if (data.ok) {
+    currentSubscriber.billing_type = data.billing_type;
+    currentSubscriber.charge_amount = data.charge_amount;
+    document.getElementById('myAmount').innerHTML = fmt(data.charge_amount) + '<small>원</small>';
+    document.getElementById('myBillingType').textContent = data.billing_type === 'monthly' ? '월 구독' : '연 구독';
+    renderBillingSwitch();
+    renderFeatList();
+    closeBillingModal();
+  } else {
+    alert(data.msg || '오류가 발생했습니다.');
+  }
 }
 
 async function cancelFeat(featKey) {
