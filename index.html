@@ -306,38 +306,85 @@
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
     /* ── Problem ── */
-    .problem { background: var(--gray50); }
+    .problem {
+      background: var(--gray50);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,107,255,.05) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 50% at 90% 85%, rgba(0,212,255,.04) 0%, transparent 60%);
+    }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 20px; margin-top: 56px;
+      gap: 24px; margin-top: 64px;
     }
     .problem-card {
+      position: relative;
       background: white;
-      border: 1px solid var(--gray100);
-      box-shadow: 0 2px 20px rgba(0,0,0,.05);
-      border-radius: var(--radius);
-      padding: 32px;
-      border-left: 3px solid var(--blue);
-      transition: transform .25s, box-shadow .25s;
+      border-radius: 22px;
+      padding: 52px 30px 28px;
+      border: 1px solid rgba(14,21,37,.04);
+      box-shadow: 0 1px 2px rgba(14,21,37,.02);
+      transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s;
+      overflow: hidden;
+      isolation: isolate;
     }
-    .problem-card:hover { transform: translateY(-3px); box-shadow: 0 16px 44px rgba(0,0,0,.07); }
+    .problem-card::before {
+      content: '"';
+      position: absolute; top: 14px; left: 26px;
+      font-family: 'Questrial', 'Noto Sans KR', serif;
+      font-size: 92px; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      letter-spacing: -0.06em;
+      transition: transform .45s cubic-bezier(.2,.8,.2,1);
+    }
+    .problem-card::after {
+      content: '';
+      position: absolute; inset: -1px; border-radius: 22px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(26,107,255,0), rgba(0,212,255,0));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none; transition: background .45s;
+      z-index: 2;
+    }
+    .problem-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 28px 64px rgba(14,21,37,.1), 0 4px 14px rgba(26,107,255,.06);
+    }
+    .problem-card:hover::before { transform: translateY(-3px) rotate(-4deg); }
+    .problem-card:hover::after {
+      background: linear-gradient(135deg, rgba(26,107,255,.35), rgba(0,212,255,.25));
+    }
+    .problem-card h3 {
+      font-size: 18px; font-weight: 500; color: var(--text);
+      line-height: 1.7; letter-spacing: -0.015em;
+      margin-bottom: 32px;
+      position: relative; z-index: 1;
+    }
+    .problem-card h3 .hl {
+      display: inline;
+      background: linear-gradient(180deg, transparent 62%, rgba(0,212,255,.28) 62%);
+      padding: 0 2px;
+      font-weight: 700; color: var(--text);
+    }
     .problem-persona {
       display: flex; align-items: center; gap: 12px;
-      margin-bottom: 20px;
+      padding-top: 22px;
+      border-top: 1px solid var(--gray100);
+      position: relative; z-index: 1;
     }
     .problem-avatar {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: var(--gray100);
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
       display: flex; align-items: center; justify-content: center;
-      font-size: 26px; flex-shrink: 0;
+      font-size: 14px; font-weight: 900; color: white;
+      letter-spacing: -0.02em; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(26,107,255,.25);
     }
-    .problem-persona-info { display: flex; flex-direction: column; gap: 2px; }
-    .problem-persona-name { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
-    .problem-persona-role { font-size: 13px; color: var(--gray400); font-weight: 500; }
-    .problem-card h3 {
-      font-size: 17px; font-weight: 500; color: var(--gray600);
-      line-height: 1.85; letter-spacing: -0.01em;
-    }
+    .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .problem-persona-name { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+    .problem-persona-role { font-size: 12px; color: var(--gray400); font-weight: 500; }
 
     /* ── Features ── */
     .features { background: var(--navy); }
@@ -373,20 +420,39 @@
         radial-gradient(ellipse 70% 60% at 90% 80%, rgba(0,212,255,.1) 0%, transparent 55%),
         var(--navy2);
     }
-    .all-mosaic {
-      position: absolute; inset: 0; z-index: 1;
-      display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
-      gap: 2px; background: rgba(6,16,30,.6);
-    }
-    .all-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.05); }
-    .all-mosaic-plus {
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
-      color: white; font-weight: 900; font-size: 22px; letter-spacing: -0.03em;
-    }
     .feat-thumb-all .feat-thumb-gradient {
       background: linear-gradient(0deg, rgba(6,16,30,.98) 0%, rgba(6,16,30,.5) 42%, rgba(6,16,30,.25) 100%);
+      z-index: 5;
     }
+    .all-stack {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px 16px 44px;
+    }
+    .all-stack-inner {
+      position: relative;
+      width: 62%; aspect-ratio: 4/3;
+    }
+    .all-stack-card {
+      position: absolute; inset: 0;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 12px 32px rgba(0,0,0,.42), 0 2px 6px rgba(0,0,0,.24);
+      border: 1.5px solid rgba(255,255,255,.14);
+      transform-origin: center center;
+      transition: transform .55s cubic-bezier(.2,.8,.2,1), box-shadow .55s;
+      background: var(--navy2);
+    }
+    .all-stack-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .all-stack-card:nth-child(1) { transform: translate(-34%, 10%) rotate(-14deg); z-index: 1; opacity: .82; }
+    .all-stack-card:nth-child(2) { transform: translate(-17%, 4%) rotate(-7deg); z-index: 2; opacity: .92; }
+    .all-stack-card:nth-child(3) { transform: translate(0, 0) rotate(0deg); z-index: 3; }
+    .all-stack-card:nth-child(4) { transform: translate(17%, 4%) rotate(7deg); z-index: 2; opacity: .92; }
+    .all-stack-card:nth-child(5) { transform: translate(34%, 10%) rotate(14deg); z-index: 1; opacity: .82; }
+    .feat-card:hover .all-stack-card:nth-child(1) { transform: translate(-44%, 14%) rotate(-20deg); opacity: .95; }
+    .feat-card:hover .all-stack-card:nth-child(2) { transform: translate(-22%, 6%) rotate(-10deg); opacity: 1; }
+    .feat-card:hover .all-stack-card:nth-child(3) { transform: translate(0, -3%) rotate(0deg) scale(1.04); }
+    .feat-card:hover .all-stack-card:nth-child(4) { transform: translate(22%, 6%) rotate(10deg); opacity: 1; }
+    .feat-card:hover .all-stack-card:nth-child(5) { transform: translate(44%, 14%) rotate(20deg); opacity: .95; }
 
     /* ── Feature Modal ── */
     .feat-modal {
@@ -932,34 +998,34 @@
     <h2 class="section-title">이런 고민, 이제 끝입니다.</h2>
     <div class="problem-grid">
       <div class="problem-card">
+        <h3>화이트를 원했는데 <span class="hl">예산 때문에 미니</span>를 샀어요. 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
         <div class="problem-persona">
-          <div class="problem-avatar">😔</div>
+          <div class="problem-avatar">최</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">최** 원장</span>
             <span class="problem-persona-role">재활운동센터 · Mini 사용 중</span>
           </div>
         </div>
-        <h3>화이트를 원했는데 예산 때문에 미니를 샀어요. 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
+        <h3>프로를 원했는데 <span class="hl">화이트로 계약</span>했어요. 기기를 다시 바꿀 여유는 없고, 분석 깊이가 아쉽습니다.</h3>
         <div class="problem-persona">
-          <div class="problem-avatar">🤔</div>
+          <div class="problem-avatar">한</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">한** 원장</span>
             <span class="problem-persona-role">체형교정센터 · White 사용 중</span>
           </div>
         </div>
-        <h3>프로를 원했는데 화이트로 계약했어요. 기기를 다시 바꿀 여유는 없고, 분석 깊이가 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
+        <h3>다른 원장님들이 어떤 <span class="hl">고급 기능</span>을 쓰는지 궁금한데, 저는 아직 써본 적이 없어요.</h3>
         <div class="problem-persona">
-          <div class="problem-avatar">💡</div>
+          <div class="problem-avatar">이</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 원장</span>
             <span class="problem-persona-role">피부·체형 복합센터 · White 사용 중</span>
           </div>
         </div>
-        <h3>다른 원장님들이 어떤 고급 기능을 쓰는지 궁금한데, 저는 아직 써본 적이 없어요.</h3>
       </div>
     </div>
   </div>
@@ -1017,17 +1083,18 @@
       </div>
       <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
         <div class="feat-thumb feat-thumb-all">
-          <div class="all-mosaic">
-            <img src="moire_image.jpg" alt="모아레" />
-            <img src="nerve.png" alt="3D 신경" />
-            <img src="spinedetaie.png" alt="척추 세부" />
-            <img src="lossheight..png" alt="손실키" />
-            <img src="faece.png" alt="안면 여백" />
-            <div class="all-mosaic-plus">+α</div>
+          <div class="all-stack">
+            <div class="all-stack-inner">
+              <div class="all-stack-card"><img src="moire_image.jpg" alt="모아레" /></div>
+              <div class="all-stack-card"><img src="nerve.png" alt="3D 신경·림프·장기" /></div>
+              <div class="all-stack-card"><img src="spinedetaie.png" alt="척추 세부" /></div>
+              <div class="all-stack-card"><img src="lossheight..png" alt="손실키" /></div>
+              <div class="all-stack-card"><img src="faece.png" alt="안면 여백" /></div>
+            </div>
           </div>
           <div class="feat-thumb-gradient"></div>
-          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:3;color:var(--cyan);border-color:rgba(0,212,255,.35);">최대 40% 절감</span>
-          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:3;font-size:17px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
+          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;color:var(--cyan);border-color:rgba(0,212,255,.35);">5 기능 전부 포함</span>
+          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:6;font-size:17px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
         </div>
         <p>위 5개 기능 전부. 개별 구독보다 월 최대 40% 저렴하며, 추후 추가되는 기능도 동일 요금에 포함됩니다.</p>
       </div>
@@ -1321,9 +1388,7 @@
 <section class="trial-form" id="trial" style="background:var(--navy2);">
   <div class="section-inner">
     <div style="text-align:center; margin-bottom:40px;">
-      <span class="section-label" style="justify-content:center; color:var(--cyan);">30일 무료 체험</span>
-      <h2 class="section-title" style="color:white;">지금 시작하면, 30일은 무료입니다</h2>
-      <p class="section-sub" style="color:rgba(255,255,255,.45);">카드 유효성 확인 10원은 즉시 취소 · 체험 기간 내 언제든 해지 가능</p>
+      <h2 class="section-title" style="color:white;">지금 시작하면, 30일은 무료입니다.</h2>
     </div>
 
     <!-- 스텝 인디케이터 -->
