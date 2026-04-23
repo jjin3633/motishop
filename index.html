@@ -661,6 +661,94 @@
     .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
     .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; text-align: left; }
 
+    /* ── Compare Action CTA ── */
+    .compare-action {
+      margin-top: 40px;
+      background: var(--navy);
+      border-radius: var(--radius);
+      padding: 32px 40px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      border: 1px solid rgba(26,107,255,.25);
+      box-shadow: 0 8px 32px rgba(26,107,255,.1);
+    }
+    .compare-action-text { flex: 1; }
+    .compare-action-text p { font-size: 15px; color: rgba(255,255,255,.55); line-height: 1.7; margin-bottom: 4px; }
+    .compare-action-text strong { font-size: 20px; font-weight: 900; color: white; letter-spacing: -0.02em; line-height: 1.35; display: block; }
+    @media (max-width: 768px) {
+      .compare-action { flex-direction: column; text-align: center; padding: 24px 20px; }
+      .compare-action .btn-primary { width: 100%; justify-content: center; }
+    }
+
+    /* ── Problem scene cards ── */
+    .problem-scene { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: var(--blue); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    .problem-scene::before { content: ''; display: inline-block; width: 3px; height: 14px; background: var(--blue); border-radius: 2px; }
+    .problem-card h3 { margin-top: 4px; }
+    .problem-resolution {
+      margin-top: 20px;
+      padding: 10px 14px;
+      background: rgba(26,107,255,.07);
+      border-radius: 8px;
+      border-left: 3px solid var(--blue2);
+      font-size: 13px; font-weight: 700; color: var(--blue2);
+      line-height: 1.6;
+    }
+    .problem-tagline {
+      text-align: center;
+      margin-top: 52px;
+      padding-top: 40px;
+      border-top: 1px solid var(--gray100);
+    }
+    .problem-tagline h3 {
+      font-size: clamp(20px, 2.8vw, 28px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+    .problem-tagline h3 .accent { color: var(--blue); }
+    .problem-tagline p { font-size: 16px; color: var(--gray600); line-height: 1.8; }
+
+    /* ── Social Proof Toast ── */
+    .sp-toast {
+      position: fixed; bottom: 28px; left: 24px; z-index: 9999;
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(24px) saturate(2);
+      border-radius: 18px;
+      padding: 14px 16px 14px 14px;
+      display: flex; align-items: center; gap: 12px;
+      min-width: 272px; max-width: 320px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
+      border: 1px solid rgba(0,0,0,.07);
+      transform: translateY(120px) scale(.95);
+      opacity: 0;
+      transition: transform .42s cubic-bezier(0.34,1.2,0.64,1), opacity .35s ease;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .sp-toast.show { transform: translateY(0) scale(1); opacity: 1; }
+    .sp-avatar-wrap { position: relative; flex-shrink: 0; }
+    .sp-avatar-circle {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #1A6BFF, #00D4FF);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 16px; font-weight: 900; color: white;
+    }
+    .sp-live-dot {
+      position: absolute; bottom: 1px; right: 1px;
+      width: 11px; height: 11px; border-radius: 50%;
+      background: #22C55E;
+      border: 2px solid white;
+    }
+    .sp-content { flex: 1; min-width: 0; }
+    .sp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+    .sp-brand { font-size: 10px; color: #aaa; font-weight: 700; letter-spacing: 0.05em; }
+    .sp-time-text { font-size: 10px; color: #bbb; font-weight: 500; }
+    .sp-main { font-size: 13px; font-weight: 800; color: #111; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-sub { font-size: 12px; color: #555; margin-top: 2px; line-height: 1.35; }
+    .sp-feat-highlight { color: var(--blue); font-weight: 700; }
+
     /* ── CTA Banner ── */
     .cta-banner { background: var(--navy); padding: 80px 24px; text-align: center; position: relative; overflow: hidden; }
     .cta-banner::before {
@@ -865,41 +953,52 @@
 <!-- ── PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <h2 class="section-title">라인업이 아니라,<br>기능이 아쉬웠던 거 아닌가요?</h2>
+    <h2 class="section-title">혹시, 이 순간이<br>낯설지 않으신가요?</h2>
+    <p class="section-sub">기기 문제가 아니었어요. 기능 문제였습니다.</p>
     <div class="problem-grid">
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">😔</div>
+          <div class="problem-avatar">😶</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">최** 원장</span>
-            <span class="problem-persona-role">재활운동센터 · 36세</span>
+            <span class="problem-persona-role">재활운동센터 · Mini 사용 중 · 36세</span>
           </div>
         </div>
-        <h3>화이트를 원했는데 예산 때문에 미니를 구입했어요. 모아레랑 3D 분석이 없으니 상담할 때 확실히 차이가 느껴집니다.</h3>
+        <div class="problem-scene">상담 중 이런 순간이 있었어요</div>
+        <h3>회원이 물었어요. "선생님, 제 몸이 왜 이렇게 됐는지 눈으로 보여주실 수 있어요?" 수치는 있었는데, 딱 한눈에 보여주는 게 없었어요. 옆 센터는 등고선 이미지로 한 장에 설명한다던데.</h3>
+        <div class="problem-resolution">→ 모아레 기능이 있었다면, 그 질문이 기회가 됐을 거예요</div>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">🤔</div>
+          <div class="problem-avatar">😬</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">한** 원장</span>
-            <span class="problem-persona-role">체형교정센터 · 44세</span>
+            <span class="problem-persona-role">체형교정센터 · White 사용 중 · 44세</span>
           </div>
         </div>
-        <h3>프로를 원했는데 결국 화이트를 샀어요. 척추 세부 분석이 없다 보니 분석 깊이가 아쉬울 때가 있습니다.</h3>
+        <div class="problem-scene">다른 센터 분석지를 본 날</div>
+        <h3>환자가 다른 센터 분석지를 가져왔어요. 척추 마디마디 각도가 다 나와 있더라고요. 우리 건 "전체적으로 틀어짐" 수준인데. 그날 저녁 새 기기 견적을 알아봤어요.</h3>
+        <div class="problem-resolution">→ 척추 세부 분석이 있었다면, 기기 견적은 안 찾아봤을 거예요</div>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">💡</div>
+          <div class="problem-avatar">😮‍💨</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 원장</span>
-            <span class="problem-persona-role">체형교정센터 · 38세</span>
+            <span class="problem-persona-role">체형교정센터 · Pro 사용 중 · 38세</span>
           </div>
         </div>
-        <h3>기기를 새로 살 여유는 없는데 기능은 더 쓰고 싶어요. 지금 기기로 뭔가 더 할 수 있는 방법이 없을까요?</h3>
+        <div class="problem-scene">견적서를 닫던 그 순간</div>
+        <h3>원하는 기능 다 있는 신형 기기 견적 받았더니 2,800만원이 나왔어요. 기기가 있는데 또 그만큼을. 결국 닫았어요. 근데 그 기능은 여전히 쓰고 싶어요.</h3>
+        <div class="problem-resolution">→ 기기 교체 없이 기능만 추가할 수 있다면</div>
       </div>
+    </div>
+    <div class="problem-tagline">
+      <h3>그 <span class="accent">"~이었다면"</span>,<br>이제 현실이 됩니다.</h3>
+      <p>기기는 그대로. 필요한 기능만 구독하면 됩니다.</p>
     </div>
   </div>
 </section>
@@ -907,7 +1006,7 @@
 <!-- ── FEATURES ── -->
 <section class="features" id="features">
   <div class="section-inner">
-    <h2 class="section-title">그 기능들,<br>이제 씁니다</h2>
+    <h2 class="section-title">그 기능들,<br>이제 사용 가능합니다</h2>
     <p class="section-sub">기기는 그대로. 필요한 기능만 골라 구독하세요.</p>
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
@@ -1145,6 +1244,13 @@
           <a class="compare-cta" href="#trial">30일 무료</a>
         </div>
       </div>
+    </div>
+    <div class="compare-action">
+      <div class="compare-action-text">
+        <p>내 라인업 확인하셨나요?</p>
+        <strong>필요한 기능만, 30일 무료로 직접 써보세요.</strong>
+      </div>
+      <a class="btn-primary" href="#trial" style="white-space:nowrap; flex-shrink:0;">30일 무료 시작하기 →</a>
     </div>
   </div>
 </section>
@@ -1509,6 +1615,22 @@
   </div>
 </div>
 
+<!-- ── SOCIAL PROOF TOAST ── -->
+<div class="sp-toast" id="spToast">
+  <div class="sp-avatar-wrap">
+    <div class="sp-avatar-circle" id="spAvatar">이</div>
+    <div class="sp-live-dot"></div>
+  </div>
+  <div class="sp-content">
+    <div class="sp-header">
+      <span class="sp-brand">Moti Shop</span>
+      <span class="sp-time-text" id="spTime">방금 전</span>
+    </div>
+    <div class="sp-main"><span id="spName">이** 원장</span>님이 체험을 시작했습니다</div>
+    <div class="sp-sub"><span class="sp-feat-highlight" id="spMsg">모아레</span> 기능 · 30일 무료</div>
+  </div>
+</div>
+
 <!-- ── FOOTER ── -->
 <footer>
   <p>
@@ -1778,26 +1900,35 @@
   // ── Social Proof Toast ──
   const SP_EVENTS = [
     { name: '이** 원장', feat: '모아레', time: '방금 전' },
-    { name: '박** 원장', feat: '척추 세부 분석', time: '2분 전' },
-    { name: '최** 원장', feat: 'ALL IN ONE', time: '5분 전' },
-    { name: '정** 원장', feat: '3D 신경·림프·장기', time: '8분 전' },
-    { name: '김** 원장', feat: '손실키 분석', time: '12분 전' },
-    { name: '한** 원장', feat: '안면 여백/탄력', time: '방금 전' },
-    { name: '윤** 원장', feat: 'ALL IN ONE', time: '3분 전' },
+    { name: '박** 원장', feat: '척추 세부 분석', time: '1분 전' },
+    { name: '최** 원장', feat: 'ALL IN ONE', time: '방금 전' },
+    { name: '정** 원장', feat: '3D 신경·림프·장기', time: '2분 전' },
+    { name: '김** 원장', feat: '손실키 분석', time: '방금 전' },
+    { name: '한** 원장', feat: '안면 여백/탄력', time: '3분 전' },
+    { name: '윤** 원장', feat: 'ALL IN ONE', time: '방금 전' },
+    { name: '강** 원장', feat: '모아레', time: '1분 전' },
+    { name: '장** 원장', feat: '척추 세부 분석', time: '방금 전' },
   ];
+  // 순서를 랜덤하게 섞어서 더 자연스럽게
+  const spShuffled = [...SP_EVENTS].sort(() => Math.random() - 0.5);
   let spIdx = 0;
   const spToast = document.getElementById('spToast');
   function showSP() {
-    const ev = SP_EVENTS[spIdx % SP_EVENTS.length];
+    const ev = spShuffled[spIdx % spShuffled.length];
     spIdx++;
     document.getElementById('spAvatar').textContent = ev.name.charAt(0);
-    document.getElementById('spName').textContent = ev.name + '이 ';
-    document.getElementById('spMsg').textContent = `'${ev.feat}' 체험을 시작했습니다`;
+    document.getElementById('spName').textContent = ev.name;
+    document.getElementById('spMsg').textContent = ev.feat;
     document.getElementById('spTime').textContent = ev.time;
     spToast.classList.add('show');
-    setTimeout(() => spToast.classList.remove('show'), 3800);
+    setTimeout(() => spToast.classList.remove('show'), 4200);
   }
-  setTimeout(() => { showSP(); setInterval(showSP, 12000); }, 5000);
+  // 첫 토스트는 3초 후, 이후 10~18초 랜덤 간격
+  function scheduleSP() {
+    const delay = 10000 + Math.random() * 8000;
+    setTimeout(() => { showSP(); scheduleSP(); }, delay);
+  }
+  setTimeout(() => { showSP(); scheduleSP(); }, 3000);
 </script>
 </body>
 </html>
