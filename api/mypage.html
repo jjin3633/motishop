@@ -127,6 +127,35 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 .modal-confirm { flex: 2; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(90deg, var(--blue), var(--cyan)); color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .modal-confirm.danger { background: var(--red); }
 .modal-err { font-size: 12px; color: var(--red); margin-top: -6px; margin-bottom: 10px; display: none; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .container { padding: 20px 16px; }
+  .nav-inner { padding: 0 16px; }
+  .nav-logo { font-size: 19px; }
+  .nav-user { display: none; }
+  .btn-logout { font-size: 12px; padding: 5px 10px; }
+  .status-card { padding: 24px 20px; border-radius: 16px; }
+  .status-top { flex-direction: column; gap: 14px; align-items: flex-start; }
+  .status-company { font-size: 18px; }
+  .status-grid { grid-template-columns: 1fr; gap: 12px; padding-top: 4px; }
+  .status-item { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .status-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .status-item .lbl { margin-bottom: 0; }
+  .status-item .val { font-size: 16px; }
+  .action-row { flex-direction: column; gap: 8px; }
+  .btn-action { padding: 14px; font-size: 14px; }
+  .billing-switch-box { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
+  .btn-switch { width: 100%; padding: 12px; }
+  .feat-row { padding: 12px 14px; gap: 10px; flex-wrap: wrap; }
+  .feat-price { margin-right: 0; font-size: 11px; }
+  .btn-feat-cancel, .btn-feat-add { padding: 6px 12px; font-size: 11px; }
+  .log-row { padding: 12px 14px; gap: 8px; flex-wrap: wrap; }
+  .log-date { font-size: 12px; }
+  .modal { padding: 24px 20px; border-radius: 16px; }
+  .login-box { padding: 36px 24px; }
+  .section-title { font-size: 12px; margin-bottom: 10px; }
+}
 </style>
 </head>
 <body>

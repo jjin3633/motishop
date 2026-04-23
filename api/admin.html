@@ -89,7 +89,7 @@ nav { position:fixed; top:0; left:0; right:0; z-index:100; height:60px; backgrou
 .spin { display:inline-block; animation:spin .7s linear infinite; }
 
 /* ── Table ── */
-.table-wrap { background:white; border-radius:14px; border:1px solid var(--gray100); overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.table-wrap { background:white; border-radius:14px; border:1px solid var(--gray100); overflow-x:auto; -webkit-overflow-scrolling:touch; box-shadow:0 1px 4px rgba(0,0,0,.04); }
 table { width:100%; border-collapse:collapse; }
 th { background:var(--gray50); padding:11px 16px; text-align:left; font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; border-bottom:1px solid var(--gray100); white-space:nowrap; }
 td { padding:13px 16px; border-bottom:1px solid var(--gray100); font-size:13px; color:var(--text); vertical-align:middle; }
@@ -148,6 +148,39 @@ tr:hover td { background:var(--gray50); }
 .month-detail { margin-top:16px; }
 .month-detail-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .month-detail-title span { font-size:11px; color:var(--text-muted); font-weight:500; }
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .top-stats { grid-template-columns:repeat(3,1fr); }
+  .rev-top { grid-template-columns:repeat(3,1fr); }
+  .rev-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 768px) {
+  .container { padding:20px 16px; }
+  .nav-inner { padding:0 16px; }
+  .nav-logo { font-size:19px; }
+  .btn-logout { font-size:12px; padding:5px 10px; }
+  .top-stats { grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+  .stat-card { padding:14px 16px; border-radius:12px; }
+  .stat-card .val { font-size:20px; }
+  .stat-card .lbl { font-size:10px; }
+  .rev-top { grid-template-columns:1fr; gap:10px; }
+  .rev-card { padding:18px 20px; }
+  .tabs { width:100%; overflow-x:auto; flex-wrap:nowrap; }
+  .tab { flex-shrink:0; padding:7px 14px; font-size:13px; }
+  .toolbar { gap:8px; }
+  .toolbar input, .toolbar select { flex:1; min-width:120px; font-size:13px; }
+  .toolbar input { width:auto; }
+  th { padding:9px 12px; font-size:10px; }
+  td { padding:10px 12px; font-size:12px; }
+  .login-box { padding:36px 24px; width:100%; }
+  .month-detail-title { font-size:12px; }
+  .year-table th, .year-table td { padding:8px 10px; font-size:12px; }
+}
+@media (max-width: 480px) {
+  .top-stats { grid-template-columns:1fr 1fr; }
+  .rev-card .amt { font-size:22px; }
+}
 </style>
 </head>
 <body>
