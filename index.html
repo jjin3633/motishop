@@ -302,44 +302,30 @@
       gap: 20px; margin-top: 56px;
     }
     .problem-card {
-      background: var(--gray50);
+      background: white;
       border: 1px solid var(--gray100);
       border-radius: var(--radius);
-      padding: 36px 32px 32px;
-      position: relative; overflow: hidden;
+      padding: 32px;
+      border-left: 3px solid var(--blue);
       transition: transform .25s, box-shadow .25s;
     }
-    .problem-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,.08); }
-    .problem-deco {
-      font-family: Georgia, serif; font-size: 120px; line-height: 1;
-      position: absolute; top: -10px; right: 16px;
-      opacity: .06; color: var(--navy); user-select: none; pointer-events: none;
-    }
+    .problem-card:hover { transform: translateY(-3px); box-shadow: 0 16px 44px rgba(0,0,0,.07); }
     .problem-persona {
       display: flex; align-items: center; gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .problem-avatar {
-      width: 52px; height: 52px; border-radius: 50%;
+      width: 48px; height: 48px; border-radius: 50%;
       background: var(--gray100);
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px; flex-shrink: 0;
-      border: 2px solid var(--gray100);
+      font-size: 26px; flex-shrink: 0;
     }
     .problem-persona-info { display: flex; flex-direction: column; gap: 2px; }
-    .problem-persona-name { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+    .problem-persona-name { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
     .problem-persona-role { font-size: 12px; color: var(--gray400); font-weight: 500; }
     .problem-card h3 {
-      font-size: 17px; font-weight: 600; color: var(--gray600);
-      line-height: 1.75; letter-spacing: -0.01em;
-      font-style: italic; position: relative;
-    }
-    .problem-card h3::before {
-      content: '"';
-      font-family: Georgia, serif; font-size: 52px; line-height: 1;
-      color: var(--blue); opacity: .18;
-      display: block; margin-bottom: -8px;
-      font-style: normal;
+      font-size: 15px; font-weight: 500; color: var(--gray600);
+      line-height: 1.8; letter-spacing: -0.01em;
     }
 
     /* ── Features ── */
@@ -349,8 +335,8 @@
     .features .section-label { color: var(--cyan); }
     .features .section-label::before { background: var(--cyan); }
     .features-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 16px; margin-top: 56px;
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 20px; margin-top: 52px;
     }
     .feat-card {
       background: rgba(255,255,255,.035);
@@ -358,35 +344,21 @@
       border-radius: var(--radius); padding: 32px;
       transition: all .25s; cursor: pointer; position: relative; overflow: hidden;
     }
-    .feat-card:active { transform: scale(.98); }
-
-    /* feat-card image thumbnail */
+    /* feat-card — image overlay layout */
     .feat-thumb {
       width: 100%; aspect-ratio: 16/9;
-      border-radius: 8px; overflow: hidden; margin-bottom: 18px;
-      position: relative;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.07);
-      flex-shrink: 0;
+      position: relative; overflow: hidden; flex-shrink: 0;
+      background: var(--navy2);
     }
-    .feat-thumb img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      transition: transform .35s ease;
+    .feat-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s ease; }
+    .feat-card:hover .feat-thumb img { transform: scale(1.06); }
+    .feat-thumb-gradient {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(0deg, rgba(6,16,30,.94) 0%, rgba(6,16,30,.28) 48%, transparent 100%);
     }
-    .feat-card:hover .feat-thumb img { transform: scale(1.04); }
-    .feat-thumb-overlay {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: white;
-      background: rgba(6,16,30,.5); backdrop-filter: blur(3px);
-      opacity: 0; transition: opacity .25s;
-    }
-    .feat-card:hover .feat-thumb-overlay { opacity: 1; }
     .feat-thumb-all {
-      display: flex; align-items: center; justify-content: center;
-      font-size: 40px;
-      background: radial-gradient(ellipse at center, rgba(26,107,255,.18) 0%, rgba(0,212,255,.06) 60%, transparent 100%);
-      border-color: rgba(0,212,255,.15);
+      display: flex; align-items: center; justify-content: center; font-size: 48px;
+      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(26,107,255,.2) 0%, rgba(0,212,255,.06) 60%, transparent 100%);
     }
 
     /* ── Feature Modal ── */
@@ -416,40 +388,23 @@
       line-height: 1;
     }
     .feat-modal-close:hover { background: rgba(255,255,255,.2); transform: scale(1.1); }
-    .feat-card:hover { background: rgba(255,255,255,.06); border-color: rgba(0,212,255,.5); transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(0,212,255,.3), 0 12px 40px rgba(0,0,0,.3); }
-    .feat-card h3 { font-size: 17px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
-    .feat-card p { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.75; margin-bottom: 14px; flex: 1; }
-    /* Feature icon — dark glass style, matches hero tone */
-    .fi {
-      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 19px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.09);
-      transition: box-shadow .25s;
+    .feat-card { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+    .feat-card:hover { background: rgba(255,255,255,.055); border-color: rgba(0,212,255,.4); transform: translateY(-4px); box-shadow: 0 0 0 1px rgba(0,212,255,.2), 0 20px 56px rgba(0,0,0,.4); }
+    /* badge + h3 positioned inside feat-thumb */
+    .feat-card .feat-badge { position: absolute; top: 14px; left: 14px; z-index: 3; }
+    .feat-card h3 {
+      position: absolute; bottom: 0; left: 0; right: 0; margin: 0;
+      padding: 10px 18px 16px; color: white; z-index: 3;
+      font-size: 16px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3;
     }
-    .feat-card:hover .fi { box-shadow: 0 0 16px var(--fi-glow, rgba(0,212,255,.2)); }
-    .fi-moire  { --fi-glow: rgba(0,212,255,.25); border-color: rgba(0,212,255,.2); }
-    .fi-nerve  { --fi-glow: rgba(168,85,247,.25); border-color: rgba(168,85,247,.2); }
-    .fi-spine  { --fi-glow: rgba(34,211,238,.25); border-color: rgba(34,211,238,.2); }
-    .fi-height { --fi-glow: rgba(251,191,36,.25); border-color: rgba(251,191,36,.2); }
-    .fi-face   { --fi-glow: rgba(236,72,153,.25); border-color: rgba(236,72,153,.2); }
-    .fi-all    { --fi-glow: rgba(26,107,255,.3); border-color: rgba(26,107,255,.25); }
-    .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .03em; }
-    .badge-hot { background: rgba(255,90,90,.15); color: #FF6B6B; }
-    .badge-new { background: rgba(0,212,255,.15); color: var(--cyan); }
-    .badge-pro { background: rgba(245,200,66,.15); color: var(--gold); }
-    .feat-card { display: flex; flex-direction: column; }
-    .feat-card h3 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 10px; line-height: 1.3; letter-spacing: -0.02em; }
-    .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; }
-    .feat-roi {
-      margin-top: auto; padding: 12px 16px;
-      background: rgba(255,255,255,.04); border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.07);
-      font-size: 13px; font-weight: 700; color: rgba(255,255,255,.45);
-      letter-spacing: 0.01em; line-height: 1.5;
+    .feat-card p {
+      padding: 16px 20px 20px; margin: 0;
+      font-size: 13px; color: rgba(255,255,255,.48); line-height: 1.8; flex: 1;
     }
-    .feat-roi strong { color: var(--cyan); }
+    .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .03em; backdrop-filter: blur(6px); }
+    .badge-hot { background: rgba(255,80,80,.22); color: #FF7070; border: 1px solid rgba(255,80,80,.2); }
+    .badge-new { background: rgba(0,212,255,.18); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
+    .badge-pro { background: rgba(245,200,66,.16); color: var(--gold); border: 1px solid rgba(245,200,66,.2); }
 
     /* ── How it works ── */
     .howitworks { background: var(--gray50); }
@@ -828,6 +783,7 @@
     @media (max-width: 1024px) {
       .features-grid { grid-template-columns: repeat(2, 1fr); }
       .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+      .feat-card h3 { font-size: 15px; }
       .compare-slide.active { grid-template-columns: 1fr; }
       .form-layout { grid-template-columns: 1fr; }
       .form-left { padding-top: 0; }
@@ -967,7 +923,6 @@
     <h2 class="section-title">이런 고민,<br>없으셨나요?</h2>
     <div class="problem-grid">
       <div class="problem-card">
-        <div class="problem-deco">"</div>
         <div class="problem-persona">
           <div class="problem-avatar">😔</div>
           <div class="problem-persona-info">
@@ -978,7 +933,6 @@
         <h3>화이트를 원했는데 예산 때문에 미니를 샀어요. 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
-        <div class="problem-deco">"</div>
         <div class="problem-persona">
           <div class="problem-avatar">🤔</div>
           <div class="problem-persona-info">
@@ -989,7 +943,6 @@
         <h3>프로를 원했는데 화이트로 계약했어요. 기기를 다시 바꿀 여유는 없고, 분석 깊이가 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
-        <div class="problem-deco">"</div>
         <div class="problem-persona">
           <div class="problem-avatar">💡</div>
           <div class="problem-persona-info">
@@ -1006,61 +959,62 @@
 <!-- ── FEATURES ── -->
 <section class="features" id="features">
   <div class="section-inner">
-    <h2 class="section-title">모티샵이 오픈했습니다</h2>
-    <p class="section-sub">기기는 그대로. 필요한 기능만 골라 구독하세요.</p>
+    <h2 class="section-title">기기는 그대로입니다.<br>기능만 더하면 됩니다.</h2>
+    <p class="section-sub">필요한 기능만 골라 구독하세요. 언제든 해지할 수 있습니다.</p>
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
         <div class="feat-thumb">
           <img src="moire_image.jpg" alt="모아레 분석 화면" />
-          <div class="feat-thumb-overlay">미리보기 ↗</div>
+          <div class="feat-thumb-gradient"></div>
+          <span class="feat-badge badge-hot">인기</span>
+          <h3>모아레 (Moiré)</h3>
         </div>
-        <h3>모아레 (Moiré)</h3>
-        <p>척추·골반 불균형을 등고선으로 시각화합니다.</p>
-        <span class="feat-badge badge-hot">인기</span>
+        <p>척추·골반 불균형을 등고선으로 시각화합니다. 수치 대신 이미지 한 장으로 회원 상담이 달라집니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('nerve.png')">
         <div class="feat-thumb">
           <img src="nerve.png" alt="3D 신경·림프·장기 분석 화면" />
-          <div class="feat-thumb-overlay">미리보기 ↗</div>
+          <div class="feat-thumb-gradient"></div>
+          <span class="feat-badge badge-new">신규</span>
+          <h3>3D 신경 · 림프 · 장기</h3>
         </div>
-        <h3>3D 신경 · 림프 · 장기</h3>
-        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다.</p>
-        <span class="feat-badge badge-new">신규</span>
+        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 타 센터에서는 보여주기 어려운 분석입니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
         <div class="feat-thumb">
           <img src="spinedetaie.png" alt="척추 세부 분석 화면" />
-          <div class="feat-thumb-overlay">미리보기 ↗</div>
+          <div class="feat-thumb-gradient"></div>
+          <span class="feat-badge badge-pro">프리미엄</span>
+          <h3>척추 세부 분석</h3>
         </div>
-        <h3>척추 세부 분석</h3>
-        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다.</p>
-        <span class="feat-badge badge-pro">프리미엄</span>
+        <p>경추·흉추·요추 각 마디의 각도를 세분화합니다. 기기 교체 없이 프로급 척추 분석을 제공합니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('lossheight..png')">
         <div class="feat-thumb">
           <img src="lossheight..png" alt="손실키 분석 화면" />
-          <div class="feat-thumb-overlay">미리보기 ↗</div>
+          <div class="feat-thumb-gradient"></div>
+          <span class="feat-badge badge-pro">프리미엄</span>
+          <h3>손실키 분석</h3>
         </div>
-        <h3>손실키 분석</h3>
-        <p>자세로 인한 신장 손실을 수치로 제시합니다.</p>
-        <span class="feat-badge badge-pro">프리미엄</span>
+        <p>자세로 인한 신장 손실을 수치로 제시합니다. 체형 교정 동기 부여에 즉각적인 효과가 있습니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('faece.png')">
         <div class="feat-thumb">
           <img src="faece.png" alt="안면 여백·탄력 분석 화면" />
-          <div class="feat-thumb-overlay">미리보기 ↗</div>
+          <div class="feat-thumb-gradient"></div>
+          <span class="feat-badge badge-pro">프리미엄</span>
+          <h3>안면 여백 / 탄력</h3>
         </div>
-        <h3>안면 여백 / 탄력</h3>
-        <p>안면 윤곽과 탄력도를 분석합니다.</p>
-        <span class="feat-badge badge-pro">프리미엄</span>
+        <p>안면 윤곽과 탄력도를 분석합니다. 체형·뷰티 복합 센터의 차별화 포인트입니다.</p>
       </div>
-      <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
+      <div class="feat-card" style="border-color:rgba(0,212,255,.18);">
         <div class="feat-thumb feat-thumb-all">
-          <span>⭐</span>
+          <div class="feat-thumb-gradient"></div>
+          <span class="feat-badge badge-hot" style="position:absolute;top:14px;left:14px;z-index:3;">최저가</span>
+          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 16px;color:white;z-index:3;font-size:16px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
+          <span style="font-size:48px;position:relative;z-index:2;">⭐</span>
         </div>
-        <h3>ALL IN ONE</h3>
-        <p>5개 기능 전체 묶음. 개별 합산 대비 월 최대 40% 절감.</p>
-        <span class="feat-badge badge-hot">최저가</span>
+        <p>5개 기능 전체 묶음. 개별 합산 대비 월 최대 40% 절감됩니다.</p>
       </div>
     </div>
   </div>
