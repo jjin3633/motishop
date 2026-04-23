@@ -1146,7 +1146,7 @@
   <div class="section-inner">
     <span class="section-label">이용 방법</span>
     <h2 class="section-title">딱 4단계면 됩니다</h2>
-    <p class="section-sub">기능을 고르고 카드 등록 한 번, 그것만으로 30일이 시작됩니다.</p>
+    <p class="section-sub">기능 선택부터 카드 등록까지 5분. 30일은 무료입니다.</p>
     <div class="steps">
       <div class="step">
         <div class="step-num active">1</div>
@@ -1169,7 +1169,7 @@
       <div class="step">
         <div class="step-num active">4</div>
         <h3>자동 결제</h3>
-        <p>체험 후 자동으로 구독제로 전환됩니다. 원하지 않으면 체험 종료 전 언제든 해지하세요.</p>
+        <p>30일 후 자동으로 구독이 시작됩니다. 원하지 않으면 언제든 해지하세요.</p>
         <span class="step-tag">자유롭게</span>
       </div>
     </div>
@@ -1475,7 +1475,7 @@
 <section class="faq">
   <div class="section-inner" style="text-align:center;">
     <span class="section-label" style="justify-content:center;">자주 묻는 질문</span>
-    <h2 class="section-title">궁금한 점이 있으신가요?</h2>
+    <h2 class="section-title">자주 묻는 질문</h2>
     <div class="faq-list">
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>30일 체험이 끝나면 자동으로 결제되나요?</span><span class="arrow"></span></div>
@@ -1499,7 +1499,7 @@
 
 <!-- ── CTA BANNER ── -->
 <section class="cta-banner">
-  <h2>지금 시작해보세요. <span class="accent">30일은 무료입니다.</span></h2>
+  <h2>30일, <span class="accent">직접 써보세요.</span></h2>
   <p>마음에 들면 그냥 두세요. 언제든 해지 가능.</p>
   <a class="btn-primary" href="#trial" style="display:inline-flex;">30일 무료 체험 시작</a>
 </section>
@@ -1779,6 +1779,30 @@
     el.style.transition = `opacity .3s ease ${i * 0.04}s, transform .3s ease ${i * 0.04}s`;
     observer.observe(el);
   });
+
+  // ── Social Proof Toast ──
+  const SP_EVENTS = [
+    { name: '이** 원장', feat: '모아레', time: '방금 전' },
+    { name: '박** 원장', feat: '척추 세부 분석', time: '2분 전' },
+    { name: '최** 원장', feat: 'ALL IN ONE', time: '5분 전' },
+    { name: '정** 원장', feat: '3D 신경·림프·장기', time: '8분 전' },
+    { name: '김** 원장', feat: '손실키 분석', time: '12분 전' },
+    { name: '한** 원장', feat: '안면 여백/탄력', time: '방금 전' },
+    { name: '윤** 원장', feat: 'ALL IN ONE', time: '3분 전' },
+  ];
+  let spIdx = 0;
+  const spToast = document.getElementById('spToast');
+  function showSP() {
+    const ev = SP_EVENTS[spIdx % SP_EVENTS.length];
+    spIdx++;
+    document.getElementById('spAvatar').textContent = ev.name.charAt(0);
+    document.getElementById('spName').textContent = ev.name + '이 ';
+    document.getElementById('spMsg').textContent = `'${ev.feat}' 체험을 시작했습니다`;
+    document.getElementById('spTime').textContent = ev.time;
+    spToast.classList.add('show');
+    setTimeout(() => spToast.classList.remove('show'), 3800);
+  }
+  setTimeout(() => { showSP(); setInterval(showSP, 12000); }, 5000);
 </script>
 </body>
 </html>

@@ -17,6 +17,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── 기능 가격표 ──
+const FEATURE_PRICES = {
+  monthly: {
+    '🧍 모아레': 23900,
+    '🫀 3D 신경·림프·장기': 35900,
+    '📐 척추 세부 분석': 47900,
+    '📏 손실키 분석': 79900,
+    '✨ 안면 여백/탄력': 29900,
+    '⭐ ALL IN ONE': 107900,
+  },
+  annual: {
+    '🧍 모아레': 17900,
+    '🫀 3D 신경·림프·장기': 29900,
+    '📐 척추 세부 분석': 39900,
+    '📏 손실키 분석': 65900,
+    '✨ 안면 여백/탄력': 23900,
+    '⭐ ALL IN ONE': 89900,
+  }
+};
+
 // ── 유틸 ──
 function hashPw(pw, salt) {
   return crypto.createHmac('sha256', salt).update(pw).digest('hex');
@@ -197,6 +217,30 @@ app.post('/api/mypage/cancel', mypageAuth, (req, res) => {
   db.prepare(`UPDATE subscribers SET status='cancelled' WHERE id=?`).run(req.subscriberId);
   db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(req.subscriberId);
   res.json({ ok: true });
+});
+
+// 기능 추가/해지
+app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
+  const { features } = req.body;
+  if (!features || !Array.isArray(features) || features.length === 0)
+    return res.status(400).json({ ok: false, msg: '기능을 하나 이상 선택해주세요.' });
+
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  const prices = FEATURE_PRICES[sub.billing_type] || FEATURE_PRICES.monthly;
+
+  let newAmount;
+  if (features.includes('⭐ ALL IN ONE')) {
+    newAmount = prices['⭐ ALL IN ONE'];
+  } else {
+    newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+  }
+
+  const featStr = features.join(', ');
+  db.prepare(`UPDATE subscribers SET features=?, charge_amount=? WHERE id=?`)
+    .run(featStr, newAmount, req.subscriberId);
+
+  console.log(`[기능변경] ${sub.company} → ${featStr} / ${newAmount}원`);
+  res.json({ ok: true, features: featStr, charge_amount: newAmount });
 });
 
 scheduleBilling();

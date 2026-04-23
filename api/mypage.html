@@ -63,7 +63,14 @@ nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; ali
 .feat-row:last-child { border-bottom: none; }
 .feat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
 .feat-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.feat-price { font-size: 12px; color: var(--gray400); margin-right: 10px; }
 .feat-empty { text-align: center; padding: 32px; color: var(--gray400); font-size: 14px; }
+.btn-feat-cancel { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,.3); background: rgba(239,68,68,.06); color: var(--red); cursor: pointer; font-family: inherit; white-space: nowrap; }
+.btn-feat-cancel:hover { background: rgba(239,68,68,.12); }
+.btn-feat-add { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(26,107,255,.25); background: rgba(26,107,255,.06); color: var(--blue); cursor: pointer; font-family: inherit; white-space: nowrap; }
+.btn-feat-add:hover { background: rgba(26,107,255,.12); }
+.feat-section-title { font-size: 13px; font-weight: 700; color: var(--gray400); padding: 10px 20px 6px; background: var(--gray50); border-bottom: 1px solid var(--gray100); letter-spacing: .04em; text-transform: uppercase; }
+.feat-row.avail { opacity: .75; }
 
 /* ── Billing Logs ── */
 .log-list { background: white; border-radius: 14px; border: 1px solid var(--gray100); overflow: hidden; margin-bottom: 20px; }
@@ -152,23 +159,23 @@ nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; ali
       </div>
     </div>
 
-    <!-- 구독 기능 -->
-    <div class="section-title">구독 중인 기능</div>
+    <!-- 구독 기능 관리 -->
+    <div class="section-title">기능 구독 관리</div>
     <div class="feat-list" id="featList"></div>
 
     <!-- 액션 버튼 -->
     <div class="action-row">
       <button class="btn-action" onclick="openPwModal()">비밀번호 변경</button>
-      <button class="btn-action danger" onclick="openCancelModal()" id="cancelBtn">구독 해지</button>
+      <button class="btn-action danger" onclick="openCancelModal()" id="cancelBtn">전체 해지</button>
     </div>
 
     <!-- 결제 내역 -->
     <div class="section-title">결제 내역</div>
     <div class="log-list" id="logList"></div>
 
-    <!-- 추가 구독 / 문의 -->
+    <!-- 문의 -->
     <div class="contact-box">
-      <p>기능 추가 구독 또는 구독 변경은 담당자에게 문의해주세요.<br>
+      <p>결제 관련 문의는 담당자에게 문의해주세요.<br>
       <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00</p>
     </div>
 
@@ -205,7 +212,17 @@ nav { background: var(--navy); padding: 0 24px; height: 60px; display: flex; ali
 
 <script>
 let sessionToken = sessionStorage.getItem('moti_token');
+let currentSubscriber = null;
 const fmt = n => Number(n||0).toLocaleString();
+
+const ALL_FEATURES = [
+  { key: '🧍 모아레', monthly: 23900, annual: 17900 },
+  { key: '🫀 3D 신경·림프·장기', monthly: 35900, annual: 29900 },
+  { key: '📐 척추 세부 분석', monthly: 47900, annual: 39900 },
+  { key: '📏 손실키 분석', monthly: 79900, annual: 65900 },
+  { key: '✨ 안면 여백/탄력', monthly: 29900, annual: 23900 },
+  { key: '⭐ ALL IN ONE', monthly: 107900, annual: 89900 },
+];
 
 async function apiFetch(path, options = {}) {
   const res = await fetch(path, {
@@ -267,18 +284,8 @@ async function showApp() {
 
   if (s.status === 'cancelled') document.getElementById('cancelBtn').style.display = 'none';
 
-  // 기능 목록
-  const featList = document.getElementById('featList');
-  const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
-  if (feats.length) {
-    featList.innerHTML = feats.map(f => `
-      <div class="feat-row">
-        <div class="feat-dot"></div>
-        <div class="feat-name">${f}</div>
-      </div>`).join('');
-  } else {
-    featList.innerHTML = '<div class="feat-empty">구독 중인 기능이 없습니다</div>';
-  }
+  currentSubscriber = s;
+  renderFeatList();
 
   // 결제 내역
   const logList = document.getElementById('logList');
@@ -295,6 +302,79 @@ async function showApp() {
       </div>`).join('');
   } else {
     logList.innerHTML = '<div class="feat-empty">아직 결제 내역이 없습니다</div>';
+  }
+}
+
+// 기능 목록 렌더링
+function renderFeatList() {
+  const s = currentSubscriber;
+  if (!s) return;
+  const billingType = s.billing_type === 'annual' ? 'annual' : 'monthly';
+  const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  const featList = document.getElementById('featList');
+
+  const subscribedFeats = ALL_FEATURES.filter(f => subscribed.includes(f.key));
+  const availFeats = ALL_FEATURES.filter(f => !subscribed.includes(f.key));
+
+  let html = '';
+
+  if (subscribedFeats.length) {
+    html += `<div class="feat-section-title">구독 중 (${subscribedFeats.length}개)</div>`;
+    html += subscribedFeats.map(f => `
+      <div class="feat-row">
+        <div class="feat-dot"></div>
+        <div class="feat-name">${f.key}</div>
+        <span class="feat-price">월 ${fmt(f[billingType])}원</span>
+        ${s.status !== 'cancelled' ? `<button class="btn-feat-cancel" onclick="cancelFeat('${f.key}')">해지</button>` : ''}
+      </div>`).join('');
+  }
+
+  if (availFeats.length && s.status !== 'cancelled') {
+    html += `<div class="feat-section-title">추가 가능</div>`;
+    html += availFeats.map(f => `
+      <div class="feat-row avail">
+        <div class="feat-dot" style="background:var(--gray100)"></div>
+        <div class="feat-name" style="color:var(--gray400)">${f.key}</div>
+        <span class="feat-price">월 ${fmt(f[billingType])}원</span>
+        <button class="btn-feat-add" onclick="addFeat('${f.key}')">추가</button>
+      </div>`).join('');
+  }
+
+  if (!html) html = '<div class="feat-empty">구독 중인 기능이 없습니다</div>';
+  featList.innerHTML = html;
+}
+
+async function cancelFeat(featKey) {
+  const s = currentSubscriber;
+  const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  const remaining = subscribed.filter(f => f !== featKey);
+  if (remaining.length === 0) {
+    if (!confirm(`'${featKey}'를 해지하면 구독 중인 기능이 없게 됩니다. 전체 해지로 진행하시겠습니까?`)) return;
+    openCancelModal(); return;
+  }
+  if (!confirm(`'${featKey}' 구독을 해지하시겠습니까?\n다음 결제일부터 반영됩니다.`)) return;
+  await updateFeatures(remaining);
+}
+
+async function addFeat(featKey) {
+  const s = currentSubscriber;
+  const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  const updated = [...subscribed, featKey];
+  if (!confirm(`'${featKey}'를 추가 구독하시겠습니까?\n다음 결제일부터 반영됩니다.`)) return;
+  await updateFeatures(updated);
+}
+
+async function updateFeatures(features) {
+  const data = await apiFetch('/api/mypage/update-features', {
+    method: 'POST', body: JSON.stringify({ features })
+  });
+  if (data.ok) {
+    currentSubscriber.features = data.features;
+    currentSubscriber.charge_amount = data.charge_amount;
+    document.getElementById('myAmount').innerHTML = fmt(data.charge_amount) + '<small>원</small>';
+    renderFeatList();
+  } else {
+    alert(data.msg || '오류가 발생했습니다.');
   }
 }
 
