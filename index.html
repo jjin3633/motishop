@@ -321,11 +321,11 @@
       font-size: 26px; flex-shrink: 0;
     }
     .problem-persona-info { display: flex; flex-direction: column; gap: 2px; }
-    .problem-persona-name { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
-    .problem-persona-role { font-size: 12px; color: var(--gray400); font-weight: 500; }
+    .problem-persona-name { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+    .problem-persona-role { font-size: 13px; color: var(--gray400); font-weight: 500; }
     .problem-card h3 {
-      font-size: 15px; font-weight: 500; color: var(--gray600);
-      line-height: 1.8; letter-spacing: -0.01em;
+      font-size: 17px; font-weight: 500; color: var(--gray600);
+      line-height: 1.85; letter-spacing: -0.01em;
     }
 
     /* ── Features ── */
@@ -346,7 +346,7 @@
     }
     /* feat-card — image overlay layout */
     .feat-thumb {
-      width: 100%; aspect-ratio: 16/9;
+      width: 100%; aspect-ratio: 4/3;
       position: relative; overflow: hidden; flex-shrink: 0;
       background: var(--navy2);
     }
@@ -354,11 +354,24 @@
     .feat-card:hover .feat-thumb img { transform: scale(1.06); }
     .feat-thumb-gradient {
       position: absolute; inset: 0; pointer-events: none;
-      background: linear-gradient(0deg, rgba(6,16,30,.94) 0%, rgba(6,16,30,.28) 48%, transparent 100%);
+      background: linear-gradient(0deg, rgba(6,16,30,.97) 0%, rgba(6,16,30,.45) 45%, rgba(6,16,30,.1) 100%);
     }
     .feat-thumb-all {
-      display: flex; align-items: center; justify-content: center; font-size: 48px;
-      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(26,107,255,.2) 0%, rgba(0,212,255,.06) 60%, transparent 100%);
+      display: flex; align-items: stretch; justify-content: stretch;
+      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(26,107,255,.18) 0%, rgba(0,212,255,.05) 60%, transparent 100%);
+      padding: 20px 18px 56px;
+    }
+    .all-feat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 7px; width: 100%; align-content: start;
+    }
+    .all-feat-item {
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,.65);
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px; padding: 8px 10px; line-height: 1.4;
+    }
+    .all-feat-plus {
+      background: rgba(0,212,255,.1); border-color: rgba(0,212,255,.3); color: var(--cyan);
+      grid-column: span 2; text-align: center; font-size: 12px;
     }
 
     /* ── Feature Modal ── */
@@ -394,17 +407,22 @@
     .feat-card .feat-badge { position: absolute; top: 14px; left: 14px; z-index: 3; }
     .feat-card h3 {
       position: absolute; bottom: 0; left: 0; right: 0; margin: 0;
-      padding: 10px 18px 16px; color: white; z-index: 3;
-      font-size: 16px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3;
+      padding: 10px 18px 18px; color: white; z-index: 3;
+      font-size: 17px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3;
     }
     .feat-card p {
-      padding: 16px 20px 20px; margin: 0;
-      font-size: 13px; color: rgba(255,255,255,.48); line-height: 1.8; flex: 1;
+      padding: 18px 22px 22px; margin: 0;
+      font-size: 14px; color: rgba(255,255,255,.68); line-height: 1.85; flex: 1;
     }
-    .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .03em; backdrop-filter: blur(6px); }
-    .badge-hot { background: rgba(255,80,80,.22); color: #FF7070; border: 1px solid rgba(255,80,80,.2); }
-    .badge-new { background: rgba(0,212,255,.18); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
-    .badge-pro { background: rgba(245,200,66,.16); color: var(--gold); border: 1px solid rgba(245,200,66,.2); }
+    .feat-badge {
+      font-size: 11px; font-weight: 800; padding: 4px 11px; border-radius: 100px; letter-spacing: .04em;
+      background: rgba(6,16,30,.72); border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    }
+    .badge-hot { color: #FF8585; border-color: rgba(255,120,120,.35); }
+    .badge-new { color: var(--cyan); border-color: rgba(0,212,255,.35); }
+    .badge-pro { color: var(--gold); border-color: rgba(245,200,66,.35); }
 
     /* ── How it works ── */
     .howitworks { background: var(--gray50); }
@@ -624,8 +642,8 @@
     .faq-q .arrow::after  { width: 1.5px; height: 14px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
     .faq-item.open .faq-q .arrow::after { transform: translate(-50%,-50%) rotate(90deg); opacity: 0; }
     .faq-item.open .faq-q .arrow::before { background: var(--blue); }
-    .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
-    .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; text-align: left; }
+    .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; text-align: left; }
+    .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; }
 
     /* ── Compare Action CTA ── */
     .compare-action {
@@ -781,9 +799,9 @@
 
     /* ── Responsive ── */
     @media (max-width: 1024px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: repeat(2, 1fr); }
-      .feat-card h3 { font-size: 15px; }
+      .feat-card h3 { font-size: 16px; }
       .compare-slide.active { grid-template-columns: 1fr; }
       .form-layout { grid-template-columns: 1fr; }
       .form-left { padding-top: 0; }
@@ -839,8 +857,7 @@
       .tab-full { display: none; }
       .tab-short { display: inline; }
       /* 기능 카드 */
-      .feat-card { padding: 20px; }
-      .feat-card p, .feat-roi { font-size: 15px; }
+      .feat-card p, .feat-roi { font-size: 14px; }
       /* 문제 카드 */
       .problem-card { padding: 28px 24px 24px; }
       .problem-card h3 { font-size: 16px; }
@@ -1007,14 +1024,21 @@
         </div>
         <p>안면 윤곽과 탄력도를 분석합니다. 체형·뷰티 복합 센터의 차별화 포인트입니다.</p>
       </div>
-      <div class="feat-card" style="border-color:rgba(0,212,255,.18);">
+      <div class="feat-card" style="border-color:rgba(0,212,255,.22);">
         <div class="feat-thumb feat-thumb-all">
           <div class="feat-thumb-gradient"></div>
-          <span class="feat-badge badge-hot" style="position:absolute;top:14px;left:14px;z-index:3;">최저가</span>
-          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 16px;color:white;z-index:3;font-size:16px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
-          <span style="font-size:48px;position:relative;z-index:2;">⭐</span>
+          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:3;color:var(--cyan);border-color:rgba(0,212,255,.35);">최대 40% 절감</span>
+          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:3;font-size:17px;font-weight:800;letter-spacing:-0.02em;">⭐ ALL IN ONE</h3>
+          <div class="all-feat-grid" style="position:relative;z-index:2;">
+            <div class="all-feat-item">🧍 모아레</div>
+            <div class="all-feat-item">🫀 3D 신경·림프·장기</div>
+            <div class="all-feat-item">📐 척추 세부 분석</div>
+            <div class="all-feat-item">📏 손실키 분석</div>
+            <div class="all-feat-item">✨ 안면 여백·탄력</div>
+            <div class="all-feat-item all-feat-plus">+ 5개 기능 전부</div>
+          </div>
         </div>
-        <p>5개 기능 전체 묶음. 개별 합산 대비 월 최대 40% 절감됩니다.</p>
+        <p>모든 기능을 하나로. 개별 구독보다 월 최대 40% 저렴하고, 추후 기능이 추가되어도 동일 요금으로 이용하실 수 있습니다.</p>
       </div>
     </div>
   </div>
@@ -1279,7 +1303,7 @@
 <section class="howitworks">
   <div class="section-inner">
     <h2 class="section-title">어떻게 하면 되냐고요?<br>4단계면 됩니다</h2>
-    <p class="section-sub">기능 선택 + 카드 등록, 그게 전부입니다.</p>
+    <p class="section-sub">원하는 기능을 고르고 카드를 등록하면 됩니다.<br>신청서도 계약서도 없습니다. 정말로.</p>
     <div class="steps">
       <div class="step">
         <div class="step-num active">1</div>
@@ -1330,7 +1354,7 @@
       <!-- STEP 1 -->
       <div class="form-step active" id="fstep1">
         <div class="form-step-title">기본 정보를 입력해주세요</div>
-        <div class="form-step-sub">업체명과 연락처만 있으면 됩니다</div>
+        <div class="form-step-sub">5분이면 끝납니다. 카드도 지금 안 써도 됩니다.</div>
         <div class="form-row"><label>업체명 *</label><input id="f-company" type="text" placeholder="모티 필라테스" /></div>
         <div class="form-grid">
           <div class="form-row"><label>원장님 성함 *</label><input id="f-name" type="text" placeholder="김모티" /></div>
@@ -1563,7 +1587,7 @@
 <!-- ── CTA BANNER ── -->
 <section class="cta-banner">
   <h2>30일, <span class="accent">직접 써보세요.</span></h2>
-  <p>마음에 들면 그냥 두세요. 언제든 해지 가능.</p>
+  <p>맞지 않으면 해지하면 됩니다.<br>계약서도, 위약금도, 이유도 묻지 않습니다.</p>
   <a class="btn-primary" href="#trial" style="display:inline-flex;">30일 무료 체험 시작</a>
 </section>
 

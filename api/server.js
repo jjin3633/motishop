@@ -49,6 +49,15 @@ function genToken() {
 }
 
 // ── 구독 등록 ──
+function genTempPw() {
+  // 기억하기 쉬운 형식: 영문2자 + 숫자4자 (예: AZ8823)
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const l1 = letters[Math.floor(Math.random() * letters.length)];
+  const l2 = letters[Math.floor(Math.random() * letters.length)];
+  const nums = String(Math.floor(1000 + Math.random() * 9000));
+  return l1 + l2 + nums;
+}
+
 app.post('/api/subscribe', (req, res) => {
   const { company, name, phone, features, billingType, billKey, moid, amount } = req.body;
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
@@ -60,14 +69,19 @@ app.post('/api/subscribe', (req, res) => {
   const nextBillingDate = firstBilling.toISOString().slice(0, 10);
   const chargeAmount = billingType === 'annual' ? amount * 12 : amount;
 
+  // 가입 시 자동으로 임시 비밀번호 생성
+  const tempPw = genTempPw();
+  const salt = genSalt();
+  const hash = hashPw(tempPw, salt);
+
   try {
     db.prepare(`
       INSERT INTO subscribers
-        (company, name, phone, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(company, name, phone, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate);
-    console.log(`[신규 가입] ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
-    res.json({ ok: true, trialStart, nextBillingDate });
+        (company, name, phone, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(company, name, phone, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+    console.log(`[신규 가입] ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate} / 임시PW: ${tempPw}`);
+    res.json({ ok: true, trialStart, nextBillingDate, tempPassword: tempPw });
   } catch (e) {
     console.error('[DB 오류]', e.message);
     res.status(500).json({ ok: false, msg: 'DB 저장 실패' });
@@ -142,14 +156,16 @@ app.post('/api/cancel', adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// 관리자 — 구독자 비밀번호 설정
-app.post('/api/admin/set-password', adminAuth, (req, res) => {
-  const { id, password } = req.body;
-  if (!id || !password) return res.status(400).json({ ok: false, msg: '필수값 누락' });
+// 관리자 — 임시 비밀번호 재발급 (시스템이 생성, 관리자는 받아서 고객에게 전달)
+app.post('/api/admin/reset-password', adminAuth, (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ ok: false, msg: '필수값 누락' });
+  const tempPw = genTempPw();
   const salt = genSalt();
-  const hash = hashPw(password, salt);
+  const hash = hashPw(tempPw, salt);
   db.prepare(`UPDATE subscribers SET pw_hash=?, pw_salt=? WHERE id=?`).run(hash, salt, id);
-  res.json({ ok: true });
+  console.log(`[비번재발급] subscriber_id=${id} / 임시PW: ${tempPw}`);
+  res.json({ ok: true, tempPassword: tempPw });
 });
 
 // ── 마이페이지 ──
