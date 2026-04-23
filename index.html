@@ -365,21 +365,19 @@
         radial-gradient(ellipse 70% 60% at 90% 80%, rgba(0,212,255,.1) 0%, transparent 55%),
         var(--navy2);
     }
-    .all-checklist {
-      position: absolute; inset: 0; z-index: 2;
-      display: flex; flex-direction: column; justify-content: center;
-      gap: 10px; padding: 50px 22px 58px;
-      list-style: none;
+    .all-mosaic {
+      position: absolute; inset: 0; z-index: 1;
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
+      gap: 2px; background: rgba(6,16,30,.6);
     }
-    .all-checklist li {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.78); letter-spacing: -0.01em;
-    }
-    .all-check {
-      width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
-      background: rgba(0,212,255,.12); border: 1.5px solid rgba(0,212,255,.4);
+    .all-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.05); }
+    .all-mosaic-plus {
       display: flex; align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 900; color: var(--cyan);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      color: white; font-weight: 900; font-size: 22px; letter-spacing: -0.03em;
+    }
+    .feat-thumb-all .feat-thumb-gradient {
+      background: linear-gradient(0deg, rgba(6,16,30,.98) 0%, rgba(6,16,30,.5) 42%, rgba(6,16,30,.25) 100%);
     }
 
     /* ── Feature Modal ── */
@@ -945,7 +943,7 @@
 <!-- ── PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <h2 class="section-title">이런 고민,<br>없으셨나요?</h2>
+    <h2 class="section-title">이런 고민, 이제 끝입니다.</h2>
     <div class="problem-grid">
       <div class="problem-card">
         <div class="problem-persona">
@@ -1033,16 +1031,17 @@
       </div>
       <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
         <div class="feat-thumb feat-thumb-all">
+          <div class="all-mosaic">
+            <img src="moire_image.jpg" alt="모아레" />
+            <img src="nerve.png" alt="3D 신경" />
+            <img src="spinedetaie.png" alt="척추 세부" />
+            <img src="lossheight..png" alt="손실키" />
+            <img src="faece.png" alt="안면 여백" />
+            <div class="all-mosaic-plus">+α</div>
+          </div>
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:3;color:var(--cyan);border-color:rgba(0,212,255,.35);">최대 40% 절감</span>
-          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:3;font-size:17px;font-weight:800;letter-spacing:-0.02em;">⭐ ALL IN ONE</h3>
-          <ul class="all-checklist">
-            <li><span class="all-check">✓</span>모아레 분석</li>
-            <li><span class="all-check">✓</span>3D 신경·림프·장기</li>
-            <li><span class="all-check">✓</span>척추 세부 분석</li>
-            <li><span class="all-check">✓</span>손실키 분석</li>
-            <li><span class="all-check">✓</span>안면 여백·탄력</li>
-          </ul>
+          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:3;font-size:17px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
         </div>
         <p>위 5개 기능 전부. 개별 구독보다 월 최대 40% 저렴하며, 추후 추가되는 기능도 동일 요금에 포함됩니다.</p>
       </div>
@@ -1053,7 +1052,7 @@
 <!-- ── COMPARISON ── -->
 <section class="comparison">
   <div class="section-inner">
-    <h2 class="section-title">내 라인업엔<br>무엇을 더할 수 있나요?</h2>
+    <h2 class="section-title">필요한 만큼만 더합니다.</h2>
     <div class="compare-tabs">
       <button class="compare-tab active" onclick="switchTab('mini', this)"><span class="tab-full">Moti Physio Mini</span><span class="tab-short">Mini</span></button>
       <button class="compare-tab" onclick="switchTab('white', this)"><span class="tab-full">Moti Physio White</span><span class="tab-short">White</span></button>
