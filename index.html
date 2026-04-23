@@ -601,6 +601,28 @@
     .save-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: rgba(0,212,255,.15); color: var(--cyan); margin-left: 6px; letter-spacing: 0.02em; }
     .price-row .amount-wrap { display: flex; align-items: center; }
 
+    /* ── Trust chips (form header) ── */
+    .trust-chips {
+      display: inline-flex; flex-wrap: wrap; justify-content: center;
+      gap: 8px; margin-top: 14px;
+    }
+    .trust-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600; letter-spacing: -0.01em;
+      color: rgba(255,255,255,.72);
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      padding: 6px 12px; border-radius: 100px;
+    }
+    .trust-chip .trust-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px rgba(0,212,255,.6);
+    }
+    @media (max-width: 768px) {
+      .trust-chip { font-size: 11px; padding: 5px 10px; }
+    }
+
     /* ── Form (멀티스텝) ── */
     #trial { scroll-margin-top: 60px; }
     .trial-form { background: var(--white); }
@@ -1429,6 +1451,11 @@
   <div class="section-inner">
     <div style="text-align:center; margin-bottom:40px;">
       <h2 class="section-title" style="color:white;">지금 시작하면, 30일은 무료입니다.</h2>
+      <div class="trust-chips">
+        <span class="trust-chip"><span class="trust-dot"></span>카드 유효성 확인 10원은 즉시 취소</span>
+        <span class="trust-chip"><span class="trust-dot"></span>체험 기간 내 언제든 해지 가능</span>
+        <span class="trust-chip"><span class="trust-dot"></span>위약금·계약서 없음</span>
+      </div>
     </div>
 
     <!-- 스텝 인디케이터 -->
