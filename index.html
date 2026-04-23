@@ -95,13 +95,12 @@
       letter-spacing: 0.1em; text-transform: uppercase;
       margin-bottom: 32px; position: relative;
     }
-    .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); display: inline-block; animation: blink 1.5s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+    .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); display: inline-block; }
     .hero h1 {
       font-size: clamp(38px, 6vw, 76px);
       font-weight: 900;
       color: white;
-      line-height: 1.26;
+      line-height: 1.38;
       letter-spacing: -0.02em;
       margin-bottom: 20px;
       position: relative;
@@ -216,7 +215,7 @@
     .section-label::before { content: ''; width: 20px; height: 2px; background: var(--blue); display: inline-block; }
     .section-title {
       font-size: clamp(28px, 3.5vw, 44px); font-weight: 900;
-      letter-spacing: -0.03em; line-height: 1.32;
+      letter-spacing: -0.03em; line-height: 1.42;
       margin-bottom: 18px;
     }
     .section-sub { font-size: 18px; color: var(--gray600); line-height: 1.8; }
@@ -272,7 +271,7 @@
     .compare-row .feat-name.highlight { color: var(--text); font-weight: 700; }
     .compare-card.after .compare-row .feat-name.highlight { color: white; }
     .chk { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-    .chk-y { background: rgba(34,197,94,.15); color: #16a34a; }
+    .chk-y { background: rgba(26,107,255,.15); color: var(--blue); }
     .chk-y-bright { background: linear-gradient(135deg, var(--blue), var(--cyan)); color: white; }
     .chk-n { background: var(--gray100); color: var(--gray400); }
     .chk-n-dark { background: rgba(255,255,255,.06); color: rgba(255,255,255,.2); }
@@ -429,14 +428,15 @@
     .badge-hot { background: rgba(255,90,90,.15); color: #FF6B6B; }
     .badge-new { background: rgba(0,212,255,.15); color: var(--cyan); }
     .badge-pro { background: rgba(245,200,66,.15); color: var(--gold); }
+    .feat-card { display: flex; flex-direction: column; }
     .feat-card h3 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 10px; line-height: 1.3; letter-spacing: -0.02em; }
-    .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; min-height: 98px; }
+    .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; }
     .feat-roi {
-      margin-top: 20px; padding: 14px 16px;
+      margin-top: auto; padding-top: 20px; padding-bottom: 14px; padding-left: 16px; padding-right: 16px;
       background: rgba(26,107,255,.1); border-radius: 8px;
       border-left: 3px solid var(--blue2);
       font-size: 18px; color: rgba(255,255,255,.7);
-      line-height: 1.7; min-height: 84px;
+      line-height: 1.7;
     }
     .feat-roi strong { color: var(--cyan); }
 
@@ -865,35 +865,34 @@
 <!-- ── PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <span class="section-label">원장님들의 목소리</span>
-    <h2 class="section-title">이런 고민,<br>혼자만 하신 게 아닙니다</h2>
+    <h2 class="section-title">라인업이 아니라,<br>기능이 아쉬웠던 거 아닌가요?</h2>
     <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-deco">"</div>
+        <div class="problem-persona">
+          <div class="problem-avatar">😔</div>
+          <div class="problem-persona-info">
+            <span class="problem-persona-name">최** 원장</span>
+            <span class="problem-persona-role">재활운동센터 · 36세</span>
+          </div>
+        </div>
+        <h3>화이트를 원했는데 예산 때문에 미니를 구입했어요. 모아레랑 3D 분석이 없으니 상담할 때 확실히 차이가 느껴집니다.</h3>
+      </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
           <div class="problem-avatar">🤔</div>
           <div class="problem-persona-info">
-            <span class="problem-persona-name">김** 원장</span>
-            <span class="problem-persona-role">필라테스 스튜디오 · 34세</span>
+            <span class="problem-persona-name">한** 원장</span>
+            <span class="problem-persona-role">체형교정센터 · 44세</span>
           </div>
         </div>
-        <h3>측정 결과를 보여줘도 회원이 잘 납득을 못 해요. 수치보다 눈으로 바로 보이는 게 있으면 좋겠는데.</h3>
+        <h3>프로를 원했는데 결국 화이트를 샀어요. 척추 세부 분석이 없다 보니 분석 깊이가 아쉬울 때가 있습니다.</h3>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">😤</div>
-          <div class="problem-persona-info">
-            <span class="problem-persona-name">박** 원장</span>
-            <span class="problem-persona-role">재활운동센터 · 41세</span>
-          </div>
-        </div>
-        <h3>근처에 비슷한 센터가 계속 생기는데, 우리만 할 수 있는 게 뭔지 모르겠어요. 차별점이 필요합니다.</h3>
-      </div>
-      <div class="problem-card">
-        <div class="problem-deco">"</div>
-        <div class="problem-persona">
-          <div class="problem-avatar">😔</div>
+          <div class="problem-avatar">💡</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 원장</span>
             <span class="problem-persona-role">체형교정센터 · 38세</span>
@@ -908,27 +907,26 @@
 <!-- ── FEATURES ── -->
 <section class="features" id="features">
   <div class="section-inner">
-    <span class="section-label">구독 가능 기능</span>
-    <h2 class="section-title">5가지 기능,<br>필요한 것만 골라 쓰세요</h2>
-    <p class="section-sub">모두 구독하거나, 원하는 기능 하나만. 선택은 원장님이 합니다.</p>
+    <h2 class="section-title">그 기능들,<br>이제 씁니다</h2>
+    <p class="section-sub">기기는 그대로. 필요한 기능만 골라 구독하세요.</p>
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
         <div class="feat-top">
           <div class="fi fi-moire">모아</div>
-          <span class="feat-badge badge-hot">가장 인기</span>
+          <span class="feat-badge badge-hot">가장인기</span>
         </div>
         <h3>모아레 (Moiré)</h3>
-        <p>빛의 간섭 패턴으로 척추 측만·골반 틀어짐을 등고선으로 시각화합니다. 수치보다 직관적인 사진 하나로 회원 설득이 훨씬 쉬워집니다.</p>
-        <div class="feat-roi">💡 <strong>"한눈에 보이니까 회원이 먼저 묻습니다"</strong><br>설명 시간 단축 + 납득률 향상</div>
+        <p>빛의 간섭 패턴으로 척추·골반 불균형을 등고선으로 시각화합니다. 수치 대신 사진 한 장이 회원 상담을 완전히 바꿉니다.</p>
+        <div class="feat-roi">💡 <strong>"한눈에 보이니까 회원이 먼저 묻습니다"</strong><br>설명 시간 단축 + 납득률 즉각 향상</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('nerve.png')">
         <div class="feat-top">
           <div class="fi fi-nerve">3D</div>
-          <span class="feat-badge badge-new">NEW</span>
+          <span class="feat-badge badge-new">신규</span>
         </div>
         <h3>3D 신경 · 림프 · 장기</h3>
-        <p>체형 불균형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 회원 스스로 자기 몸에 관심을 갖게 만드는 가장 강력한 도구입니다.</p>
-        <div class="feat-roi">💡 <strong>"이런 분석 다른 센터에선 못 봤어요"</strong><br>센터 차별화의 핵심 포인트</div>
+        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 다른 센터에서는 보여줄 수 없는 차별화 포인트입니다.</p>
+        <div class="feat-roi">💡 <strong>"이런 분석 다른 센터에선 못 봤어요"</strong><br>센터 차별화의 가장 강력한 핵심 포인트</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
         <div class="feat-top">
@@ -936,8 +934,8 @@
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>척추 세부 분석</h3>
-        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 기기 교체 없이 프로 수준의 척추 분석을 그대로 활용할 수 있습니다.</p>
-        <div class="feat-roi">💡 <strong>프로 스펙을 기기 교체 없이</strong><br>상담 퀄리티가 눈에 띄게 달라집니다</div>
+        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 기기 교체 없이 프로 수준의 분석 퀄리티를 그대로 냅니다.</p>
+        <div class="feat-roi">💡 <strong>프로 스펙을 기기 교체 없이 그대로</strong><br>상담 퀄리티가 눈에 띄게 달라집니다</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('lossheight..png')">
         <div class="feat-top">
@@ -945,8 +943,8 @@
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>손실키 분석</h3>
-        <p>현재 자세로 인해 실제보다 작아 보이는 신장 손실을 수치로 제시합니다. "지금 자세를 교정하면 몇 cm 더 커 보입니다" — 강력한 동기 부여 포인트입니다.</p>
-        <div class="feat-roi">💡 <strong>수치화된 동기 부여</strong><br>체형 개선 의지를 즉각적으로 자극</div>
+        <p>자세로 인한 신장 손실을 수치로 제시합니다. '교정하면 더 커 보입니다'—가장 강력한 동기 부여 한 마디입니다.</p>
+        <div class="feat-roi">💡 <strong>수치로 증명된 동기 부여 포인트</strong><br>체형 개선 의지를 즉각적으로 자극합니다</div>
       </div>
       <div class="feat-card" onclick="openFeatModal('faece.png')">
         <div class="feat-top">
@@ -954,8 +952,8 @@
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>안면 여백 / 탄력</h3>
-        <p>안면 윤곽과 탄력도를 정밀 분석합니다. 피부미용·한의원·왁싱샵 등 뷰티 연계 서비스 센터에서 완전히 새로운 차별화 포인트를 만들 수 있습니다.</p>
-        <div class="feat-roi">💡 <strong>뷰티샵·피부샵 원장님께 특히 강력합니다</strong><br>체형 분석 + 피부 분석, 한 번에 두 가지 가치를 제공하세요</div>
+        <p>안면 윤곽과 탄력도를 정밀 분석합니다. 체형 분석에 피부 분석까지—뷰티 연계 센터의 핵심 차별화입니다.</p>
+        <div class="feat-roi">💡 <strong>체형 + 피부, 한 번에 두 가지 가치</strong><br>뷰티·한의원·피부샵 원장님께 특히 강력합니다</div>
       </div>
     </div>
   </div>
@@ -964,7 +962,6 @@
 <!-- ── COMPARISON ── -->
 <section class="comparison">
   <div class="section-inner">
-    <span class="section-label">라인업별 기능 비교</span>
     <h2 class="section-title">내 라인업엔 무엇을<br>추가할 수 있을까?</h2>
     <p class="section-sub">라인업을 선택하면 기본 구성과 추가 가능한 기능을 바로 확인할 수 있습니다.</p>
     <div class="compare-tabs">
@@ -1155,33 +1152,28 @@
 <!-- ── HOW IT WORKS ── -->
 <section class="howitworks">
   <div class="section-inner">
-    <span class="section-label">이용 방법</span>
     <h2 class="section-title">딱 4단계면 됩니다</h2>
-    <p class="section-sub">기능 선택부터 카드 등록까지 5분. 30일은 무료입니다.</p>
+    <p class="section-sub">기능을 고르고 카드 등록 한 번, 그것만으로 30일이 시작됩니다.</p>
     <div class="steps">
       <div class="step">
         <div class="step-num active">1</div>
         <h3>정보 입력</h3>
-        <p>센터 정보 입력과 체험할 기능을 선택 후 카드를 등록합니다.</p>
-        <span class="step-tag">오늘 바로</span>
+        <p>센터 정보와 체험할 기능을 선택합니다.<br>카드를 한 번 등록하면 시작됩니다.</p>
       </div>
       <div class="step">
         <div class="step-num active">2</div>
         <h3>기능 활성화</h3>
-        <p>접수 확인 후 1~2 영업일 내 담당자가 기능을 활성화해 드립니다.</p>
-        <span class="step-tag">1~2 영업일</span>
+        <p>접수 후 1~2 영업일 내 담당자가<br>직접 기능을 활성화해 드립니다.</p>
       </div>
       <div class="step">
         <div class="step-num active">3</div>
         <h3>30일 무료 체험</h3>
-        <p>모든 선택 기능을 마음껏 써보세요. 종료 7일 전 사전 안내드립니다.</p>
-        <span class="step-tag">30일간</span>
+        <p>모든 선택 기능을 마음껏 써보세요.<br>종료 7일 전 사전 안내드립니다.</p>
       </div>
       <div class="step">
         <div class="step-num active">4</div>
         <h3>자동 결제</h3>
-        <p>30일 후 자동으로 구독이 시작됩니다. 원하지 않으면 언제든 해지하세요.</p>
-        <span class="step-tag">자유롭게</span>
+        <p>체험 후 구독으로 자동 전환됩니다.<br>원하지 않으면 언제든 해지 가능합니다.</p>
       </div>
     </div>
   </div>
@@ -1190,12 +1182,10 @@
 <!-- ── PRICING ── -->
 <section class="pricing">
   <div class="section-inner">
-    <span class="section-label">구독 요금제</span>
     <h2 class="section-title">필요한 기능만,<br>합리적인 가격으로</h2>
     <p class="section-sub">써보고 결정하세요. 30일은 무료입니다.</p>
     <div class="pricing-grid">
       <div class="price-card">
-        <div class="price-card-top"><div class="fi fi-moire">모아</div></div>
         <h4>모아레</h4>
         <p class="desc">척추·골반 불균형을 등고선으로 시각화. 가장 먼저 체감 효과가 나타납니다.</p>
         <div class="price-rows">
@@ -1204,7 +1194,6 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><div class="fi fi-spine">척추</div></div>
         <h4>척추 세부 분석</h4>
         <p class="desc">경추·흉추·요추 마디별 각도 세분화. 프로 수준의 척추 분석.</p>
         <div class="price-rows">
@@ -1213,7 +1202,6 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><div class="fi fi-nerve">3D</div></div>
         <h4>신경 · 림프 · 장기</h4>
         <p class="desc">체형과 내부 시스템 연관성 3D 시각화. 센터 차별화의 핵심.</p>
         <div class="price-rows">
@@ -1222,7 +1210,6 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><div class="fi fi-height">키↑</div></div>
         <h4>손실키 분석</h4>
         <p class="desc">자세로 인한 신장 손실 수치화. 회원 동기 부여에 즉각적 효과.</p>
         <div class="price-rows">
@@ -1231,7 +1218,6 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><div class="fi fi-face">안면</div></div>
         <h4>안면 여백 / 탄력</h4>
         <p class="desc">안면 윤곽·탄력도 분석. 뷰티·한의원 연계 차별화 포인트.</p>
         <div class="price-rows">
@@ -1240,7 +1226,6 @@
         </div>
       </div>
       <div class="price-card featured">
-        <div class="price-card-top"><div class="fi fi-all">ALL</div></div>
         <h4>ALL IN ONE</h4>
         <p class="desc">5개 기능 전체 묶음. 개별 합산 대비 월 40% 이상 절감.</p>
         <div class="price-rows">
@@ -1485,7 +1470,6 @@
 <!-- ── FAQ ── -->
 <section class="faq">
   <div class="section-inner" style="text-align:center;">
-    <span class="section-label" style="justify-content:center;">자주 묻는 질문</span>
     <h2 class="section-title">자주 묻는 질문</h2>
     <div class="faq-list">
       <div class="faq-item">
