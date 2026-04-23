@@ -270,11 +270,9 @@
     .compare-card.after .compare-row .feat-name { color: rgba(255,255,255,.65); }
     .compare-row .feat-name.highlight { color: var(--text); font-weight: 700; }
     .compare-card.after .compare-row .feat-name.highlight { color: white; }
-    .chk { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-    .chk-y { background: rgba(26,107,255,.15); color: var(--blue); }
-    .chk-y-bright { background: linear-gradient(135deg, var(--blue), var(--cyan)); color: white; }
-    .chk-n { background: var(--gray100); color: var(--gray400); }
-    .chk-n-dark { background: rgba(255,255,255,.06); color: rgba(255,255,255,.2); }
+    .chk { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; border: 1.5px solid; }
+    .chk-y, .chk-y-bright { background: rgba(26,107,255,.12); border-color: rgba(26,107,255,.4); color: var(--blue2); }
+    .chk-n, .chk-n-dark { background: transparent; border-color: rgba(150,160,180,.2); color: rgba(150,160,180,.35); }
     .compare-footer {
       padding: 20px 28px;
       border-top: 1px solid rgba(255,255,255,.07);
@@ -362,18 +360,34 @@
     }
     .feat-card:active { transform: scale(.98); }
 
-    .feat-card::after {
-      content: '미리보기';
+    /* feat-card image thumbnail */
+    .feat-thumb {
+      width: 100%; aspect-ratio: 16/9;
+      border-radius: 8px; overflow: hidden; margin-bottom: 18px;
+      position: relative;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+      flex-shrink: 0;
+    }
+    .feat-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform .35s ease;
+    }
+    .feat-card:hover .feat-thumb img { transform: scale(1.04); }
+    .feat-thumb-overlay {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 22px; font-weight: 700; letter-spacing: 0.1em;
-      color: #ffffff;
-      text-shadow: 0 0 20px rgba(0,212,255,.6), 0 2px 12px rgba(0,0,0,.8);
-      opacity: 0; transition: opacity .25s ease;
-      pointer-events: none;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: white;
+      background: rgba(6,16,30,.5); backdrop-filter: blur(3px);
+      opacity: 0; transition: opacity .25s;
     }
-    .feat-card:hover::after { opacity: 1; }
+    .feat-card:hover .feat-thumb-overlay { opacity: 1; }
+    .feat-thumb-all {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      background: radial-gradient(ellipse at center, rgba(26,107,255,.18) 0%, rgba(0,212,255,.06) 60%, transparent 100%);
+      border-color: rgba(0,212,255,.15);
+    }
 
     /* ── Feature Modal ── */
     .feat-modal {
@@ -402,15 +416,9 @@
       line-height: 1;
     }
     .feat-modal-close:hover { background: rgba(255,255,255,.2); transform: scale(1.1); }
-    .feat-card::before {
-      content: ''; position: absolute; inset: 0;
-      background: rgba(255,255,255,.12); backdrop-filter: blur(4px);
-      opacity: 0; transition: opacity .25s; pointer-events: none;
-    }
-    .feat-card > * { position: relative; z-index: 1; }
-    .feat-card:hover { background: rgba(255,255,255,.06); border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 0 0 1px var(--cyan), 0 0 28px rgba(0,212,255,.25), 0 12px 40px rgba(0,0,0,.3); }
-    .feat-card:hover::before { opacity: 1; }
-    .feat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    .feat-card:hover { background: rgba(255,255,255,.06); border-color: rgba(0,212,255,.5); transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(0,212,255,.3), 0 12px 40px rgba(0,0,0,.3); }
+    .feat-card h3 { font-size: 17px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .feat-card p { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.75; margin-bottom: 14px; flex: 1; }
     /* Feature icon — dark glass style, matches hero tone */
     .fi {
       width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
@@ -956,8 +964,7 @@
 <!-- ── PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <h2 class="section-title">라인업이 아니라,<br>기능이 아쉬웠던 겁니다</h2>
-    <p class="section-sub">기기는 그대로입니다. 기능만 추가하면 됩니다.</p>
+    <h2 class="section-title">이런 고민,<br>없으셨나요?</h2>
     <div class="problem-grid">
       <div class="problem-card">
         <div class="problem-deco">"</div>
@@ -965,10 +972,10 @@
           <div class="problem-avatar">😔</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">최** 원장</span>
-            <span class="problem-persona-role">재활운동센터 · Mini 사용 중 · 36세</span>
+            <span class="problem-persona-role">재활운동센터 · Mini 사용 중</span>
           </div>
         </div>
-        <h3>화이트를 사고 싶었는데 예산 때문에 미니로 결정했어요. 모아레랑 3D 분석 기능 때문에 화이트를 원했던 건데, 막상 쓰다 보니 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
+        <h3>화이트를 원했는데 예산 때문에 미니를 샀어요. 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
@@ -976,10 +983,10 @@
           <div class="problem-avatar">🤔</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">한** 원장</span>
-            <span class="problem-persona-role">체형교정센터 · White 사용 중 · 44세</span>
+            <span class="problem-persona-role">체형교정센터 · White 사용 중</span>
           </div>
         </div>
-        <h3>프로를 원했는데 결국 화이트로 계약했어요. 척추 세부 분석이랑 손실키 기능이 없다 보니, 분석 깊이 면에서 아쉬울 때가 있습니다. 기기를 다시 바꿀 여유는 없고요.</h3>
+        <h3>프로를 원했는데 화이트로 계약했어요. 기기를 다시 바꿀 여유는 없고, 분석 깊이가 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
@@ -987,10 +994,73 @@
           <div class="problem-avatar">💡</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 원장</span>
-            <span class="problem-persona-role">피부·체형 복합센터 · White 사용 중 · 38세</span>
+            <span class="problem-persona-role">피부·체형 복합센터 · White 사용 중</span>
           </div>
         </div>
-        <h3>다른 센터 원장님들이 어떤 기능 쓰는지 늘 궁금했어요. 마케팅에 효과 있다는 기능들이 있다는데 저는 아직 못 써봤거든요. 어떤 게 실제로 도움이 되는지 알고 싶습니다.</h3>
+        <h3>다른 원장님들이 어떤 고급 기능을 쓰는지 궁금한데, 저는 아직 써본 적이 없어요.</h3>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <h2 class="section-title">모티샵이 오픈했습니다</h2>
+    <p class="section-sub">기기는 그대로. 필요한 기능만 골라 구독하세요.</p>
+    <div class="features-grid">
+      <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
+        <div class="feat-thumb">
+          <img src="moire_image.jpg" alt="모아레 분석 화면" />
+          <div class="feat-thumb-overlay">미리보기 ↗</div>
+        </div>
+        <h3>모아레 (Moiré)</h3>
+        <p>척추·골반 불균형을 등고선으로 시각화합니다.</p>
+        <span class="feat-badge badge-hot">인기</span>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('nerve.png')">
+        <div class="feat-thumb">
+          <img src="nerve.png" alt="3D 신경·림프·장기 분석 화면" />
+          <div class="feat-thumb-overlay">미리보기 ↗</div>
+        </div>
+        <h3>3D 신경 · 림프 · 장기</h3>
+        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다.</p>
+        <span class="feat-badge badge-new">신규</span>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
+        <div class="feat-thumb">
+          <img src="spinedetaie.png" alt="척추 세부 분석 화면" />
+          <div class="feat-thumb-overlay">미리보기 ↗</div>
+        </div>
+        <h3>척추 세부 분석</h3>
+        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다.</p>
+        <span class="feat-badge badge-pro">프리미엄</span>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('lossheight..png')">
+        <div class="feat-thumb">
+          <img src="lossheight..png" alt="손실키 분석 화면" />
+          <div class="feat-thumb-overlay">미리보기 ↗</div>
+        </div>
+        <h3>손실키 분석</h3>
+        <p>자세로 인한 신장 손실을 수치로 제시합니다.</p>
+        <span class="feat-badge badge-pro">프리미엄</span>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('faece.png')">
+        <div class="feat-thumb">
+          <img src="faece.png" alt="안면 여백·탄력 분석 화면" />
+          <div class="feat-thumb-overlay">미리보기 ↗</div>
+        </div>
+        <h3>안면 여백 / 탄력</h3>
+        <p>안면 윤곽과 탄력도를 분석합니다.</p>
+        <span class="feat-badge badge-pro">프리미엄</span>
+      </div>
+      <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
+        <div class="feat-thumb feat-thumb-all">
+          <span>⭐</span>
+        </div>
+        <h3>ALL IN ONE</h3>
+        <p>5개 기능 전체 묶음. 개별 합산 대비 월 최대 40% 절감.</p>
+        <span class="feat-badge badge-hot">최저가</span>
       </div>
     </div>
   </div>
@@ -999,8 +1069,8 @@
 <!-- ── COMPARISON ── -->
 <section class="comparison">
   <div class="section-inner">
-    <h2 class="section-title">내 라인업엔 무엇을<br>추가할 수 있을까?</h2>
-    <p class="section-sub">라인업을 선택하면 기본 구성과 추가 가능한 기능을 바로 확인할 수 있습니다.</p>
+    <h2 class="section-title">내 라인업엔<br>어떤 기능을 추가할 수 있나요?</h2>
+    <p class="section-sub">라인업을 선택하면 추가 가능한 기능을 바로 확인할 수 있습니다.</p>
     <div class="compare-tabs">
       <button class="compare-tab active" onclick="switchTab('mini', this)"><span class="tab-full">Moti Physio Mini</span><span class="tab-short">Mini</span></button>
       <button class="compare-tab" onclick="switchTab('white', this)"><span class="tab-full">Moti Physio White</span><span class="tab-short">White</span></button>
@@ -1193,105 +1263,11 @@
   </div>
 </section>
 
-<!-- ── FEATURES ── -->
-<section class="features" id="features">
-  <div class="section-inner">
-    <h2 class="section-title">추가 가능한 기능,<br>전부 정리했습니다</h2>
-    <p class="section-sub">카드를 클릭하면 실제 분석 화면을 확인할 수 있습니다.</p>
-    <div class="features-grid">
-      <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
-        <div class="feat-top">
-          <div class="fi fi-moire">🧍</div>
-          <span class="feat-badge badge-hot">인기</span>
-        </div>
-        <h3>모아레 (Moiré)</h3>
-        <p>척추·골반 불균형을 등고선으로 시각화합니다. 수치 대신 이미지 한 장으로 회원 상담이 달라집니다.</p>
-        <div class="feat-roi">월 23,900원 · 연 17,900원</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('nerve.png')">
-        <div class="feat-top">
-          <div class="fi fi-nerve">🫀</div>
-          <span class="feat-badge badge-new">신규</span>
-        </div>
-        <h3>3D 신경 · 림프 · 장기</h3>
-        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 타 센터와의 분석 차별화 포인트입니다.</p>
-        <div class="feat-roi">월 35,900원 · 연 29,900원</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
-        <div class="feat-top">
-          <div class="fi fi-spine">📐</div>
-          <span class="feat-badge badge-pro">프리미엄</span>
-        </div>
-        <h3>척추 세부 분석</h3>
-        <p>경추·흉추·요추 각 마디의 각도를 세분화 분석합니다. 기기 교체 없이 프로급 척추 분석이 가능합니다.</p>
-        <div class="feat-roi">월 47,900원 · 연 39,900원</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('lossheight..png')">
-        <div class="feat-top">
-          <div class="fi fi-height">📏</div>
-          <span class="feat-badge badge-pro">프리미엄</span>
-        </div>
-        <h3>손실키 분석</h3>
-        <p>자세로 인한 신장 손실을 수치로 제시합니다. 체형 교정 동기 부여에 즉각적인 효과가 있습니다.</p>
-        <div class="feat-roi">월 79,900원 · 연 65,900원</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('faece.png')">
-        <div class="feat-top">
-          <div class="fi fi-face">✨</div>
-          <span class="feat-badge badge-pro">프리미엄</span>
-        </div>
-        <h3>안면 여백 / 탄력</h3>
-        <p>안면 윤곽과 탄력도를 분석합니다. 체형·뷰티 복합 센터의 추가 차별화 포인트입니다.</p>
-        <div class="feat-roi">월 29,900원 · 연 23,900원</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('')" style="border-color:rgba(0,212,255,.2);">
-        <div class="feat-top">
-          <div class="fi fi-all">⭐</div>
-          <span class="feat-badge badge-hot">최저가</span>
-        </div>
-        <h3>ALL IN ONE</h3>
-        <p>위 5개 기능 전체 묶음입니다. 개별 합산 대비 월 최대 40% 이상 절감됩니다.</p>
-        <div class="feat-roi">월 107,900원 · 연 89,900원</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── HOW IT WORKS ── -->
-<section class="howitworks">
-  <div class="section-inner">
-    <h2 class="section-title">딱 4단계면 됩니다</h2>
-    <p class="section-sub">기능을 고르고 카드 등록 한 번, 그것만으로 30일이 시작됩니다.</p>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num active">1</div>
-        <h3>정보 입력</h3>
-        <p>센터 정보와 체험할 기능을 선택합니다.<br>카드를 한 번 등록하면 시작됩니다.</p>
-      </div>
-      <div class="step">
-        <div class="step-num active">2</div>
-        <h3>기능 활성화</h3>
-        <p>접수 후 1~2 영업일 내 담당자가<br>직접 기능을 활성화해 드립니다.</p>
-      </div>
-      <div class="step">
-        <div class="step-num active">3</div>
-        <h3>30일 무료 체험</h3>
-        <p>모든 선택 기능을 마음껏 써보세요.<br>종료 7일 전 사전 안내드립니다.</p>
-      </div>
-      <div class="step">
-        <div class="step-num active">4</div>
-        <h3>자동 결제</h3>
-        <p>체험 후 구독으로 자동 전환됩니다.<br>원하지 않으면 언제든 해지 가능합니다.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ── PRICING ── -->
 <section class="pricing">
   <div class="section-inner">
-    <h2 class="section-title">필요한 기능만,<br>합리적인 가격으로</h2>
-    <p class="section-sub">써보고 결정하세요. 30일은 무료입니다.</p>
+    <h2 class="section-title">구독 요금</h2>
+    <p class="section-sub">30일 무료 체험 후 자동 전환. 언제든 해지 가능.</p>
     <div class="pricing-grid">
       <div class="price-card">
         <h4>모아레</h4>
@@ -1340,6 +1316,36 @@
           <div class="price-row"><span class="label">월 구독</span><span class="amount">107,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">89,900원</span><span class="save-badge">-17%</span></span></div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="howitworks">
+  <div class="section-inner">
+    <h2 class="section-title">어떻게 하면 되냐고요?<br>4단계면 됩니다</h2>
+    <p class="section-sub">기능 선택 + 카드 등록, 그게 전부입니다.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num active">1</div>
+        <h3>정보 입력</h3>
+        <p>센터 정보와 체험할 기능을 선택합니다.<br>카드를 한 번 등록하면 시작됩니다.</p>
+      </div>
+      <div class="step">
+        <div class="step-num active">2</div>
+        <h3>기능 활성화</h3>
+        <p>접수 후 1~2 영업일 내 담당자가<br>직접 기능을 활성화해 드립니다.</p>
+      </div>
+      <div class="step">
+        <div class="step-num active">3</div>
+        <h3>30일 무료 체험</h3>
+        <p>모든 선택 기능을 마음껏 써보세요.<br>종료 7일 전 사전 안내드립니다.</p>
+      </div>
+      <div class="step">
+        <div class="step-num active">4</div>
+        <h3>자동 결제</h3>
+        <p>체험 후 구독으로 자동 전환됩니다.<br>원하지 않으면 언제든 해지 가능합니다.</p>
       </div>
     </div>
   </div>
