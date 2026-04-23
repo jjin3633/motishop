@@ -274,21 +274,16 @@ tr:hover td { background:var(--gray50); }
     <!-- ── 결제 로그 ── -->
     <div class="panel" id="panel-logs">
       <div class="toolbar">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;">
-          <input id="log-search" type="text" placeholder="업체명 또는 원장님 검색" oninput="filterLogs()"
-            style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--gray100);font-size:13px;font-family:inherit;outline:none;width:220px;" />
-          <select id="log-result" onchange="filterLogs()"
-            style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--gray100);font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer;">
-            <option value="">전체 결과</option>
-            <option value="ok">성공만</option>
-            <option value="fail">실패만</option>
-          </select>
-          <select id="log-month" onchange="filterLogs()"
-            style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--gray100);font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer;">
-            <option value="">전체 기간</option>
-          </select>
-          <span id="log-count" style="font-size:12px;color:var(--gray400);"></span>
-        </div>
+        <input id="log-search" type="text" placeholder="🔍  업체명 · 원장님 검색" oninput="filterLogs()" />
+        <select id="log-result" onchange="filterLogs()">
+          <option value="">결과: 전체</option>
+          <option value="ok">✅ 성공만</option>
+          <option value="fail">❌ 실패만</option>
+        </select>
+        <select id="log-month" onchange="filterLogs()">
+          <option value="">기간: 전체</option>
+        </select>
+        <span id="log-count" style="font-size:12px;color:var(--gray400);padding-left:4px;"></span>
         <div class="toolbar-right"><button class="btn-sm primary" onclick="loadLogs(this)">새로고침</button></div>
       </div>
       <div class="table-wrap">
