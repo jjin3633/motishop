@@ -30,18 +30,17 @@ body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; backgroun
 .login-err { font-size:13px; color:#f87171; margin-top:10px; text-align:center; display:none; }
 
 /* ── Layout ── */
-.app { display:none; min-height:100vh; }
-nav { background:rgba(6,16,30,.95); backdrop-filter:blur(20px); height:60px; border-bottom:1px solid rgba(255,255,255,.07); position:sticky; top:0; z-index:10; }
-.nav-inner { max-width:1440px; margin:0 auto; height:100%; display:flex; align-items:center; justify-content:space-between; padding:0 32px; }
-.nav-logo { font-size:17px; font-weight:900; color:white; display:flex; align-items:center; gap:10px; letter-spacing:-.02em; }
+.app { display:none; min-height:100vh; padding-top:60px; }
+nav { position:fixed; top:0; left:0; right:0; z-index:100; height:60px; background:rgba(6,16,30,.92); backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,.07); }
+.nav-inner { max-width:1248px; margin:0 auto; height:100%; display:flex; align-items:center; justify-content:space-between; padding:0 24px; }
+.nav-logo { text-decoration:none; font-size:22px; font-weight:900; color:white; letter-spacing:0.04em; }
 .nav-logo span { color:var(--cyan); }
-.nav-tag { font-size:11px; color:rgba(255,255,255,.35); font-weight:500; background:rgba(255,255,255,.07); padding:3px 10px; border-radius:100px; }
-.nav-right { display:flex; align-items:center; gap:16px; }
+.nav-right { display:flex; align-items:center; gap:12px; }
 .nav-refresh { font-size:12px; color:rgba(255,255,255,.3); }
 .btn-logout { font-size:13px; color:rgba(255,255,255,.5); background:none; border:1px solid rgba(255,255,255,.15); border-radius:8px; padding:6px 14px; cursor:pointer; font-family:inherit; transition:all .15s; }
 .btn-logout:hover { color:white; border-color:rgba(255,255,255,.4); }
 
-.container { max-width:1440px; margin:0 auto; padding:28px 32px; }
+.container { max-width:1248px; margin:0 auto; padding:28px 24px; }
 
 /* ── Top Stats ── */
 .top-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
@@ -167,7 +166,7 @@ tr:hover td { background:var(--gray50); }
 <div class="app" id="app">
   <nav>
     <div class="nav-inner">
-      <div class="nav-logo">Moti <span>Shop</span><span class="nav-tag">관리자</span></div>
+      <a class="nav-logo" href="#">Moti <span>Shop</span></a>
       <div class="nav-right">
         <span class="nav-refresh" id="lastRefresh"></span>
         <button class="btn-logout" onclick="logout()">로그아웃</button>

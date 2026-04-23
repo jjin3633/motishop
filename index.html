@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moti Shop — 내 라인업엔 없는 기능, 이제 씁니다</title>
   <link rel="icon" type="image/png" href="사이트_png_파비콘.png" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GM9BE8D39V"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GM9BE8D39V');
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Questrial&family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
@@ -699,45 +707,23 @@
     .problem-tagline h3 .accent { color: var(--blue); }
     .problem-tagline p { font-size: 16px; color: var(--gray600); line-height: 1.8; }
 
-    /* ── Social Proof Toast ── */
-    .sp-toast {
-      position: fixed; bottom: 28px; left: 24px; z-index: 9999;
-      background: rgba(255,255,255,.97);
-      backdrop-filter: blur(24px) saturate(2);
-      border-radius: 18px;
-      padding: 14px 16px 14px 14px;
-      display: flex; align-items: center; gap: 12px;
-      min-width: 272px; max-width: 320px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
-      border: 1px solid rgba(0,0,0,.07);
-      transform: translateY(120px) scale(.95);
-      opacity: 0;
-      transition: transform .42s cubic-bezier(0.34,1.2,0.64,1), opacity .35s ease;
-      pointer-events: none;
-      will-change: transform;
+    /* ── Mobile Sticky CTA ── */
+    .mobile-sticky-cta { display: none; }
+    @media (max-width: 768px) {
+      .mobile-sticky-cta {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 98;
+        padding: 15px 18px; border-radius: 14px;
+        background: linear-gradient(90deg, var(--blue), var(--cyan));
+        color: white; font-size: 15px; font-weight: 800; letter-spacing: -0.01em;
+        text-decoration: none;
+        box-shadow: 0 12px 32px rgba(26,107,255,.45), 0 2px 8px rgba(0,0,0,.2);
+        transition: transform .2s, box-shadow .2s;
+      }
+      .mobile-sticky-cta:active { transform: scale(.98); }
+      .mobile-sticky-cta.hidden { transform: translateY(140%); }
+      body { padding-bottom: 80px; }
     }
-    .sp-toast.show { transform: translateY(0) scale(1); opacity: 1; }
-    .sp-avatar-wrap { position: relative; flex-shrink: 0; }
-    .sp-avatar-circle {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: linear-gradient(135deg, #1A6BFF, #00D4FF);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 16px; font-weight: 900; color: white;
-    }
-    .sp-live-dot {
-      position: absolute; bottom: 1px; right: 1px;
-      width: 11px; height: 11px; border-radius: 50%;
-      background: #22C55E;
-      border: 2px solid white;
-    }
-    .sp-content { flex: 1; min-width: 0; }
-    .sp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
-    .sp-brand { font-size: 10px; color: #aaa; font-weight: 700; letter-spacing: 0.05em; }
-    .sp-time-text { font-size: 10px; color: #bbb; font-weight: 500; }
-    .sp-main { font-size: 13px; font-weight: 800; color: #111; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sp-sub { font-size: 12px; color: #555; margin-top: 2px; line-height: 1.35; }
-    .sp-feat-highlight { color: var(--blue); font-weight: 700; }
 
     /* ── CTA Banner ── */
     .cta-banner { background: var(--navy); padding: 80px 24px; text-align: center; position: relative; overflow: hidden; }
@@ -1248,7 +1234,7 @@
 <!-- ── PRICING ── -->
 <section class="pricing">
   <div class="section-inner">
-    <h2 class="section-title">요금은 단순합니다.</h2>
+    <h2 class="section-title">구독 요금</h2>
     <div class="pricing-grid">
       <div class="price-card">
         <h4>모아레</h4>
@@ -1308,12 +1294,12 @@
     <h2 class="section-title">신청은<br>4단계로 끝납니다.</h2>
     <div class="steps">
       <div class="step">
-        <div class="step-num active">1</div>
+        <div class="step-num">1</div>
         <h3>정보 입력</h3>
         <p>센터 정보와 체험할 기능을 선택합니다.<br>카드를 한 번 등록하면 시작됩니다.</p>
       </div>
       <div class="step">
-        <div class="step-num active">2</div>
+        <div class="step-num">2</div>
         <h3>기능 활성화</h3>
         <p>접수 후 1~2 영업일 내 담당자가<br>직접 기능을 활성화해 드립니다.</p>
       </div>
@@ -1323,7 +1309,7 @@
         <p>모든 선택 기능을 마음껏 써보세요.<br>종료 7일 전 사전 안내드립니다.</p>
       </div>
       <div class="step">
-        <div class="step-num active">4</div>
+        <div class="step-num">4</div>
         <h3>자동 결제</h3>
         <p>체험 후 구독으로 자동 전환됩니다.<br>원하지 않으면 언제든 해지 가능합니다.</p>
       </div>
@@ -1356,7 +1342,7 @@
       <!-- STEP 1 -->
       <div class="form-step active" id="fstep1">
         <div class="form-step-title">기본 정보를 입력해주세요</div>
-        <div class="form-step-sub">5분이면 끝납니다. 카드도 지금 안 써도 됩니다.</div>
+        <div class="form-step-sub">5분이면 끝납니다. 카드는 마지막 단계에서 등록합니다.</div>
         <div class="form-row"><label>업체명 *</label><input id="f-company" type="text" placeholder="모티 필라테스" /></div>
         <div class="form-grid">
           <div class="form-row"><label>원장님 성함 *</label><input id="f-name" type="text" placeholder="김모티" /></div>
@@ -1580,7 +1566,7 @@
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>기능을 하나씩 따로 구독할 수 있나요?</span><span class="arrow"></span></div>
-        <div class="faq-a">지금 선택한 기능이 30일 후 자동 구독으로 전환됩니다. 구독 중 기능 추가·변경은 담당자를 통해 언제든 가능합니다.</div>
+        <div class="faq-a">네, 기능별로 개별 구독이 가능합니다. 지금 선택한 기능이 30일 후 자동 구독으로 전환되며, 구독 중 기능 추가·변경은 담당자를 통해 언제든 가능합니다.</div>
       </div>
     </div>
   </div>
@@ -1603,21 +1589,8 @@
   </div>
 </div>
 
-<!-- ── SOCIAL PROOF TOAST ── -->
-<div class="sp-toast" id="spToast">
-  <div class="sp-avatar-wrap">
-    <div class="sp-avatar-circle" id="spAvatar">이</div>
-    <div class="sp-live-dot"></div>
-  </div>
-  <div class="sp-content">
-    <div class="sp-header">
-      <span class="sp-brand">Moti Shop</span>
-      <span class="sp-time-text" id="spTime">방금 전</span>
-    </div>
-    <div class="sp-main"><span id="spName">이** 원장</span>님이 체험을 시작했습니다</div>
-    <div class="sp-sub"><span class="sp-feat-highlight" id="spMsg">모아레</span> 기능 · 30일 무료</div>
-  </div>
-</div>
+<!-- ── MOBILE STICKY CTA ── -->
+<a class="mobile-sticky-cta" href="#trial" id="mobileStickyCta">30일 무료로 시작 →</a>
 
 <!-- ── FOOTER ── -->
 <footer>
@@ -1651,6 +1624,19 @@
   document.fonts.ready.then(fixWrapWidth);
   let resizeTimer;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fixWrapWidth, 150); });
+
+  // 모바일 Sticky CTA: 폼/푸터 보일 땐 숨김
+  const stickyCta = document.getElementById('mobileStickyCta');
+  const trialSection = document.getElementById('trial');
+  const footerEl = document.querySelector('footer');
+  if (stickyCta && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      const anyVisible = entries.some(e => e.isIntersecting);
+      stickyCta.classList.toggle('hidden', anyVisible);
+    }, { threshold: 0.15 });
+    if (trialSection) io.observe(trialSection);
+    if (footerEl) io.observe(footerEl);
+  }
 
   function cycleModel() {
     // slide out
@@ -1886,40 +1872,6 @@
   });
 
   // ── Social Proof Toast ──
-  const SP_NAMES = ['이** 원장', '박** 원장', '최** 원장', '정** 원장', '김** 원장', '한** 원장', '윤** 원장', '강** 원장', '장** 원장', '신** 원장'];
-  const SP_FEATS = ['모아레', '척추 세부 분석', '3D 신경·림프·장기', '손실키 분석', '안면 여백/탄력'];
-  const SP_TIMES = ['방금 전', '1분 전', '2분 전', '방금 전', '3분 전', '방금 전'];
-
-  function getSpEvent() {
-    const name = SP_NAMES[Math.floor(Math.random() * SP_NAMES.length)];
-    const time = SP_TIMES[Math.floor(Math.random() * SP_TIMES.length)];
-    const r = Math.random();
-    let feat;
-    if (r < 0.18) {
-      feat = 'ALL IN ONE';
-    } else {
-      const count = r < 0.55 ? 1 : (r < 0.82 ? 2 : 3);
-      const shuffled = [...SP_FEATS].sort(() => Math.random() - 0.5);
-      feat = shuffled.slice(0, count).join(', ');
-    }
-    return { name, feat, time };
-  }
-
-  const spToast = document.getElementById('spToast');
-  function showSP() {
-    const ev = getSpEvent();
-    document.getElementById('spAvatar').textContent = ev.name.charAt(0);
-    document.getElementById('spName').textContent = ev.name;
-    document.getElementById('spMsg').textContent = ev.feat;
-    document.getElementById('spTime').textContent = ev.time;
-    spToast.classList.add('show');
-    setTimeout(() => spToast.classList.remove('show'), 4000);
-  }
-  function scheduleSP() {
-    const delay = 8000 + Math.random() * 4000;
-    setTimeout(() => { showSP(); scheduleSP(); }, delay);
-  }
-  setTimeout(() => { showSP(); scheduleSP(); }, 3000);
 </script>
 </body>
 </html>
