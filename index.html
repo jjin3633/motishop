@@ -268,7 +268,7 @@
     .compare-tag { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 100px; flex-shrink: 0; }
     .tag-before { background: var(--gray100); color: var(--gray600); }
     .tag-after { background: rgba(0,212,255,.15); color: var(--cyan); }
-    .compare-body { padding: 20px 28px; }
+    .compare-body { padding: 10px 28px 20px; }
     .compare-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);
@@ -326,6 +326,7 @@
       transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s;
       overflow: hidden;
       isolation: isolate;
+      display: flex; flex-direction: column;
     }
     .problem-card::before {
       content: '"';
@@ -361,6 +362,7 @@
       line-height: 1.7; letter-spacing: -0.015em;
       margin-bottom: 32px;
       position: relative; z-index: 1;
+      flex: 1;
     }
     .problem-card h3 .hl {
       display: inline;
@@ -369,20 +371,12 @@
       font-weight: 700; color: var(--text);
     }
     .problem-persona {
-      display: flex; align-items: center; gap: 12px;
       padding-top: 22px;
       border-top: 1px solid var(--gray100);
       position: relative; z-index: 1;
+      margin-top: auto;
     }
-    .problem-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 900; color: white;
-      letter-spacing: -0.02em; flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(26,107,255,.25);
-    }
-    .problem-persona-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; min-height: 40px; justify-content: center; }
+    .problem-persona-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .problem-persona-name { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; line-height: 1.3; }
     .problem-persona-role { font-size: 13px; color: var(--gray400); font-weight: 500; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -554,16 +548,15 @@
     .step { text-align: center; padding: 0 16px; }
     .step-num {
       width: 70px; height: 70px; border-radius: 50%;
-      background: white;
-      color: var(--gray400); font-size: 22px; font-weight: 900;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      color: white; font-size: 22px; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 24px;
       position: relative; z-index: 1;
-      border: 2px solid var(--gray100);
+      border: none;
+      box-shadow: 0 8px 24px rgba(26,107,255,.35);
     }
-    .step-num.active {
-      background: white; color: var(--gray400); border: 2px solid var(--gray100); box-shadow: none;
-    }
+    .step-num.active { background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%); }
     .step h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; line-height: 1.4; letter-spacing: -0.01em; }
     .step p { font-size: 14px; color: var(--gray600); line-height: 1.8; }
     .step .step-tag {
@@ -998,7 +991,7 @@
     <span class="hero-prefix">Moti Physio</span>
     <span class="hero-model-wrap">
       <span class="hero-model" id="heroModel">Mini</span>
-    </span>,<br>
+    </span><br>
     <span class="accent">라인업을 넘어섭니다.</span>
   </h1>
   <div class="hero-btns">
@@ -1039,7 +1032,6 @@
       <div class="problem-card">
         <h3>화이트를 원했는데 <span class="hl">예산 때문에 미니</span>를 샀어요. 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
         <div class="problem-persona">
-          <div class="problem-avatar">최</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">최** 원장</span>
             <span class="problem-persona-role">재활운동센터 · Mini 사용 중</span>
@@ -1049,7 +1041,6 @@
       <div class="problem-card">
         <h3>프로를 원했는데 <span class="hl">화이트로 계약</span>했어요. 기기를 다시 바꿀 여유는 없고, 분석 깊이가 아쉽습니다.</h3>
         <div class="problem-persona">
-          <div class="problem-avatar">한</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">한** 원장</span>
             <span class="problem-persona-role">체형교정센터 · White 사용 중</span>
@@ -1059,7 +1050,6 @@
       <div class="problem-card">
         <h3>다른 원장님들이 어떤 <span class="hl">고급 기능</span>을 쓰는지 궁금한데, 저는 아직 써본 적이 없어요.</h3>
         <div class="problem-persona">
-          <div class="problem-avatar">이</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 원장</span>
             <span class="problem-persona-role">피부·체형 복합센터 · White 사용 중</span>
@@ -1137,7 +1127,7 @@
             </div>
           </div>
           <div class="feat-thumb-gradient"></div>
-          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;">5 기능 전부</span>
+          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;">추천</span>
           <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:6;font-size:17px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
         </div>
         <p>개별 구독 대비 월 최대 40% 저렴. 지금 있는 5개 기능 전부, 앞으로 더해질 기능까지 포함됩니다.</p>
@@ -1469,12 +1459,12 @@
           <button class="billing-btn" id="btn-annual" onclick="setBilling('annual')">연 구독 <span style="font-size:11px;color:var(--gold);">최대 25% 할인</span></button>
         </div>
         <div class="feat-select-list">
-          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="🧍 모아레" data-monthly="23900" data-annual="17900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">🧍 모아레</span></div><span class="feat-select-price">월 23,900원</span></div>
-          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="🫀 3D 신경·림프·장기" data-monthly="35900" data-annual="29900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">🫀 3D 신경·림프·장기</span></div><span class="feat-select-price">월 35,900원</span></div>
-          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="📐 척추 세부 분석" data-monthly="47900" data-annual="39900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">📐 척추 세부 분석</span></div><span class="feat-select-price">월 47,900원</span></div>
-          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="📏 손실키 분석" data-monthly="79900" data-annual="65900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">📏 손실키 분석</span></div><span class="feat-select-price">월 79,900원</span></div>
-          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="✨ 안면 여백/탄력" data-monthly="29900" data-annual="23900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">✨ 안면 여백/탄력</span></div><span class="feat-select-price">월 29,900원</span></div>
-          <div class="feat-select-item" onclick="toggleFeat(this, true)" data-name="⭐ ALL IN ONE" data-monthly="107900" data-annual="89900" id="feat-all"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">⭐ ALL IN ONE <span style="font-size:11px;color:var(--gold);font-weight:700;">가장 저렴</span></span></div><span class="feat-select-price">월 107,900원</span></div>
+          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="모아레" data-monthly="23900" data-annual="17900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">모아레</span></div><span class="feat-select-price">월 23,900원</span></div>
+          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="3D 신경·림프·장기" data-monthly="35900" data-annual="29900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">3D 신경·림프·장기</span></div><span class="feat-select-price">월 35,900원</span></div>
+          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="척추 세부 분석" data-monthly="47900" data-annual="39900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">척추 세부 분석</span></div><span class="feat-select-price">월 47,900원</span></div>
+          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="손실키 분석" data-monthly="79900" data-annual="65900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">손실키 분석</span></div><span class="feat-select-price">월 79,900원</span></div>
+          <div class="feat-select-item" onclick="toggleFeat(this)" data-name="안면 여백/탄력" data-monthly="29900" data-annual="23900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">안면 여백/탄력</span></div><span class="feat-select-price">월 29,900원</span></div>
+          <div class="feat-select-item" onclick="toggleFeat(this, true)" data-name="ALL IN ONE" data-monthly="107900" data-annual="89900" id="feat-all"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">ALL IN ONE</span></div><span class="feat-select-price">월 107,900원</span></div>
         </div>
         <div class="price-summary">
           <div class="price-summary-label">선택 기능 합계</div>

@@ -262,12 +262,12 @@ let currentSubscriber = null;
 const fmt = n => Number(n||0).toLocaleString();
 
 const ALL_FEATURES = [
-  { key: '🧍 모아레', monthly: 23900, annual: 17900 },
-  { key: '🫀 3D 신경·림프·장기', monthly: 35900, annual: 29900 },
-  { key: '📐 척추 세부 분석', monthly: 47900, annual: 39900 },
-  { key: '📏 손실키 분석', monthly: 79900, annual: 65900 },
-  { key: '✨ 안면 여백/탄력', monthly: 29900, annual: 23900 },
-  { key: '⭐ ALL IN ONE', monthly: 107900, annual: 89900 },
+  { key: '모아레', monthly: 23900, annual: 17900 },
+  { key: '3D 신경·림프·장기', monthly: 35900, annual: 29900 },
+  { key: '척추 세부 분석', monthly: 47900, annual: 39900 },
+  { key: '손실키 분석', monthly: 79900, annual: 65900 },
+  { key: '안면 여백/탄력', monthly: 29900, annual: 23900 },
+  { key: 'ALL IN ONE', monthly: 107900, annual: 89900 },
 ];
 
 async function apiFetch(path, options = {}) {
@@ -400,8 +400,8 @@ function renderBillingSwitch() {
   const targetType = isMonthly ? 'annual' : 'monthly';
   const prices = FEATURE_PRICES[targetType];
   const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
-  let targetAmount = feats.includes('⭐ ALL IN ONE')
-    ? prices['⭐ ALL IN ONE']
+  let targetAmount = feats.includes('ALL IN ONE')
+    ? prices['ALL IN ONE']
     : feats.reduce((sum, f) => sum + (prices[f] || 0), 0);
 
   document.getElementById('billingSwitchCurrent').textContent = isMonthly ? '월 구독 중' : '연 구독 중';
@@ -421,8 +421,8 @@ function openBillingModal() {
   const targetType = isMonthly ? 'annual' : 'monthly';
   const prices = FEATURE_PRICES[targetType];
   const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
-  let targetAmount = feats.includes('⭐ ALL IN ONE')
-    ? prices['⭐ ALL IN ONE']
+  let targetAmount = feats.includes('ALL IN ONE')
+    ? prices['ALL IN ONE']
     : feats.reduce((sum, f) => sum + (prices[f] || 0), 0);
 
   document.getElementById('billingModalTitle').textContent = isMonthly ? '연 구독으로 전환' : '월 구독으로 전환';
