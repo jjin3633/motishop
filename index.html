@@ -109,9 +109,11 @@
     .hero-model-wrap {
       display: inline-block;
       overflow: hidden;
-      vertical-align: bottom;
-      height: 1.18em;
+      vertical-align: middle;
+      height: 1em;
+      line-height: 1;
       position: relative;
+      margin-top: -0.06em;
     }
     .hero-model {
       display: inline-block;
@@ -296,7 +298,7 @@
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
     /* ── Problem ── */
-    .problem { background: white; }
+    .problem { background: var(--gray50); }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
       gap: 20px; margin-top: 56px;
@@ -304,6 +306,7 @@
     .problem-card {
       background: white;
       border: 1px solid var(--gray100);
+      box-shadow: 0 2px 20px rgba(0,0,0,.05);
       border-radius: var(--radius);
       padding: 32px;
       border-left: 3px solid var(--blue);
@@ -357,21 +360,26 @@
       background: linear-gradient(0deg, rgba(6,16,30,.97) 0%, rgba(6,16,30,.45) 45%, rgba(6,16,30,.1) 100%);
     }
     .feat-thumb-all {
-      display: flex; align-items: stretch; justify-content: stretch;
-      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(26,107,255,.18) 0%, rgba(0,212,255,.05) 60%, transparent 100%);
-      padding: 20px 18px 56px;
+      background:
+        radial-gradient(ellipse 100% 80% at 10% 20%, rgba(26,107,255,.18) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 60% at 90% 80%, rgba(0,212,255,.1) 0%, transparent 55%),
+        var(--navy2);
     }
-    .all-feat-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 7px; width: 100%; align-content: start;
+    .all-checklist {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; flex-direction: column; justify-content: center;
+      gap: 10px; padding: 50px 22px 58px;
+      list-style: none;
     }
-    .all-feat-item {
-      font-size: 11px; font-weight: 700; color: rgba(255,255,255,.65);
-      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
-      border-radius: 8px; padding: 8px 10px; line-height: 1.4;
+    .all-checklist li {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.78); letter-spacing: -0.01em;
     }
-    .all-feat-plus {
-      background: rgba(0,212,255,.1); border-color: rgba(0,212,255,.3); color: var(--cyan);
-      grid-column: span 2; text-align: center; font-size: 12px;
+    .all-check {
+      width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(0,212,255,.12); border: 1.5px solid rgba(0,212,255,.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 900; color: var(--cyan);
     }
 
     /* ── Feature Modal ── */
@@ -463,7 +471,7 @@
     .pricing .section-sub { color: rgba(255,255,255,.4); }
     .pricing .section-label { color: var(--cyan); }
     .pricing .section-label::before { background: var(--cyan); }
-    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
     .price-card {
       background: rgba(255,255,255,.04);
       border: 1px solid rgba(255,255,255,.08);
@@ -477,7 +485,7 @@
     .price-card.featured { border-color: rgba(0,212,255,.4); background: rgba(26,107,255,.08); }
     .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .price-card h4 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
-    .price-card .desc { font-size: 18px; color: rgba(255,255,255,.4); line-height: 1.8; margin-bottom: 24px; }
+    .price-card .desc { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.75; margin-bottom: 24px; }
     .price-rows { border-top: 1px solid rgba(255,255,255,.07); padding-top: 20px; }
     .price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .price-row .label { font-size: 13px; color: rgba(255,255,255,.7); }
@@ -813,7 +821,7 @@
       .nav-inner { padding: 0 20px; }
       .hero { padding: 100px 5% 80px; }
       .hero h1 { font-size: clamp(32px, 9vw, 52px); line-height: 1.3; }
-      .hero-model-wrap { height: 1.3em; }
+      .hero-model-wrap { height: 1em; }
       .hero-hook { font-size: 17px; }
       .hero-btns { flex-direction: column; align-items: stretch; gap: 12px; }
       .btn-primary, .btn-secondary { font-size: 15px; padding: 14px 20px; text-align: center; justify-content: center; width: 100%; }
@@ -977,7 +985,6 @@
 <section class="features" id="features">
   <div class="section-inner">
     <h2 class="section-title">기기는 그대로입니다.<br>기능만 더하면 됩니다.</h2>
-    <p class="section-sub">필요한 기능만 골라 구독하세요. 언제든 해지할 수 있습니다.</p>
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
         <div class="feat-thumb">
@@ -1024,21 +1031,20 @@
         </div>
         <p>안면 윤곽과 탄력도를 분석합니다. 체형·뷰티 복합 센터의 차별화 포인트입니다.</p>
       </div>
-      <div class="feat-card" style="border-color:rgba(0,212,255,.22);">
+      <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
         <div class="feat-thumb feat-thumb-all">
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:3;color:var(--cyan);border-color:rgba(0,212,255,.35);">최대 40% 절감</span>
           <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:3;font-size:17px;font-weight:800;letter-spacing:-0.02em;">⭐ ALL IN ONE</h3>
-          <div class="all-feat-grid" style="position:relative;z-index:2;">
-            <div class="all-feat-item">🧍 모아레</div>
-            <div class="all-feat-item">🫀 3D 신경·림프·장기</div>
-            <div class="all-feat-item">📐 척추 세부 분석</div>
-            <div class="all-feat-item">📏 손실키 분석</div>
-            <div class="all-feat-item">✨ 안면 여백·탄력</div>
-            <div class="all-feat-item all-feat-plus">+ 5개 기능 전부</div>
-          </div>
+          <ul class="all-checklist">
+            <li><span class="all-check">✓</span>모아레 분석</li>
+            <li><span class="all-check">✓</span>3D 신경·림프·장기</li>
+            <li><span class="all-check">✓</span>척추 세부 분석</li>
+            <li><span class="all-check">✓</span>손실키 분석</li>
+            <li><span class="all-check">✓</span>안면 여백·탄력</li>
+          </ul>
         </div>
-        <p>모든 기능을 하나로. 개별 구독보다 월 최대 40% 저렴하고, 추후 기능이 추가되어도 동일 요금으로 이용하실 수 있습니다.</p>
+        <p>위 5개 기능 전부. 개별 구독보다 월 최대 40% 저렴하며, 추후 추가되는 기능도 동일 요금에 포함됩니다.</p>
       </div>
     </div>
   </div>
@@ -1047,8 +1053,7 @@
 <!-- ── COMPARISON ── -->
 <section class="comparison">
   <div class="section-inner">
-    <h2 class="section-title">내 라인업엔<br>어떤 기능을 추가할 수 있나요?</h2>
-    <p class="section-sub">라인업을 선택하면 추가 가능한 기능을 바로 확인할 수 있습니다.</p>
+    <h2 class="section-title">내 라인업엔<br>무엇을 더할 수 있나요?</h2>
     <div class="compare-tabs">
       <button class="compare-tab active" onclick="switchTab('mini', this)"><span class="tab-full">Moti Physio Mini</span><span class="tab-short">Mini</span></button>
       <button class="compare-tab" onclick="switchTab('white', this)"><span class="tab-full">Moti Physio White</span><span class="tab-short">White</span></button>
@@ -1244,8 +1249,7 @@
 <!-- ── PRICING ── -->
 <section class="pricing">
   <div class="section-inner">
-    <h2 class="section-title">구독 요금</h2>
-    <p class="section-sub">30일 무료 체험 후 자동 전환. 언제든 해지 가능.</p>
+    <h2 class="section-title">요금은 단순합니다.</h2>
     <div class="pricing-grid">
       <div class="price-card">
         <h4>모아레</h4>
@@ -1302,8 +1306,7 @@
 <!-- ── HOW IT WORKS ── -->
 <section class="howitworks">
   <div class="section-inner">
-    <h2 class="section-title">어떻게 하면 되냐고요?<br>4단계면 됩니다</h2>
-    <p class="section-sub">원하는 기능을 고르고 카드를 등록하면 됩니다.<br>신청서도 계약서도 없습니다. 정말로.</p>
+    <h2 class="section-title">신청은<br>4단계로 끝납니다.</h2>
     <div class="steps">
       <div class="step">
         <div class="step-num active">1</div>
