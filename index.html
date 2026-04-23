@@ -411,19 +411,22 @@
     .feat-card:hover { background: rgba(255,255,255,.06); border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 0 0 1px var(--cyan), 0 0 28px rgba(0,212,255,.25), 0 12px 40px rgba(0,0,0,.3); }
     .feat-card:hover::before { opacity: 1; }
     .feat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-    /* Premium icon box */
+    /* Feature icon — dark glass style, matches hero tone */
     .fi {
-      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Noto Sans KR', sans-serif; font-size: 12px; font-weight: 900;
-      letter-spacing: -0.01em; color: white;
+      font-size: 19px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      transition: box-shadow .25s;
     }
-    .fi-moire  { background: linear-gradient(135deg,#1A6BFF,#00D4FF); box-shadow: 0 4px 14px rgba(0,212,255,.35); }
-    .fi-nerve  { background: linear-gradient(135deg,#7C3AED,#A855F7); box-shadow: 0 4px 14px rgba(124,58,237,.35); }
-    .fi-spine  { background: linear-gradient(135deg,#0891B2,#22D3EE); box-shadow: 0 4px 14px rgba(8,145,178,.35); }
-    .fi-height { background: linear-gradient(135deg,#D97706,#FBBF24); box-shadow: 0 4px 14px rgba(217,119,6,.35); }
-    .fi-face   { background: linear-gradient(135deg,#BE185D,#EC4899); box-shadow: 0 4px 14px rgba(190,24,93,.35); }
-    .fi-all    { background: linear-gradient(135deg,#1A6BFF,#7C3AED); box-shadow: 0 4px 14px rgba(26,107,255,.4); }
+    .feat-card:hover .fi { box-shadow: 0 0 16px var(--fi-glow, rgba(0,212,255,.2)); }
+    .fi-moire  { --fi-glow: rgba(0,212,255,.25); border-color: rgba(0,212,255,.2); }
+    .fi-nerve  { --fi-glow: rgba(168,85,247,.25); border-color: rgba(168,85,247,.2); }
+    .fi-spine  { --fi-glow: rgba(34,211,238,.25); border-color: rgba(34,211,238,.2); }
+    .fi-height { --fi-glow: rgba(251,191,36,.25); border-color: rgba(251,191,36,.2); }
+    .fi-face   { --fi-glow: rgba(236,72,153,.25); border-color: rgba(236,72,153,.2); }
+    .fi-all    { --fi-glow: rgba(26,107,255,.3); border-color: rgba(26,107,255,.25); }
     .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .03em; }
     .badge-hot { background: rgba(255,90,90,.15); color: #FF6B6B; }
     .badge-new { background: rgba(0,212,255,.15); color: var(--cyan); }
@@ -432,11 +435,11 @@
     .feat-card h3 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 10px; line-height: 1.3; letter-spacing: -0.02em; }
     .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; }
     .feat-roi {
-      margin-top: auto; padding-top: 20px; padding-bottom: 14px; padding-left: 16px; padding-right: 16px;
-      background: rgba(26,107,255,.1); border-radius: 8px;
-      border-left: 3px solid var(--blue2);
-      font-size: 18px; color: rgba(255,255,255,.7);
-      line-height: 1.7;
+      margin-top: auto; padding: 12px 16px;
+      background: rgba(255,255,255,.04); border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.07);
+      font-size: 13px; font-weight: 700; color: rgba(255,255,255,.45);
+      letter-spacing: 0.01em; line-height: 1.5;
     }
     .feat-roi strong { color: var(--cyan); }
 
@@ -953,106 +956,41 @@
 <!-- ── PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <h2 class="section-title">혹시, 이 순간이<br>낯설지 않으신가요?</h2>
-    <p class="section-sub">기기 문제가 아니었어요. 기능 문제였습니다.</p>
+    <h2 class="section-title">라인업이 아니라,<br>기능이 아쉬웠던 겁니다</h2>
+    <p class="section-sub">기기는 그대로입니다. 기능만 추가하면 됩니다.</p>
     <div class="problem-grid">
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">😶</div>
+          <div class="problem-avatar">😔</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">최** 원장</span>
             <span class="problem-persona-role">재활운동센터 · Mini 사용 중 · 36세</span>
           </div>
         </div>
-        <div class="problem-scene">상담 중 이런 순간이 있었어요</div>
-        <h3>회원이 물었어요. "선생님, 제 몸이 왜 이렇게 됐는지 눈으로 보여주실 수 있어요?" 수치는 있었는데, 딱 한눈에 보여주는 게 없었어요. 옆 센터는 등고선 이미지로 한 장에 설명한다던데.</h3>
-        <div class="problem-resolution">→ 모아레 기능이 있었다면, 그 질문이 기회가 됐을 거예요</div>
+        <h3>화이트를 사고 싶었는데 예산 때문에 미니로 결정했어요. 모아레랑 3D 분석 기능 때문에 화이트를 원했던 건데, 막상 쓰다 보니 그 기능들이 없는 게 상담할 때마다 아쉽습니다.</h3>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">😬</div>
+          <div class="problem-avatar">🤔</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">한** 원장</span>
             <span class="problem-persona-role">체형교정센터 · White 사용 중 · 44세</span>
           </div>
         </div>
-        <div class="problem-scene">다른 센터 분석지를 본 날</div>
-        <h3>환자가 다른 센터 분석지를 가져왔어요. 척추 마디마디 각도가 다 나와 있더라고요. 우리 건 "전체적으로 틀어짐" 수준인데. 그날 저녁 새 기기 견적을 알아봤어요.</h3>
-        <div class="problem-resolution">→ 척추 세부 분석이 있었다면, 기기 견적은 안 찾아봤을 거예요</div>
+        <h3>프로를 원했는데 결국 화이트로 계약했어요. 척추 세부 분석이랑 손실키 기능이 없다 보니, 분석 깊이 면에서 아쉬울 때가 있습니다. 기기를 다시 바꿀 여유는 없고요.</h3>
       </div>
       <div class="problem-card">
         <div class="problem-deco">"</div>
         <div class="problem-persona">
-          <div class="problem-avatar">😮‍💨</div>
+          <div class="problem-avatar">💡</div>
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 원장</span>
-            <span class="problem-persona-role">체형교정센터 · Pro 사용 중 · 38세</span>
+            <span class="problem-persona-role">피부·체형 복합센터 · White 사용 중 · 38세</span>
           </div>
         </div>
-        <div class="problem-scene">견적서를 닫던 그 순간</div>
-        <h3>원하는 기능 다 있는 신형 기기 견적 받았더니 2,800만원이 나왔어요. 기기가 있는데 또 그만큼을. 결국 닫았어요. 근데 그 기능은 여전히 쓰고 싶어요.</h3>
-        <div class="problem-resolution">→ 기기 교체 없이 기능만 추가할 수 있다면</div>
-      </div>
-    </div>
-    <div class="problem-tagline">
-      <h3>그 <span class="accent">"~이었다면"</span>,<br>이제 현실이 됩니다.</h3>
-      <p>기기는 그대로. 필요한 기능만 구독하면 됩니다.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ── FEATURES ── -->
-<section class="features" id="features">
-  <div class="section-inner">
-    <h2 class="section-title">그 기능들,<br>이제 사용 가능합니다</h2>
-    <p class="section-sub">기기는 그대로. 필요한 기능만 골라 구독하세요.</p>
-    <div class="features-grid">
-      <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
-        <div class="feat-top">
-          <div class="fi fi-moire">모아</div>
-          <span class="feat-badge badge-hot">가장인기</span>
-        </div>
-        <h3>모아레 (Moiré)</h3>
-        <p>빛의 간섭 패턴으로 척추·골반 불균형을 등고선으로 시각화합니다. 수치 대신 사진 한 장이 회원 상담을 완전히 바꿉니다.</p>
-        <div class="feat-roi">💡 <strong>"한눈에 보이니까 회원이 먼저 묻습니다"</strong><br>설명 시간 단축 + 납득률 즉각 향상</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('nerve.png')">
-        <div class="feat-top">
-          <div class="fi fi-nerve">3D</div>
-          <span class="feat-badge badge-new">신규</span>
-        </div>
-        <h3>3D 신경 · 림프 · 장기</h3>
-        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 다른 센터에서는 보여줄 수 없는 차별화 포인트입니다.</p>
-        <div class="feat-roi">💡 <strong>"이런 분석 다른 센터에선 못 봤어요"</strong><br>센터 차별화의 가장 강력한 핵심 포인트</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
-        <div class="feat-top">
-          <div class="fi fi-spine">척추</div>
-          <span class="feat-badge badge-pro">프리미엄</span>
-        </div>
-        <h3>척추 세부 분석</h3>
-        <p>경추·흉추·요추 각 마디의 각도를 세분화하여 분석합니다. 기기 교체 없이 프로 수준의 분석 퀄리티를 그대로 냅니다.</p>
-        <div class="feat-roi">💡 <strong>프로 스펙을 기기 교체 없이 그대로</strong><br>상담 퀄리티가 눈에 띄게 달라집니다</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('lossheight..png')">
-        <div class="feat-top">
-          <div class="fi fi-height">키↑</div>
-          <span class="feat-badge badge-pro">프리미엄</span>
-        </div>
-        <h3>손실키 분석</h3>
-        <p>자세로 인한 신장 손실을 수치로 제시합니다. '교정하면 더 커 보입니다'—가장 강력한 동기 부여 한 마디입니다.</p>
-        <div class="feat-roi">💡 <strong>수치로 증명된 동기 부여 포인트</strong><br>체형 개선 의지를 즉각적으로 자극합니다</div>
-      </div>
-      <div class="feat-card" onclick="openFeatModal('faece.png')">
-        <div class="feat-top">
-          <div class="fi fi-face">안면</div>
-          <span class="feat-badge badge-pro">프리미엄</span>
-        </div>
-        <h3>안면 여백 / 탄력</h3>
-        <p>안면 윤곽과 탄력도를 정밀 분석합니다. 체형 분석에 피부 분석까지—뷰티 연계 센터의 핵심 차별화입니다.</p>
-        <div class="feat-roi">💡 <strong>체형 + 피부, 한 번에 두 가지 가치</strong><br>뷰티·한의원·피부샵 원장님께 특히 강력합니다</div>
+        <h3>다른 센터 원장님들이 어떤 기능 쓰는지 늘 궁금했어요. 마케팅에 효과 있다는 기능들이 있다는데 저는 아직 못 써봤거든요. 어떤 게 실제로 도움이 되는지 알고 싶습니다.</h3>
       </div>
     </div>
   </div>
@@ -1251,6 +1189,70 @@
         <strong>필요한 기능만, 30일 무료로 직접 써보세요.</strong>
       </div>
       <a class="btn-primary" href="#trial" style="white-space:nowrap; flex-shrink:0;">30일 무료 시작하기 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <h2 class="section-title">추가 가능한 기능,<br>전부 정리했습니다</h2>
+    <p class="section-sub">카드를 클릭하면 실제 분석 화면을 확인할 수 있습니다.</p>
+    <div class="features-grid">
+      <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
+        <div class="feat-top">
+          <div class="fi fi-moire">🧍</div>
+          <span class="feat-badge badge-hot">인기</span>
+        </div>
+        <h3>모아레 (Moiré)</h3>
+        <p>척추·골반 불균형을 등고선으로 시각화합니다. 수치 대신 이미지 한 장으로 회원 상담이 달라집니다.</p>
+        <div class="feat-roi">월 23,900원 · 연 17,900원</div>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('nerve.png')">
+        <div class="feat-top">
+          <div class="fi fi-nerve">🫀</div>
+          <span class="feat-badge badge-new">신규</span>
+        </div>
+        <h3>3D 신경 · 림프 · 장기</h3>
+        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 타 센터와의 분석 차별화 포인트입니다.</p>
+        <div class="feat-roi">월 35,900원 · 연 29,900원</div>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
+        <div class="feat-top">
+          <div class="fi fi-spine">📐</div>
+          <span class="feat-badge badge-pro">프리미엄</span>
+        </div>
+        <h3>척추 세부 분석</h3>
+        <p>경추·흉추·요추 각 마디의 각도를 세분화 분석합니다. 기기 교체 없이 프로급 척추 분석이 가능합니다.</p>
+        <div class="feat-roi">월 47,900원 · 연 39,900원</div>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('lossheight..png')">
+        <div class="feat-top">
+          <div class="fi fi-height">📏</div>
+          <span class="feat-badge badge-pro">프리미엄</span>
+        </div>
+        <h3>손실키 분석</h3>
+        <p>자세로 인한 신장 손실을 수치로 제시합니다. 체형 교정 동기 부여에 즉각적인 효과가 있습니다.</p>
+        <div class="feat-roi">월 79,900원 · 연 65,900원</div>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('faece.png')">
+        <div class="feat-top">
+          <div class="fi fi-face">✨</div>
+          <span class="feat-badge badge-pro">프리미엄</span>
+        </div>
+        <h3>안면 여백 / 탄력</h3>
+        <p>안면 윤곽과 탄력도를 분석합니다. 체형·뷰티 복합 센터의 추가 차별화 포인트입니다.</p>
+        <div class="feat-roi">월 29,900원 · 연 23,900원</div>
+      </div>
+      <div class="feat-card" onclick="openFeatModal('')" style="border-color:rgba(0,212,255,.2);">
+        <div class="feat-top">
+          <div class="fi fi-all">⭐</div>
+          <span class="feat-badge badge-hot">최저가</span>
+        </div>
+        <h3>ALL IN ONE</h3>
+        <p>위 5개 기능 전체 묶음입니다. 개별 합산 대비 월 최대 40% 이상 절감됩니다.</p>
+        <div class="feat-roi">월 107,900원 · 연 89,900원</div>
+      </div>
     </div>
   </div>
 </section>
@@ -1898,34 +1900,37 @@
   });
 
   // ── Social Proof Toast ──
-  const SP_EVENTS = [
-    { name: '이** 원장', feat: '모아레', time: '방금 전' },
-    { name: '박** 원장', feat: '척추 세부 분석', time: '1분 전' },
-    { name: '최** 원장', feat: 'ALL IN ONE', time: '방금 전' },
-    { name: '정** 원장', feat: '3D 신경·림프·장기', time: '2분 전' },
-    { name: '김** 원장', feat: '손실키 분석', time: '방금 전' },
-    { name: '한** 원장', feat: '안면 여백/탄력', time: '3분 전' },
-    { name: '윤** 원장', feat: 'ALL IN ONE', time: '방금 전' },
-    { name: '강** 원장', feat: '모아레', time: '1분 전' },
-    { name: '장** 원장', feat: '척추 세부 분석', time: '방금 전' },
-  ];
-  // 순서를 랜덤하게 섞어서 더 자연스럽게
-  const spShuffled = [...SP_EVENTS].sort(() => Math.random() - 0.5);
-  let spIdx = 0;
+  const SP_NAMES = ['이** 원장', '박** 원장', '최** 원장', '정** 원장', '김** 원장', '한** 원장', '윤** 원장', '강** 원장', '장** 원장', '신** 원장'];
+  const SP_FEATS = ['모아레', '척추 세부 분석', '3D 신경·림프·장기', '손실키 분석', '안면 여백/탄력'];
+  const SP_TIMES = ['방금 전', '1분 전', '2분 전', '방금 전', '3분 전', '방금 전'];
+
+  function getSpEvent() {
+    const name = SP_NAMES[Math.floor(Math.random() * SP_NAMES.length)];
+    const time = SP_TIMES[Math.floor(Math.random() * SP_TIMES.length)];
+    const r = Math.random();
+    let feat;
+    if (r < 0.18) {
+      feat = 'ALL IN ONE';
+    } else {
+      const count = r < 0.55 ? 1 : (r < 0.82 ? 2 : 3);
+      const shuffled = [...SP_FEATS].sort(() => Math.random() - 0.5);
+      feat = shuffled.slice(0, count).join(', ');
+    }
+    return { name, feat, time };
+  }
+
   const spToast = document.getElementById('spToast');
   function showSP() {
-    const ev = spShuffled[spIdx % spShuffled.length];
-    spIdx++;
+    const ev = getSpEvent();
     document.getElementById('spAvatar').textContent = ev.name.charAt(0);
     document.getElementById('spName').textContent = ev.name;
     document.getElementById('spMsg').textContent = ev.feat;
     document.getElementById('spTime').textContent = ev.time;
     spToast.classList.add('show');
-    setTimeout(() => spToast.classList.remove('show'), 4200);
+    setTimeout(() => spToast.classList.remove('show'), 4000);
   }
-  // 첫 토스트는 3초 후, 이후 10~18초 랜덤 간격
   function scheduleSP() {
-    const delay = 10000 + Math.random() * 8000;
+    const delay = 8000 + Math.random() * 4000;
     setTimeout(() => { showSP(); scheduleSP(); }, delay);
   }
   setTimeout(() => { showSP(); scheduleSP(); }, 3000);
