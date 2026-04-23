@@ -1,0 +1,20 @@
+# Node
+api/node_modules/
+api/*.log
+api/*.db
+api/*.db-journal
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Reference/sample materials (not part of the app)
+보행분석.html
+보행분석_files/
+신용카드자동결제샘플_빌키즉시등록포함/
