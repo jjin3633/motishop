@@ -382,9 +382,9 @@
       letter-spacing: -0.02em; flex-shrink: 0;
       box-shadow: 0 4px 12px rgba(26,107,255,.25);
     }
-    .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .problem-persona-name { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
-    .problem-persona-role { font-size: 12px; color: var(--gray400); font-weight: 500; }
+    .problem-persona-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; min-height: 40px; justify-content: center; }
+    .problem-persona-name { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; line-height: 1.3; }
+    .problem-persona-role { font-size: 13px; color: var(--gray400); font-weight: 500; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Features ── */
     .features { background: var(--navy); }
@@ -529,14 +529,18 @@
       font-size: 14px; color: rgba(255,255,255,.68); line-height: 1.85; flex: 1;
     }
     .feat-badge {
-      font-size: 11px; font-weight: 800; padding: 4px 11px; border-radius: 100px; letter-spacing: .04em;
-      background: rgba(6,16,30,.72); border: 1px solid rgba(255,255,255,.18);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      text-shadow: 0 1px 4px rgba(0,0,0,.5);
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; padding: 5px 11px 5px 9px; border-radius: 100px; letter-spacing: 0;
+      background: rgba(6,16,30,.68); border: 1px solid rgba(0,212,255,.32);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      color: white;
     }
-    .badge-hot { color: #FF8585; border-color: rgba(255,120,120,.35); }
-    .badge-new { color: var(--cyan); border-color: rgba(0,212,255,.35); }
-    .badge-pro { color: var(--gold); border-color: rgba(245,200,66,.35); }
+    .feat-badge::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan); box-shadow: 0 0 8px rgba(0,212,255,.7);
+      flex-shrink: 0;
+    }
+    .badge-hot, .badge-new, .badge-pro { color: white; border-color: rgba(0,212,255,.32); }
 
     /* ── How it works ── */
     .howitworks { background: var(--gray50); }
@@ -558,9 +562,7 @@
       border: 2px solid var(--gray100);
     }
     .step-num.active {
-      background: linear-gradient(135deg, var(--blue), var(--cyan));
-      border: none; color: white;
-      box-shadow: 0 8px 24px rgba(26,107,255,.4);
+      background: white; color: var(--gray400); border: 2px solid var(--gray100); box-shadow: none;
     }
     .step h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; line-height: 1.4; letter-spacing: -0.01em; }
     .step p { font-size: 14px; color: var(--gray600); line-height: 1.8; }
@@ -999,9 +1001,6 @@
     </span>,<br>
     <span class="accent">라인업을 넘어섭니다.</span>
   </h1>
-  <p class="hero-hook">
-    기기는 그대로 두고<br>기능만 골라 더합니다
-  </p>
   <div class="hero-btns">
     <a class="btn-primary" href="#trial">무료로 시작하기</a>
     <a class="btn-secondary" href="#features">기능 살펴보기</a>
@@ -1138,7 +1137,7 @@
             </div>
           </div>
           <div class="feat-thumb-gradient"></div>
-          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;color:var(--cyan);border-color:rgba(0,212,255,.35);">5 기능 전부 포함</span>
+          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;">5 기능 전부</span>
           <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:6;font-size:17px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
         </div>
         <p>개별 구독 대비 월 최대 40% 저렴. 지금 있는 5개 기능 전부, 앞으로 더해질 기능까지 포함됩니다.</p>
@@ -1350,7 +1349,7 @@
     <div class="pricing-grid">
       <div class="price-card">
         <h4>모아레</h4>
-        <p class="desc">등고선 한 장으로 척추·골반 불균형 시각화. 가장 즉각적인 상담 도구.</p>
+        <p class="desc">불균형을 등고선 한 장으로.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">23,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">17,900원</span><span class="save-badge">-25%</span></span></div>
@@ -1358,7 +1357,7 @@
       </div>
       <div class="price-card">
         <h4>척추 세부 분석</h4>
-        <p class="desc">경추·흉추·요추 마디별 각도 세분화. 프로 수준의 척추 분석.</p>
+        <p class="desc">마디별 각도까지 세분화.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">47,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">39,900원</span><span class="save-badge">-17%</span></span></div>
@@ -1366,7 +1365,7 @@
       </div>
       <div class="price-card">
         <h4>신경 · 림프 · 장기</h4>
-        <p class="desc">체형과 내부 시스템 연관성 3D 시각화. 센터 차별화의 핵심.</p>
+        <p class="desc">체형과 내부 시스템을 연결.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">35,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">29,900원</span><span class="save-badge">-17%</span></span></div>
@@ -1374,7 +1373,7 @@
       </div>
       <div class="price-card">
         <h4>손실키 분석</h4>
-        <p class="desc">자세로 인한 신장 손실 수치화. 회원 동기 부여에 즉각적 효과.</p>
+        <p class="desc">자세로 잃은 신장, 수치로.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">79,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">65,900원</span><span class="save-badge">-18%</span></span></div>
@@ -1382,7 +1381,7 @@
       </div>
       <div class="price-card">
         <h4>안면 여백 / 탄력</h4>
-        <p class="desc">안면 윤곽·탄력도 분석. 뷰티·한의원 연계 차별화 포인트.</p>
+        <p class="desc">윤곽과 탄력까지 짚어주는 분석.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">29,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">23,900원</span><span class="save-badge">-20%</span></span></div>
@@ -1390,7 +1389,7 @@
       </div>
       <div class="price-card featured">
         <h4>ALL IN ONE</h4>
-        <p class="desc">5개 기능 전체 묶음. 개별 합산 대비 월 40% 이상 절감.</p>
+        <p class="desc">5개 기능 전부, 월 40% 절감.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">107,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">89,900원</span><span class="save-badge">-17%</span></span></div>
@@ -1686,7 +1685,7 @@
 <!-- ── CTA BANNER ── -->
 <section class="cta-banner">
   <h2>30일, <span class="accent">직접 써보세요.</span></h2>
-  <p>맞지 않으면 해지하면 됩니다.<br>계약서도, 위약금도, 이유도 묻지 않습니다.</p>
+  <p>한 번 써보면 돌아갈 수 없습니다.<br>그래서 30일은 무료로 드립니다.</p>
   <a class="btn-primary" href="#trial" style="display:inline-flex;">30일 무료 체험 시작</a>
 </section>
 
