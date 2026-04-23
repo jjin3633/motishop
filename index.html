@@ -454,6 +454,37 @@
     .feat-card:hover .all-stack-card:nth-child(4) { transform: translate(22%, 6%) rotate(10deg); opacity: 1; }
     .feat-card:hover .all-stack-card:nth-child(5) { transform: translate(44%, 14%) rotate(20deg); opacity: .95; }
 
+    /* ── ALL IN ONE — marquee (option c) ── */
+    .all-marquee {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; align-items: center;
+      overflow: hidden;
+      padding: 28px 0 54px;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+    }
+    .all-marquee-track {
+      display: flex; gap: 14px; flex-shrink: 0;
+      animation: allMarquee 22s linear infinite;
+      will-change: transform;
+    }
+    .all-marquee-card {
+      flex-shrink: 0;
+      width: 150px; aspect-ratio: 4/3;
+      border-radius: 12px; overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 28px rgba(0,0,0,.38), 0 2px 6px rgba(0,0,0,.22);
+      background: var(--navy2);
+      transition: transform .3s;
+    }
+    .all-marquee-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .all-marquee-card:hover { transform: translateY(-4px) scale(1.03); }
+    .feat-card:hover .all-marquee-track { animation-play-state: paused; }
+    @keyframes allMarquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(calc(-50% - 7px)); }
+    }
+
     /* ── Feature Modal ── */
     .feat-modal {
       display: none; position: fixed; inset: 0; z-index: 300;
@@ -956,11 +987,11 @@
     <span class="hero-prefix">Moti Physio</span>
     <span class="hero-model-wrap">
       <span class="hero-model" id="heroModel">Mini</span>
-    </span><br>
-    <span class="accent">이제 다 됩니다.</span>
+    </span>,<br>
+    <span class="accent">없던 기능도 씁니다.</span>
   </h1>
   <p class="hero-hook">
-    기기는 그대로<br>기능은 자유자재로
+    기기는 그대로 두고<br>기능만 골라 더합니다
   </p>
   <div class="hero-btns">
     <a class="btn-primary" href="#trial">무료로 시작하기</a>
@@ -1043,7 +1074,7 @@
           <span class="feat-badge badge-hot">인기</span>
           <h3>모아레 (Moiré)</h3>
         </div>
-        <p>척추·골반 불균형을 등고선으로 시각화합니다. 수치 대신 이미지 한 장으로 회원 상담이 달라집니다.</p>
+        <p>수치로 설명하기 어려운 불균형, 등고선 이미지 한 장이면 됩니다. 10분짜리 상담이 1분에 끝납니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('nerve.png')">
         <div class="feat-thumb">
@@ -1052,7 +1083,7 @@
           <span class="feat-badge badge-new">신규</span>
           <h3>3D 신경 · 림프 · 장기</h3>
         </div>
-        <p>체형과 내부 기관·신경·림프계의 연관성을 3D로 시각화합니다. 타 센터에서는 보여주기 어려운 분석입니다.</p>
+        <p>체형만 보던 눈이, 내부 구조까지 봅니다. 다른 센터에선 꺼내기 어려운 이야기를 이미지로 풀어냅니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
         <div class="feat-thumb">
@@ -1061,7 +1092,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>척추 세부 분석</h3>
         </div>
-        <p>경추·흉추·요추 각 마디의 각도를 세분화합니다. 기기 교체 없이 프로급 척추 분석을 제공합니다.</p>
+        <p>경추·흉추·요추, 마디별로 쪼갭니다. 기기는 그대로, 분석 깊이만 프로로.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('lossheight..png')">
         <div class="feat-thumb">
@@ -1070,7 +1101,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>손실키 분석</h3>
         </div>
-        <p>자세로 인한 신장 손실을 수치로 제시합니다. 체형 교정 동기 부여에 즉각적인 효과가 있습니다.</p>
+        <p>"자세가 안 좋으면 키가 줄어요" — 이제 말 대신 숫자로 보여주세요. 교정 동기는 수치가 만듭니다.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('faece.png')">
         <div class="feat-thumb">
@@ -1079,24 +1110,29 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>안면 여백 / 탄력</h3>
         </div>
-        <p>안면 윤곽과 탄력도를 분석합니다. 체형·뷰티 복합 센터의 차별화 포인트입니다.</p>
+        <p>체형 다음은 얼굴입니다. 윤곽과 탄력까지 짚어주는, 복합 센터의 차별화 포인트.</p>
       </div>
       <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
         <div class="feat-thumb feat-thumb-all">
-          <div class="all-stack">
-            <div class="all-stack-inner">
-              <div class="all-stack-card"><img src="moire_image.jpg" alt="모아레" /></div>
-              <div class="all-stack-card"><img src="nerve.png" alt="3D 신경·림프·장기" /></div>
-              <div class="all-stack-card"><img src="spinedetaie.png" alt="척추 세부" /></div>
-              <div class="all-stack-card"><img src="lossheight..png" alt="손실키" /></div>
-              <div class="all-stack-card"><img src="faece.png" alt="안면 여백" /></div>
+          <div class="all-marquee">
+            <div class="all-marquee-track">
+              <div class="all-marquee-card"><img src="moire_image.jpg" alt="모아레" /></div>
+              <div class="all-marquee-card"><img src="nerve.png" alt="3D 신경·림프·장기" /></div>
+              <div class="all-marquee-card"><img src="spinedetaie.png" alt="척추 세부" /></div>
+              <div class="all-marquee-card"><img src="lossheight..png" alt="손실키" /></div>
+              <div class="all-marquee-card"><img src="faece.png" alt="안면 여백" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="moire_image.jpg" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="nerve.png" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="spinedetaie.png" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="lossheight..png" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="faece.png" alt="" /></div>
             </div>
           </div>
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;color:var(--cyan);border-color:rgba(0,212,255,.35);">5 기능 전부 포함</span>
           <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:6;font-size:17px;font-weight:800;letter-spacing:-0.02em;">ALL IN ONE</h3>
         </div>
-        <p>위 5개 기능 전부. 개별 구독보다 월 최대 40% 저렴하며, 추후 추가되는 기능도 동일 요금에 포함됩니다.</p>
+        <p>개별 구독 대비 월 최대 40% 저렴. 지금 있는 5개 기능 전부, 앞으로 더해질 기능까지 포함됩니다.</p>
       </div>
     </div>
   </div>
@@ -1301,7 +1337,7 @@
 <!-- ── PRICING ── -->
 <section class="pricing">
   <div class="section-inner">
-    <h2 class="section-title">구독 요금</h2>
+    <h2 class="section-title">30일 써보고 결정하세요.</h2>
     <div class="pricing-grid">
       <div class="price-card">
         <h4>모아레</h4>
@@ -1419,7 +1455,7 @@
       <!-- STEP 2 -->
       <div class="form-step" id="fstep2">
         <div class="form-step-title">체험할 기능을 선택하세요</div>
-        <div class="form-step-sub">복수 선택 가능 · 체험 후 필요한 것만 구독하면 됩니다</div>
+        <div class="form-step-sub">복수 선택 가능 · 체험 후 필요한 것만 남기세요</div>
         <div class="billing-toggle">
           <button class="billing-btn active" id="btn-monthly" onclick="setBilling('monthly')">월 구독</button>
           <button class="billing-btn" id="btn-annual" onclick="setBilling('annual')">연 구독 <span style="font-size:11px;color:var(--gold);">최대 25% 할인</span></button>
@@ -1445,7 +1481,7 @@
       <!-- STEP 3 -->
       <div class="form-step" id="fstep3">
         <div class="form-step-title">약관에 동의해주세요</div>
-        <div class="form-step-sub">서비스 이용을 위해 아래 약관을 확인하고 동의해주세요</div>
+        <div class="form-step-sub">아래 약관을 확인하고 동의해 주세요</div>
 
         <!-- 전체 동의 -->
         <div class="terms-all" id="terms-all-wrap" onclick="toggleAllTerms()">
