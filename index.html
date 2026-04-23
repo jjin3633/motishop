@@ -101,7 +101,7 @@
       font-size: clamp(38px, 6vw, 76px);
       font-weight: 900;
       color: white;
-      line-height: 1.18;
+      line-height: 1.26;
       letter-spacing: -0.02em;
       margin-bottom: 20px;
       position: relative;
@@ -216,7 +216,7 @@
     .section-label::before { content: ''; width: 20px; height: 2px; background: var(--blue); display: inline-block; }
     .section-title {
       font-size: clamp(28px, 3.5vw, 44px); font-weight: 900;
-      letter-spacing: -0.03em; line-height: 1.18;
+      letter-spacing: -0.03em; line-height: 1.32;
       margin-bottom: 18px;
     }
     .section-sub { font-size: 18px; color: var(--gray600); line-height: 1.8; }
@@ -412,19 +412,31 @@
     .feat-card:hover { background: rgba(255,255,255,.06); border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 0 0 1px var(--cyan), 0 0 28px rgba(0,212,255,.25), 0 12px 40px rgba(0,0,0,.3); }
     .feat-card:hover::before { opacity: 1; }
     .feat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-    .feat-icon { font-size: 28px; }
+    /* Premium icon box */
+    .fi {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Noto Sans KR', sans-serif; font-size: 12px; font-weight: 900;
+      letter-spacing: -0.01em; color: white;
+    }
+    .fi-moire  { background: linear-gradient(135deg,#1A6BFF,#00D4FF); box-shadow: 0 4px 14px rgba(0,212,255,.35); }
+    .fi-nerve  { background: linear-gradient(135deg,#7C3AED,#A855F7); box-shadow: 0 4px 14px rgba(124,58,237,.35); }
+    .fi-spine  { background: linear-gradient(135deg,#0891B2,#22D3EE); box-shadow: 0 4px 14px rgba(8,145,178,.35); }
+    .fi-height { background: linear-gradient(135deg,#D97706,#FBBF24); box-shadow: 0 4px 14px rgba(217,119,6,.35); }
+    .fi-face   { background: linear-gradient(135deg,#BE185D,#EC4899); box-shadow: 0 4px 14px rgba(190,24,93,.35); }
+    .fi-all    { background: linear-gradient(135deg,#1A6BFF,#7C3AED); box-shadow: 0 4px 14px rgba(26,107,255,.4); }
     .feat-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; letter-spacing: .03em; }
     .badge-hot { background: rgba(255,90,90,.15); color: #FF6B6B; }
     .badge-new { background: rgba(0,212,255,.15); color: var(--cyan); }
     .badge-pro { background: rgba(245,200,66,.15); color: var(--gold); }
     .feat-card h3 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 10px; line-height: 1.3; letter-spacing: -0.02em; }
-    .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; }
+    .feat-card p { font-size: 18px; color: rgba(255,255,255,.45); line-height: 1.8; min-height: 98px; }
     .feat-roi {
       margin-top: 20px; padding: 14px 16px;
       background: rgba(26,107,255,.1); border-radius: 8px;
       border-left: 3px solid var(--blue2);
       font-size: 18px; color: rgba(255,255,255,.7);
-      line-height: 1.7;
+      line-height: 1.7; min-height: 84px;
     }
     .feat-roi strong { color: var(--cyan); }
 
@@ -480,7 +492,6 @@
     .price-card:hover { border-color: rgba(26,107,255,.3); }
     .price-card.featured { border-color: rgba(0,212,255,.4); background: rgba(26,107,255,.08); }
     .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-    .price-card .feat-icon2 { font-size: 32px; }
     .price-card h4 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
     .price-card .desc { font-size: 18px; color: rgba(255,255,255,.4); line-height: 1.8; margin-bottom: 24px; }
     .price-rows { border-top: 1px solid rgba(255,255,255,.07); padding-top: 20px; }
@@ -903,7 +914,7 @@
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('moire_image.jpg')">
         <div class="feat-top">
-          <div class="feat-icon">🧍</div>
+          <div class="fi fi-moire">모아</div>
           <span class="feat-badge badge-hot">가장 인기</span>
         </div>
         <h3>모아레 (Moiré)</h3>
@@ -912,7 +923,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('nerve.png')">
         <div class="feat-top">
-          <div class="feat-icon">🫀</div>
+          <div class="fi fi-nerve">3D</div>
           <span class="feat-badge badge-new">NEW</span>
         </div>
         <h3>3D 신경 · 림프 · 장기</h3>
@@ -921,7 +932,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
         <div class="feat-top">
-          <div class="feat-icon">📐</div>
+          <div class="fi fi-spine">척추</div>
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>척추 세부 분석</h3>
@@ -930,7 +941,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('lossheight..png')">
         <div class="feat-top">
-          <div class="feat-icon">📏</div>
+          <div class="fi fi-height">키↑</div>
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>손실키 분석</h3>
@@ -939,7 +950,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('faece.png')">
         <div class="feat-top">
-          <div class="feat-icon">✨</div>
+          <div class="fi fi-face">안면</div>
           <span class="feat-badge badge-pro">프리미엄</span>
         </div>
         <h3>안면 여백 / 탄력</h3>
@@ -1184,7 +1195,7 @@
     <p class="section-sub">써보고 결정하세요. 30일은 무료입니다.</p>
     <div class="pricing-grid">
       <div class="price-card">
-        <div class="price-card-top"><span class="feat-icon2">🧍</span></div>
+        <div class="price-card-top"><div class="fi fi-moire">모아</div></div>
         <h4>모아레</h4>
         <p class="desc">척추·골반 불균형을 등고선으로 시각화. 가장 먼저 체감 효과가 나타납니다.</p>
         <div class="price-rows">
@@ -1193,7 +1204,7 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><span class="feat-icon2">📐</span></div>
+        <div class="price-card-top"><div class="fi fi-spine">척추</div></div>
         <h4>척추 세부 분석</h4>
         <p class="desc">경추·흉추·요추 마디별 각도 세분화. 프로 수준의 척추 분석.</p>
         <div class="price-rows">
@@ -1202,7 +1213,7 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><span class="feat-icon2">🫀</span></div>
+        <div class="price-card-top"><div class="fi fi-nerve">3D</div></div>
         <h4>신경 · 림프 · 장기</h4>
         <p class="desc">체형과 내부 시스템 연관성 3D 시각화. 센터 차별화의 핵심.</p>
         <div class="price-rows">
@@ -1211,7 +1222,7 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><span class="feat-icon2">📏</span></div>
+        <div class="price-card-top"><div class="fi fi-height">키↑</div></div>
         <h4>손실키 분석</h4>
         <p class="desc">자세로 인한 신장 손실 수치화. 회원 동기 부여에 즉각적 효과.</p>
         <div class="price-rows">
@@ -1220,7 +1231,7 @@
         </div>
       </div>
       <div class="price-card">
-        <div class="price-card-top"><span class="feat-icon2">✨</span></div>
+        <div class="price-card-top"><div class="fi fi-face">안면</div></div>
         <h4>안면 여백 / 탄력</h4>
         <p class="desc">안면 윤곽·탄력도 분석. 뷰티·한의원 연계 차별화 포인트.</p>
         <div class="price-rows">
@@ -1229,7 +1240,7 @@
         </div>
       </div>
       <div class="price-card featured">
-        <div class="price-card-top"><span class="feat-icon2">⭐</span></div>
+        <div class="price-card-top"><div class="fi fi-all">ALL</div></div>
         <h4>ALL IN ONE</h4>
         <p class="desc">5개 기능 전체 묶음. 개별 합산 대비 월 40% 이상 절감.</p>
         <div class="price-rows">

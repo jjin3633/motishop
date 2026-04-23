@@ -274,6 +274,21 @@ tr:hover td { background:var(--gray50); }
     <!-- ── 결제 로그 ── -->
     <div class="panel" id="panel-logs">
       <div class="toolbar">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;">
+          <input id="log-search" type="text" placeholder="업체명 또는 원장님 검색" oninput="filterLogs()"
+            style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--gray100);font-size:13px;font-family:inherit;outline:none;width:220px;" />
+          <select id="log-result" onchange="filterLogs()"
+            style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--gray100);font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer;">
+            <option value="">전체 결과</option>
+            <option value="ok">성공만</option>
+            <option value="fail">실패만</option>
+          </select>
+          <select id="log-month" onchange="filterLogs()"
+            style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--gray100);font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer;">
+            <option value="">전체 기간</option>
+          </select>
+          <span id="log-count" style="font-size:12px;color:var(--gray400);"></span>
+        </div>
         <div class="toolbar-right"><button class="btn-sm primary" onclick="loadLogs(this)">새로고침</button></div>
       </div>
       <div class="table-wrap">
@@ -504,13 +519,38 @@ function selectYear(year) {
 }
 
 // ── 결제 로그 ──
+let allLogs = [];
+
 async function loadLogs(btn) {
   if (btn) { btn.innerHTML = '<span class="spin" style="font-size:15px;display:inline-block;">↻</span>'; btn.classList.add('loading'); btn.disabled = true; }
-  const rows = await apiFetch('/api/logs').catch(() => []);
+  allLogs = await apiFetch('/api/logs').catch(() => []);
   if (btn) { btn.innerHTML = '새로고침'; btn.classList.remove('loading'); btn.disabled = false; }
+
+  // 월 필터 옵션 생성
+  const months = [...new Set(allLogs.map(r => (r.billed_at||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('log-month');
+  sel.innerHTML = '<option value="">전체 기간</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
+
+  filterLogs();
+}
+
+function filterLogs() {
+  const q = (document.getElementById('log-search').value || '').toLowerCase();
+  const result = document.getElementById('log-result').value;
+  const month = document.getElementById('log-month').value;
+
+  const filtered = allLogs.filter(r => {
+    if (q && !`${r.company}${r.name}`.toLowerCase().includes(q)) return false;
+    if (result === 'ok' && r.result_code !== '00') return false;
+    if (result === 'fail' && r.result_code === '00') return false;
+    if (month && !(r.billed_at||'').startsWith(month)) return false;
+    return true;
+  });
+
+  document.getElementById('log-count').textContent = `${filtered.length}건`;
   const tbody = document.getElementById('tbody-logs');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">결제 내역이 없습니다</td></tr>'; return; }
-  tbody.innerHTML = rows.map(r => `
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">결제 내역이 없습니다</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(r => `
     <tr>
       <td style="color:var(--gray400)">${r.id}</td>
       <td>${r.company}</td>
