@@ -551,12 +551,11 @@
     .step-num {
       width: 70px; height: 70px; border-radius: 50%;
       background: white;
-      color: var(--blue); font-size: 22px; font-weight: 900;
+      color: var(--gray400); font-size: 22px; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 24px;
       position: relative; z-index: 1;
-      border: 2px solid rgba(26,107,255,.22);
-      box-shadow: 0 2px 10px rgba(14,21,37,.05);
+      border: 2px solid var(--gray100);
     }
     .step-num.active {
       background: linear-gradient(135deg, var(--blue), var(--cyan));
@@ -601,26 +600,11 @@
     .save-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: rgba(0,212,255,.15); color: var(--cyan); margin-left: 6px; letter-spacing: 0.02em; }
     .price-row .amount-wrap { display: flex; align-items: center; }
 
-    /* ── Trust chips (form header) ── */
-    .trust-chips {
-      display: inline-flex; flex-wrap: wrap; justify-content: center;
-      gap: 8px; margin-top: 14px;
-    }
-    .trust-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 12px; font-weight: 600; letter-spacing: -0.01em;
-      color: rgba(255,255,255,.72);
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.1);
-      padding: 6px 12px; border-radius: 100px;
-    }
-    .trust-chip .trust-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--cyan);
-      box-shadow: 0 0 8px rgba(0,212,255,.6);
-    }
-    @media (max-width: 768px) {
-      .trust-chip { font-size: 11px; padding: 5px 10px; }
+    /* ── Form footer note ── */
+    .form-footnote {
+      text-align: center; margin-top: 22px;
+      font-size: 12px; color: rgba(255,255,255,.35);
+      line-height: 1.7; letter-spacing: -0.01em;
     }
 
     /* ── Form (멀티스텝) ── */
@@ -1008,7 +992,6 @@
   <div class="hero-orb hero-orb-1"></div>
   <div class="hero-orb hero-orb-2"></div>
   <div class="hero-orb hero-orb-3"></div>
-  <div class="hero-badge">Moti Shop Grand Open</div>
   <h1>
     <span class="hero-prefix">Moti Physio</span>
     <span class="hero-model-wrap">
@@ -1111,27 +1094,27 @@
         </div>
         <p>체형만 보던 눈이, 내부 구조까지 봅니다. 다른 센터에선 꺼내기 어려운 이야기를 이미지로 풀어냅니다.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('spinedetaie.png')">
+      <div class="feat-card" onclick="openFeatModal('spinedetail.png')">
         <div class="feat-thumb">
-          <img src="spinedetaie.png" alt="척추 세부 분석 화면" />
+          <img src="spinedetail.png" alt="척추 세부 분석 화면" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>척추 세부 분석</h3>
         </div>
         <p>경추·흉추·요추, 마디별로 쪼갭니다. 기기는 그대로, 분석 깊이만 프로로.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('lossheight..png')">
+      <div class="feat-card" onclick="openFeatModal('lossheight.png')">
         <div class="feat-thumb">
-          <img src="lossheight..png" alt="손실키 분석 화면" />
+          <img src="lossheight.png" alt="손실키 분석 화면" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>손실키 분석</h3>
         </div>
         <p>"자세가 안 좋으면 키가 줄어요" — 이제 말 대신 숫자로 보여주세요. 교정 동기는 수치가 만듭니다.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('faece.png')">
+      <div class="feat-card" onclick="openFeatModal('face.png')">
         <div class="feat-thumb">
-          <img src="faece.png" alt="안면 여백·탄력 분석 화면" />
+          <img src="face.png" alt="안면 여백·탄력 분석 화면" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>안면 여백 / 탄력</h3>
@@ -1144,14 +1127,14 @@
             <div class="all-marquee-track">
               <div class="all-marquee-card"><img src="moire_image.jpg" alt="모아레" /></div>
               <div class="all-marquee-card"><img src="nerve.png" alt="3D 신경·림프·장기" /></div>
-              <div class="all-marquee-card"><img src="spinedetaie.png" alt="척추 세부" /></div>
-              <div class="all-marquee-card"><img src="lossheight..png" alt="손실키" /></div>
-              <div class="all-marquee-card"><img src="faece.png" alt="안면 여백" /></div>
+              <div class="all-marquee-card"><img src="spinedetail.png" alt="척추 세부" /></div>
+              <div class="all-marquee-card"><img src="lossheight.png" alt="손실키" /></div>
+              <div class="all-marquee-card"><img src="face.png" alt="안면 여백" /></div>
               <div class="all-marquee-card" aria-hidden="true"><img src="moire_image.jpg" alt="" /></div>
               <div class="all-marquee-card" aria-hidden="true"><img src="nerve.png" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="spinedetaie.png" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="lossheight..png" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="faece.png" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="spinedetail.png" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="lossheight.png" alt="" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="face.png" alt="" /></div>
             </div>
           </div>
           <div class="feat-thumb-gradient"></div>
@@ -1367,7 +1350,7 @@
     <div class="pricing-grid">
       <div class="price-card">
         <h4>모아레</h4>
-        <p class="desc">척추·골반 불균형을 등고선으로 시각화. 가장 먼저 체감 효과가 나타납니다.</p>
+        <p class="desc">등고선 한 장으로 척추·골반 불균형 시각화. 가장 즉각적인 상담 도구.</p>
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">23,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">17,900원</span><span class="save-badge">-25%</span></span></div>
@@ -1451,11 +1434,6 @@
   <div class="section-inner">
     <div style="text-align:center; margin-bottom:40px;">
       <h2 class="section-title" style="color:white;">지금 시작하면, 30일은 무료입니다.</h2>
-      <div class="trust-chips">
-        <span class="trust-chip"><span class="trust-dot"></span>카드 유효성 확인 10원은 즉시 취소</span>
-        <span class="trust-chip"><span class="trust-dot"></span>체험 기간 내 언제든 해지 가능</span>
-        <span class="trust-chip"><span class="trust-dot"></span>위약금·계약서 없음</span>
-      </div>
     </div>
 
     <!-- 스텝 인디케이터 -->
@@ -1676,6 +1654,7 @@
       </div>
 
     </div>
+    <p class="form-footnote">카드 유효성 확인 10원은 즉시 취소 · 체험 기간 내 언제든 해지 가능 · 위약금·계약서 없음</p>
   </div>
 </section>
 
