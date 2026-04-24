@@ -1038,24 +1038,39 @@
       .compare-body { padding: 12px 16px; }
       .compare-footer { padding: 14px 16px; }
       .compare-row { font-size: 14px; padding: 8px 0; }
-      /* HowItWorks 모바일: 중앙 수직 타임라인 방식 */
-      .steps { grid-template-columns: 1fr; gap: 0; margin-top: 28px; position: relative; }
-      .steps::before {
-        content: '';
-        position: absolute;
-        top: 56px; bottom: 56px;
-        left: 50%; transform: translateX(-50%);
-        width: 2px;
-        background: var(--gray400);
-        z-index: 0;
+      /* HowItWorks 모바일: 좌측 수직 타임라인 (텍스트는 라인 우측) */
+      .steps { grid-template-columns: 1fr; gap: 0; margin-top: 28px; position: relative; padding-left: 56px; }
+      .steps::before { display: none; }
+      .step {
+        position: relative;
+        display: block;
+        padding: 0 0 28px;
+        min-height: 68px;
+        text-align: left;
       }
-      .step { display: flex; flex-direction: column; align-items: center; padding: 32px 0; position: relative; z-index: 1; }
-      .step:first-child { padding-top: 0; }
-      .step:last-child { padding-bottom: 0; }
-      .step-num { position: relative; z-index: 2; }
-      .step:not(:last-child)::after { display: none !important; }
-      .step h3 { text-align: center; }
-      .step p { text-align: center; }
+      .step:last-child { padding-bottom: 0; min-height: 40px; }
+      .step-num {
+        position: absolute;
+        left: -56px; top: 0;
+        width: 40px; height: 40px;
+        border-radius: 12px;
+        font-size: 15px;
+        margin: 0;
+        z-index: 2;
+      }
+      /* step-num 하단 → 다음 step-num 상단 연결선 (좌측 gutter 내) */
+      .step:not(:last-child)::after {
+        content: '';
+        top: 40px;
+        left: -37px;
+        right: auto;
+        bottom: 0;
+        width: 2px;
+        height: auto;
+        background: var(--gray400);
+      }
+      .step h3 { text-align: left; margin: 0 0 6px; font-size: 16px; line-height: 1.4; }
+      .step p { text-align: left; font-size: 13px; line-height: 1.7; }
       .form-left h3 { font-size: 22px; }
       .form-grid { grid-template-columns: 1fr; }
       .form-box { padding: 24px 16px; }
