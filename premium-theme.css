@@ -12,14 +12,15 @@
   --gray100: #1E293B;  /* Borders */
   --gray400: #94A3B8;
   --gray600: #64748B;
-  --text: #F8FAFC;     /* Light text for dark mode */
+  --text: #0E1525;     /* Original dark text */
+  --text-light: #F8FAFC; /* Light text for dark mode sections */
   
   --glow-blue: rgba(37, 99, 235, 0.3);
   --glow-cyan: rgba(6, 182, 212, 0.3);
 }
 
 body {
-  background: var(--navy);
+  background: var(--white);
   color: var(--text);
   letter-spacing: -0.01em;
 }
@@ -84,10 +85,10 @@ nav {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* 5. Problem & Reviews Section (2024/2025 Trend: Bento Grid & Gradient Borders) */
+/* 5. Problem & Reviews Section (Light Premium + Bento Grid) */
 .problem, .reviews {
-  background: var(--navy);
-  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  background: var(--white);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
 }
 .problem::before, .reviews::before {
@@ -95,7 +96,7 @@ nav {
   position: absolute;
   top: 0; left: 50%; transform: translateX(-50%);
   width: 80%; height: 500px;
-  background: radial-gradient(ellipse at top, rgba(37, 99, 235, 0.08), transparent 70%);
+  background: radial-gradient(ellipse at top, rgba(37, 99, 235, 0.05), transparent 70%);
   pointer-events: none;
 }
 .problem .section-title, .reviews .section-title {
@@ -111,42 +112,13 @@ nav {
 }
 .problem-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid transparent;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 24px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s, border-color 0.4s;
   overflow: hidden;
   z-index: 1;
-}
-
-/* Gradient Border using ::before */
-.problem-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  padding: 1px; /* border thickness */
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  transition: background 0.4s;
-}
-
-/* Inner subtle glow */
-.problem-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.05), transparent 60%);
-  pointer-events: none;
-  z-index: -1;
-  transition: opacity 0.4s;
-  opacity: 0.5;
 }
 
 /* Bento layout allocations */
@@ -168,41 +140,39 @@ nav {
   
   /* Horizontal card styling for the 3rd card */
   .problem-card:nth-child(3) h3 { margin-bottom: 0; flex: 1; font-size: 20px; }
-  .problem-card:nth-child(3) .problem-persona { border-top: none; border-left: 1px solid rgba(255,255,255,0.08); padding-top: 0; padding-left: 32px; margin-top: 0; min-width: 240px; }
+  .problem-card:nth-child(3) .problem-persona { border-top: none; border-left: 1px solid rgba(0,0,0,0.06); padding-top: 0; padding-left: 32px; margin-top: 0; min-width: 240px; }
 }
 
 .problem-card h3 {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text);
   font-size: 19px;
   line-height: 1.6;
 }
 .problem-card h3 .hl {
   color: transparent;
-  background: linear-gradient(90deg, var(--cyan-bright), #A855F7);
+  background: linear-gradient(90deg, var(--blue), #A855F7);
   -webkit-background-clip: text;
   background-clip: text;
   font-weight: 900;
 }
 .problem-persona {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 .problem-persona-name {
-  color: white;
+  color: var(--text);
 }
 .problem-persona::before {
-  background: var(--cyan);
-  box-shadow: 0 0 10px var(--glow-cyan);
+  background: var(--blue);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+}
+.problem-persona-role {
+  color: var(--gray600);
 }
 
 .problem-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(6, 182, 212, 0.1);
-}
-.problem-card:hover::before {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.6) 0%, rgba(37, 99, 235, 0.2) 100%);
-}
-.problem-card:hover::after {
-  opacity: 1;
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 0 30px rgba(37, 99, 235, 0.05);
 }
 
 /* 6. Features Section */
@@ -226,50 +196,65 @@ nav {
   z-index: 10;
 }
 
-/* 7. Comparison Section */
+/* 7. Comparison Section (Light Premium) */
 .comparison {
-  background: radial-gradient(circle at center, #0B1324 0%, var(--navy) 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--gray50);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+.comparison .section-title {
+  color: var(--text);
 }
 .compare-tab {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  color: var(--gray600);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 .compare-tab.active {
-  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  background: var(--navy);
   color: white;
   border-color: transparent;
-  box-shadow: 0 4px 15px var(--glow-blue);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
 .compare-card.before {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
 }
 .compare-card.before .compare-title,
 .compare-card.before .compare-row .feat-name.highlight,
 .compare-card.before .price-big {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text);
 }
 .compare-card.before .compare-head,
 .compare-card.before .compare-row,
 .compare-card.before .compare-footer {
-  border-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 0, 0, 0.05);
 }
 .tag-before {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  background: var(--gray100);
+  color: var(--gray600);
 }
 
 .compare-card.after {
-  background: linear-gradient(180deg, rgba(37,99,235,0.1) 0%, rgba(11,19,36,0.5) 100%);
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  box-shadow: 0 10px 40px var(--glow-blue), inset 0 1px 0 rgba(255,255,255,0.1);
+  background: var(--navy);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 40px rgba(37, 99, 235, 0.15);
+}
+.compare-card.after .compare-title,
+.compare-card.after .compare-row .feat-name.highlight,
+.compare-card.after .price-big {
+  color: white;
 }
 .compare-action {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.08);
+}
+.compare-action-text strong {
+  color: var(--text);
+}
+.compare-action-text p {
+  color: var(--gray600);
 }
 
 /* 8. Pricing Section */
@@ -292,19 +277,22 @@ nav {
   box-shadow: 0 0 40px var(--glow-cyan), 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
-/* 9. How It Works */
+/* 9. How It Works (Light Premium) */
 .howitworks {
-  background: var(--navy);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--gray50);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 .howitworks .section-title {
-  color: white;
+  color: var(--text);
 }
-.step p, .step h3 {
-  color: rgba(255, 255, 255, 0.8);
+.step p {
+  color: var(--gray600);
+}
+.step h3 {
+  color: var(--text);
 }
 .step-num {
-  box-shadow: 0 8px 24px var(--glow-blue), inset 0 2px 4px rgba(255,255,255,0.3);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25), inset 0 2px 4px rgba(255,255,255,0.3);
 }
 
 /* 10. Form Section */
@@ -360,17 +348,20 @@ nav {
   color: var(--text);
 }
 
-/* FAQ Dark Mode */
+/* FAQ Light Mode */
 .faq {
-  background: var(--navy);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--gray50);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+.faq .section-title {
+  color: var(--text);
 }
 .faq-q {
-  color: white;
+  color: var(--text);
 }
 .faq-item {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 0, 0, 0.05);
 }
 .faq-a {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--gray600);
 }
