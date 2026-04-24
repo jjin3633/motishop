@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="premium-theme.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -307,7 +308,7 @@
     }
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* ── Problem / Reviews (클린 화이트, Stripe-style) ── */
+    /* ── Problem / Reviews (임팩트 강화, 무호버) ── */
     .problem, .reviews {
       background: white;
       border-top: 1px solid var(--gray100);
@@ -323,36 +324,51 @@
       background: white;
       border: 1px solid var(--gray100);
       border-radius: 16px;
-      padding: 32px 28px 24px;
-      transition: border-color .25s ease, transform .25s ease;
+      padding: 36px 30px 26px;
       display: flex; flex-direction: column;
+      overflow: hidden;
     }
-    .problem-card:hover {
-      border-color: var(--blue);
-      transform: translateY(-2px);
+    /* 좌측 세로 액센트 바 — 카드 무게감 */
+    .problem-card::before {
+      content: '';
+      position: absolute; top: 0; bottom: 0; left: 0;
+      width: 3px;
+      background: var(--text);
+    }
+    .reviews .problem-card::before {
+      background: linear-gradient(180deg, var(--blue), var(--cyan));
     }
     .problem-card h3 {
-      font-size: 17px; font-weight: 400;
+      font-size: 19px; font-weight: 700;
       color: var(--text);
-      line-height: 1.7; letter-spacing: -0.01em;
-      margin-bottom: 28px;
+      line-height: 1.6; letter-spacing: -0.02em;
+      margin-bottom: 32px;
       flex: 1;
     }
+    /* Problem — 노란 형광펜 하이라이트 (pain 강조) */
     .problem-card h3 .hl {
-      font-weight: 700;
+      font-weight: 900;
+      color: var(--text);
+      background: linear-gradient(180deg, transparent 62%, rgba(245,200,66,.5) 62%);
+      padding: 0 2px;
+    }
+    /* Reviews — 파란 텍스트 (긍정 시그널) */
+    .reviews .problem-card h3 .hl {
+      background: none;
       color: var(--blue);
     }
     .problem-persona {
       display: flex; align-items: center; gap: 10px;
-      padding-top: 18px;
+      padding-top: 20px;
       border-top: 1px solid var(--gray100);
       margin-top: auto;
     }
     .problem-persona::before {
       content: ''; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--blue);
+      background: var(--text);
       flex-shrink: 0;
     }
+    .reviews .problem-persona::before { background: var(--blue); }
     .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
     .problem-persona-name { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.3; }
     .problem-persona-role { font-size: 12px; font-weight: 400; color: var(--gray400); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1986,6 +2002,31 @@
   });
 
   // ── Social Proof Toast ──
+</script>
+<script>
+  // Reveal Animations
+  document.addEventListener("DOMContentLoaded", () => {
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.1
+    };
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Elements to animate
+    const targets = document.querySelectorAll('.section-title, .problem-card, .feat-card, .price-card, .compare-card, .step, .faq-item');
+    targets.forEach(el => {
+      el.classList.add('reveal');
+      observer.observe(el);
+    });
+  });
 </script>
 </body>
 </html>
