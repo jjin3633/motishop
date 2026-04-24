@@ -308,70 +308,97 @@
     }
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* ── Problem / Reviews (임팩트 강화, 무호버) ── */
+    /* ── Problem / Reviews (서로 다른 비주얼 언어) ── */
     .problem, .reviews {
       background: white;
       border-top: 1px solid var(--gray100);
     }
     .reviews { border-top: none; border-bottom: 1px solid var(--gray100); }
-    .problem .section-title, .reviews .section-title { color: var(--text); text-align: left; }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
       gap: 16px; margin-top: 56px;
     }
+    /* 공통 카드 베이스 */
     .problem-card {
       position: relative;
-      background: white;
-      border: 1px solid var(--gray100);
       border-radius: 16px;
       padding: 36px 30px 26px;
       display: flex; flex-direction: column;
       overflow: hidden;
     }
-    /* 좌측 세로 액센트 바 — 카드 무게감 */
     .problem-card::before {
       content: '';
       position: absolute; top: 0; bottom: 0; left: 0;
       width: 3px;
-      background: var(--text);
-    }
-    .reviews .problem-card::before {
-      background: linear-gradient(180deg, var(--blue), var(--cyan));
     }
     .problem-card h3 {
       font-size: 19px; font-weight: 700;
-      color: var(--text);
       line-height: 1.6; letter-spacing: -0.02em;
       margin-bottom: 32px;
       flex: 1;
     }
-    /* Problem — 노란 형광펜 하이라이트 (pain 강조) */
-    .problem-card h3 .hl {
-      font-weight: 900;
+    .problem-card h3 .hl { font-weight: 900; }
+    .problem-persona {
+      display: flex; flex-direction: column; gap: 3px;
+      padding-top: 20px;
+      margin-top: auto;
+    }
+    .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .problem-persona-name { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; }
+    .problem-persona-role { font-size: 12px; font-weight: 400; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Problem 전용 — 연한 블루 틴트 카드 */
+    .problem:not(.reviews) .problem-card {
+      background: #F4F7FF;
+      border: 1px solid rgba(26,107,255,.08);
+    }
+    .problem:not(.reviews) .problem-card::before {
+      background: linear-gradient(180deg, var(--blue), var(--cyan));
+    }
+    .problem:not(.reviews) .problem-card h3 { color: var(--text); }
+    .problem:not(.reviews) .problem-card h3 .hl {
       color: var(--text);
       background: linear-gradient(180deg, transparent 62%, rgba(245,200,66,.5) 62%);
       padding: 0 2px;
     }
-    /* Reviews — 파란 텍스트 (긍정 시그널) */
+    .problem:not(.reviews) .problem-persona {
+      border-top: 1px solid rgba(26,107,255,.12);
+    }
+    .problem:not(.reviews) .problem-persona-name { color: var(--text); }
+    .problem:not(.reviews) .problem-persona-role { color: var(--gray400); }
+
+    /* Reviews 전용 — 다크 네이비 카드 (강한 대비) */
+    .reviews .problem-card {
+      background: var(--navy);
+      border: 1px solid var(--navy);
+    }
+    .reviews .problem-card::before {
+      background: linear-gradient(180deg, var(--cyan), var(--blue2));
+    }
+    .reviews .problem-card h3 { color: rgba(255,255,255,.95); }
     .reviews .problem-card h3 .hl {
+      color: var(--cyan);
       background: none;
-      color: var(--blue);
     }
-    .problem-persona {
-      display: flex; align-items: center; gap: 10px;
-      padding-top: 20px;
-      border-top: 1px solid var(--gray100);
-      margin-top: auto;
+    .reviews .problem-persona {
+      border-top: 1px solid rgba(255,255,255,.1);
     }
-    .problem-persona::before {
-      content: ''; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--text);
-      flex-shrink: 0;
+    .reviews .problem-persona-name { color: white; }
+    .reviews .problem-persona-role { color: rgba(255,255,255,.5); }
+
+    /* ── Scroll Reveal (fast) ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity .32s ease-out, transform .32s cubic-bezier(.2,.8,.2,1);
     }
-    .reviews .problem-persona::before { background: var(--blue); }
-    .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-    .problem-persona-name { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.3; }
-    .problem-persona-role { font-size: 12px; font-weight: 400; color: var(--gray400); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
 
     /* ── Features ── */
     .features { background: var(--navy); }
@@ -1329,7 +1356,7 @@
 <!-- ── REVIEWS ── -->
 <section class="reviews problem">
   <div class="section-inner">
-    <h2 class="section-title">이미 시작한 원장님들.</h2>
+    <h2 class="section-title">먼저 쓰고 있는 원장님들</h2>
     <div class="problem-grid">
       <div class="problem-card">
         <h3>척추 세부 분석을 추가했더니 <span class="hl">상담이 훨씬 쉬워졌습니다</span>. 수치로 설명할 때와 이미지로 보여줄 때는 차이가 큽니다.</h3>
@@ -2008,8 +2035,8 @@
   document.addEventListener("DOMContentLoaded", () => {
     const observerOptions = {
       root: null,
-      rootMargin: "0px",
-      threshold: 0.1
+      rootMargin: "0px 0px -40px 0px",
+      threshold: 0.05
     };
     const observer = new IntersectionObserver((entries, obs) => {
       entries.forEach(entry => {
