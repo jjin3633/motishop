@@ -394,7 +394,7 @@
     .reveal {
       opacity: 0;
       transform: translateY(2px);
-      transition: opacity .01s ease-out, transform .01s cubic-bezier(.2,.8,.2,1);
+      transition: opacity .006s ease-out, transform .006s cubic-bezier(.2,.8,.2,1);
     }
     .reveal.active {
       opacity: 1;
@@ -2164,7 +2164,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     const observerOptions = {
       root: null,
-      rootMargin: "0px 0px 1000px 0px",
+      rootMargin: "0px 0px 1500px 0px",
       threshold: 0
     };
     const observer = new IntersectionObserver((entries, obs) => {
