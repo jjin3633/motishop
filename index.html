@@ -394,7 +394,7 @@
     .reveal {
       opacity: 0;
       transform: translateY(4px);
-      transition: opacity .08s ease-out, transform .08s cubic-bezier(.2,.8,.2,1);
+      transition: opacity .05s ease-out, transform .05s cubic-bezier(.2,.8,.2,1);
     }
     .reveal.active {
       opacity: 1;
@@ -1002,6 +1002,9 @@
       .compare-slide.active { grid-template-columns: 1fr; }
       .form-layout { grid-template-columns: 1fr; }
       .form-left { padding-top: 0; }
+      /* Hero 버튼: 태블릿부터 세로 1열 */
+      .hero-btns { flex-direction: column; align-items: stretch; gap: 12px; max-width: 360px; margin-left: auto; margin-right: auto; }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; text-align: center; }
     }
     @media (max-width: 768px) {
       body { font-size: 16px; }
@@ -1176,7 +1179,7 @@
         </div>
       </div>
       <div class="problem-card">
-        <h3>"이 부분 더 자세히 봐줄 수 없냐"는 회원 질문에, <span class="hl">기본 분석 선에서 끊기는 게</span> 매번 아쉽습니다.</h3>
+        <h3>프로를 원했는데 <span class="hl">화이트로 계약</span>했어요. 기기를 다시 바꿀 여유는 없고, 분석 깊이가 아쉽습니다.</h3>
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">한** 원장</span>
@@ -2151,7 +2154,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     const observerOptions = {
       root: null,
-      rootMargin: "0px 0px 200px 0px",
+      rootMargin: "0px 0px 600px 0px",
       threshold: 0
     };
     const observer = new IntersectionObserver((entries, obs) => {
