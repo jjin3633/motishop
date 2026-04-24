@@ -2003,30 +2003,5 @@
 
   // ── Social Proof Toast ──
 </script>
-<script>
-  // Reveal Animations
-  document.addEventListener("DOMContentLoaded", () => {
-    const observerOptions = {
-      root: null,
-      rootMargin: "0px",
-      threshold: 0.1
-    };
-    const observer = new IntersectionObserver((entries, obs) => {
-      entries.forEach(entry => {
-        if(entry.isIntersecting) {
-          entry.target.classList.add('active');
-          obs.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    // Elements to animate
-    const targets = document.querySelectorAll('.section-title, .problem-card, .feat-card, .price-card, .compare-card, .step, .faq-item');
-    targets.forEach(el => {
-      el.classList.add('reveal');
-      observer.observe(el);
-    });
-  });
-</script>
 </body>
 </html>
