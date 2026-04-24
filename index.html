@@ -202,20 +202,20 @@
     @keyframes scrolldown { 0%,100%{opacity:.15} 50%{opacity:.9} }
 
     /* ── Stats Bar ── */
-    .stats-bar { background: var(--navy2); border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); }
+    .stats-bar { background: var(--navy); border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); }
     .stats-inner {
-      max-width: 860px; margin: 0 auto;
+      max-width: 1080px; margin: 0 auto;
       display: grid; grid-template-columns: repeat(4, 1fr);
       padding: 0 24px;
     }
     .stat-item {
-      padding: 32px 16px; text-align: center;
+      padding: 40px 16px; text-align: center;
       border-right: 1px solid rgba(255,255,255,.06);
     }
     .stat-item:last-child { border-right: none; }
-    .stat-num { font-size: 36px; font-weight: 900; color: white; letter-spacing: -0.02em; line-height: 1; }
-    .stat-num .unit { font-size: 20px; color: var(--cyan); }
-    .stat-label { font-size: 13px; color: rgba(255,255,255,.4); margin-top: 8px; line-height: 1.6; }
+    .stat-num { font-size: 44px; font-weight: 900; color: white; letter-spacing: -0.03em; line-height: 1; }
+    .stat-num .unit { font-size: 22px; color: var(--cyan); margin-left: 2px; }
+    .stat-label { font-size: 13px; font-weight: 400; color: rgba(255,255,255,.45); margin-top: 12px; line-height: 1.5; letter-spacing: -0.01em; }
 
     /* ── Section Base ── */
     section { padding: 120px 24px; }
@@ -241,19 +241,20 @@
     .section-sub { font-size: 18px; color: var(--gray600); line-height: 1.8; }
 
     /* ── Comparison (Tab Slider) ── */
-    .comparison { background: var(--gray50); }
+    .comparison { background: white; }
     .compare-tabs {
-      display: flex; gap: 8px; margin-top: 48px; margin-bottom: 32px;
-      flex-wrap: wrap;
+      display: flex; gap: 6px; margin-top: 40px; margin-bottom: 32px;
+      flex-wrap: wrap; padding: 4px; background: var(--gray50); border-radius: 12px; width: fit-content;
     }
     .compare-tab {
-      padding: 10px 24px; border-radius: 100px;
-      font-size: 15px; font-weight: 700; cursor: pointer;
-      border: 1.5px solid var(--gray100);
-      background: white; color: var(--gray600);
-      transition: all .2s; font-family: inherit;
+      padding: 9px 22px; border-radius: 8px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      border: none;
+      background: transparent; color: var(--gray600);
+      transition: background .2s, color .2s; font-family: inherit;
+      letter-spacing: -0.01em;
     }
-    .compare-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+    .compare-tab.active { background: white; color: var(--text); }
     .tab-short { display: none; }
     .compare-slide { display: none; }
     .compare-slide.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -411,18 +412,21 @@
     .features { background: var(--navy); }
     .features .section-title { color: white; }
     .features .section-sub { color: rgba(255,255,255,.45); }
-    .features .section-label { color: var(--cyan); }
+    .features .section-label, .features .section-eyebrow { color: var(--cyan); }
     .features .section-label::before { background: var(--cyan); }
     .features-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 20px; margin-top: 52px;
+      gap: 16px; margin-top: 56px;
     }
     .feat-card {
-      background: rgba(255,255,255,.035);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: var(--radius); padding: 32px;
-      transition: all .25s; cursor: pointer; position: relative; overflow: hidden;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      transition: border-color .25s, background .25s;
+      cursor: pointer; position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
     }
+    .feat-card:hover { border-color: rgba(0,212,255,.3); background: rgba(255,255,255,.05); }
     /* feat-card — image overlay layout */
     .feat-thumb {
       width: 100%; aspect-ratio: 4/3;
@@ -564,28 +568,28 @@
     .badge-hot, .badge-new, .badge-pro { color: white; border-color: rgba(0,212,255,.32); }
 
     /* ── How it works ── */
-    .howitworks { background: var(--gray50); }
-    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 64px; position: relative; }
+    .howitworks { background: white; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 56px; position: relative; }
     .steps::before {
-      content: ''; position: absolute; top: 35px;
-      left: calc(12.5% + 35px); right: calc(12.5% + 35px);
-      height: 2px;
-      background: linear-gradient(90deg, var(--blue) 0%, var(--cyan) 100%);
+      content: ''; position: absolute; top: 28px;
+      left: calc(12.5% + 28px); right: calc(12.5% + 28px);
+      height: 1px;
+      background: var(--gray100);
     }
-    .step { text-align: center; padding: 0 16px; }
+    .step { text-align: left; padding: 0; position: relative; }
     .step-num {
-      width: 70px; height: 70px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
-      color: white; font-size: 22px; font-weight: 900;
+      width: 56px; height: 56px; border-radius: 14px;
+      background: white;
+      color: var(--text); font-size: 18px; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px;
+      margin: 0 0 24px;
       position: relative; z-index: 1;
-      border: none;
-      box-shadow: 0 8px 24px rgba(26,107,255,.35);
+      border: 1px solid var(--gray100);
+      letter-spacing: -0.02em;
     }
-    .step-num.active { background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%); }
-    .step h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; line-height: 1.4; letter-spacing: -0.01em; }
-    .step p { font-size: 14px; color: var(--gray600); line-height: 1.8; }
+    .step-num.active { background: var(--text); color: white; border-color: var(--text); }
+    .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; letter-spacing: -0.015em; color: var(--text); }
+    .step p { font-size: 14px; font-weight: 400; color: var(--gray600); line-height: 1.75; }
     .step .step-tag {
       display: inline-block; margin-top: 12px;
       font-size: 12px; font-weight: 700; padding: 3px 10px;
@@ -597,29 +601,38 @@
     .pricing { background: var(--navy); }
     .pricing .section-title { color: white; }
     .pricing .section-sub { color: rgba(255,255,255,.4); }
-    .pricing .section-label { color: var(--cyan); }
+    .pricing .section-label, .pricing .section-eyebrow { color: var(--cyan); }
     .pricing .section-label::before { background: var(--cyan); }
-    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 56px; }
     .price-card {
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius); padding: 28px;
-      transition: border-color .2s, transform .2s;
-      position: relative; overflow: hidden;
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 16px; padding: 32px 28px;
+      position: relative;
       display: flex; flex-direction: column;
+      cursor: default;
     }
-    .price-card { cursor: default; }
-    .price-card:hover { border-color: rgba(26,107,255,.3); }
-    .price-card.featured { border-color: rgba(0,212,255,.4); background: rgba(26,107,255,.08); }
+    .price-card.featured {
+      border: 1px solid var(--cyan);
+      background: linear-gradient(180deg, rgba(0,212,255,.08) 0%, rgba(0,212,255,.02) 100%);
+    }
+    .price-card.featured::before {
+      content: '추천';
+      position: absolute; top: -10px; left: 24px;
+      background: var(--cyan); color: var(--navy);
+      font-size: 11px; font-weight: 900; letter-spacing: 0.08em;
+      padding: 4px 10px; border-radius: 6px;
+    }
     .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-    .price-card h4 { font-size: 19px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.02em; }
-    .price-card .desc { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.75; margin-bottom: 24px; }
+    .price-card h4 { font-size: 18px; font-weight: 700; color: white; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .price-card .desc { font-size: 13px; font-weight: 400; color: rgba(255,255,255,.5); line-height: 1.6; margin-bottom: 24px; }
     .price-rows { border-top: 1px solid rgba(255,255,255,.07); padding-top: 20px; }
-    .price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .price-row .label { font-size: 13px; color: rgba(255,255,255,.7); }
-    .price-row .amount { font-size: 18px; font-weight: 900; color: white; }
+    .price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .price-row:last-child { margin-bottom: 0; }
+    .price-row .label { font-size: 13px; font-weight: 400; color: rgba(255,255,255,.6); }
+    .price-row .amount { font-size: 18px; font-weight: 900; color: white; letter-spacing: -0.02em; }
     .price-row.annual .amount { color: var(--cyan); }
-    .save-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: rgba(0,212,255,.15); color: var(--cyan); margin-left: 6px; letter-spacing: 0.02em; }
+    .save-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(0,212,255,.15); color: var(--cyan); margin-left: 6px; letter-spacing: 0.02em; }
     .price-row .amount-wrap { display: flex; align-items: center; }
 
     /* ── Form footer note ── */
@@ -768,12 +781,17 @@
     .form-note { text-align: center; font-size: 13px; color: rgba(255,255,255,.25); margin-top: 14px; line-height: 1.8; }
 
     /* ── FAQ ── */
-    .faq { background: var(--gray50); }
-    .faq-list { max-width: 720px; margin: 56px auto 0; }
-    .faq-item { border-bottom: 1px solid var(--gray100); padding: 22px 0; }
-    .faq-q { font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; line-height: 1.5; }
+    .faq { background: white; }
+    .faq-list { max-width: 760px; margin: 56px auto 0; }
+    .faq-item { border-bottom: 1px solid var(--gray100); padding: 24px 0; }
+    .faq-item:first-child { border-top: 1px solid var(--gray100); }
+    .faq-q {
+      font-size: 17px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      line-height: 1.5; color: var(--text); letter-spacing: -0.015em;
+    }
     .faq-q .arrow {
-      width: 24px; height: 24px; flex-shrink: 0; position: relative;
+      width: 20px; height: 20px; flex-shrink: 0; position: relative;
       transition: transform .25s;
     }
     .faq-q .arrow::before,
@@ -781,12 +799,17 @@
       content: ''; position: absolute; background: var(--gray400);
       border-radius: 2px; transition: all .25s;
     }
-    .faq-q .arrow::before { width: 14px; height: 1.5px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-    .faq-q .arrow::after  { width: 1.5px; height: 14px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .faq-q .arrow::before { width: 12px; height: 1.5px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .faq-q .arrow::after  { width: 1.5px; height: 12px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
     .faq-item.open .faq-q .arrow::after { transform: translate(-50%,-50%) rotate(90deg); opacity: 0; }
-    .faq-item.open .faq-q .arrow::before { background: var(--blue); }
-    .faq-a { font-size: 18px; color: var(--gray600); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; text-align: left; }
-    .faq-item.open .faq-a { max-height: 240px; padding-top: 14px; }
+    .faq-item.open .faq-q .arrow::before { background: var(--text); }
+    .faq-a {
+      font-size: 15px; font-weight: 400; color: var(--gray600);
+      line-height: 1.75; max-height: 0; overflow: hidden;
+      transition: max-height .3s ease, padding .3s ease; text-align: left;
+      letter-spacing: -0.01em;
+    }
+    .faq-item.open .faq-a { max-height: 280px; padding-top: 16px; }
 
     /* ── Compare Action CTA ── */
     .compare-action {
@@ -855,15 +878,20 @@
     }
 
     /* ── CTA Banner ── */
-    .cta-banner { background: var(--navy); padding: 80px 24px; text-align: center; position: relative; overflow: hidden; }
+    .cta-banner { background: var(--navy); padding: 120px 24px; text-align: center; position: relative; overflow: hidden; }
     .cta-banner::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(26,107,255,.25) 0%, transparent 60%);
+      background:
+        radial-gradient(ellipse 50% 70% at 50% 100%, rgba(0,212,255,.2) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 50% 0%, rgba(26,107,255,.12) 0%, transparent 60%);
       pointer-events: none;
     }
-    .cta-banner h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 900; color: white; letter-spacing: -0.03em; margin-bottom: 14px; position: relative; line-height: 1.2; }
-    .cta-banner h2 .accent { color: var(--cyan); }
-    .cta-banner p { font-size: 18px; color: rgba(255,255,255,.4); margin-bottom: 36px; position: relative; line-height: 1.8; }
+    .cta-banner h2 { font-size: clamp(32px, 4.5vw, 56px); font-weight: 900; color: white; letter-spacing: -0.035em; margin-bottom: 18px; position: relative; line-height: 1.2; }
+    .cta-banner h2 .accent {
+      background: linear-gradient(90deg, var(--blue2), var(--cyan));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .cta-banner p { font-size: 18px; font-weight: 400; color: rgba(255,255,255,.55); margin-bottom: 40px; position: relative; line-height: 1.7; letter-spacing: -0.01em; }
 
     /* ── Footer ── */
     footer { background: var(--navy); padding: 40px 24px; text-align: center; border-top: 1px solid rgba(255,255,255,.05); }
