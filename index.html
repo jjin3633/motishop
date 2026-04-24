@@ -307,76 +307,55 @@
     }
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* ── Problem / Reviews (공통 다크 글래스) ── */
+    /* ── Problem / Reviews (클린 화이트, Stripe-style) ── */
     .problem, .reviews {
-      background: var(--navy);
-      position: relative; overflow: hidden;
+      background: white;
+      border-top: 1px solid var(--gray100);
     }
-    .problem::before, .reviews::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 55% 45% at 18% 28%, rgba(26,107,255,.16) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 40% at 85% 75%, rgba(0,212,255,.12) 0%, transparent 60%);
-    }
-    .problem .section-inner, .reviews .section-inner { position: relative; z-index: 1; }
-    .problem .section-title, .reviews .section-title { color: white; text-align: center; }
+    .reviews { border-top: none; border-bottom: 1px solid var(--gray100); }
+    .problem .section-title, .reviews .section-title { color: var(--text); text-align: left; }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 20px; margin-top: 56px;
+      gap: 16px; margin-top: 56px;
     }
     .problem-card {
       position: relative;
-      border-radius: 20px;
-      padding: 36px 30px 28px;
-      transition: transform .45s cubic-bezier(.2,.8,.2,1);
+      background: white;
+      border: 1px solid var(--gray100);
+      border-radius: 16px;
+      padding: 32px 28px 24px;
+      transition: border-color .25s ease, transform .25s ease;
       display: flex; flex-direction: column;
-      background:
-        linear-gradient(rgba(255,255,255,.045), rgba(255,255,255,.02)) padding-box,
-        linear-gradient(135deg, rgba(0,212,255,.32), rgba(26,107,255,.18) 60%, rgba(0,212,255,.05)) border-box;
-      border: 1px solid transparent;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      isolation: isolate;
-    }
-    /* 상단 그라디언트 액센트 라인 */
-    .problem-card::before {
-      content: '';
-      position: absolute; top: 0; left: 30px;
-      width: 36px; height: 3px;
-      background: linear-gradient(90deg, var(--cyan), var(--blue2));
-      border-radius: 0 0 3px 3px;
-      transition: width .4s cubic-bezier(.2,.8,.2,1);
     }
     .problem-card:hover {
-      transform: translateY(-4px);
-      background:
-        linear-gradient(rgba(255,255,255,.07), rgba(255,255,255,.03)) padding-box,
-        linear-gradient(135deg, rgba(0,212,255,.6), rgba(26,107,255,.35) 60%, rgba(0,212,255,.12)) border-box;
+      border-color: var(--blue);
+      transform: translateY(-2px);
     }
-    .problem-card:hover::before { width: 52px; }
     .problem-card h3 {
-      font-size: 18px; font-weight: 700; color: rgba(255,255,255,.92);
-      line-height: 1.65; letter-spacing: -0.015em;
+      font-size: 17px; font-weight: 400;
+      color: var(--text);
+      line-height: 1.7; letter-spacing: -0.01em;
       margin-bottom: 28px;
       flex: 1;
     }
     .problem-card h3 .hl {
-      color: var(--cyan); font-weight: 800;
+      font-weight: 700;
+      color: var(--blue);
     }
     .problem-persona {
       display: flex; align-items: center; gap: 10px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,.1);
+      padding-top: 18px;
+      border-top: 1px solid var(--gray100);
       margin-top: auto;
     }
     .problem-persona::before {
-      content: ''; width: 4px; height: 28px; border-radius: 4px;
-      background: linear-gradient(180deg, var(--cyan), var(--blue2));
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--blue);
       flex-shrink: 0;
     }
-    .problem-persona-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-    .problem-persona-name { font-size: 14px; font-weight: 800; color: rgba(255,255,255,.95); letter-spacing: -0.01em; line-height: 1.3; }
-    .problem-persona-role { font-size: 12px; color: rgba(255,255,255,.45); font-weight: 500; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .problem-persona-name { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.3; }
+    .problem-persona-role { font-size: 12px; font-weight: 400; color: var(--gray400); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Features ── */
     .features { background: var(--navy); }
