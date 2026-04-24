@@ -4,7 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moti Shop — 내 라인업엔 없는 기능, 이제 씁니다</title>
+  <meta name="description" content="Moti Physio 기기 교체 없이 기능만 구독하세요. 모아레·3D 신경·척추 세부·손실키·안면 분석 중 원하는 것만 30일 무료로 체험합니다." />
+  <meta name="theme-color" content="#06101E" />
+  <link rel="canonical" href="https://shop.motiphysio.com/" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://shop.motiphysio.com/" />
+  <meta property="og:title" content="Moti Shop — 기능만 구독, 30일 무료" />
+  <meta property="og:description" content="기기 교체 없이 기능만 추가하세요. 원하는 기능만 골라 30일 무료로 시작." />
+  <meta property="og:image" content="https://shop.motiphysio.com/assets/features/moire.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:site_name" content="Moti Shop" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Moti Shop — 기능만 구독, 30일 무료" />
+  <meta name="twitter:description" content="기기 교체 없이 기능만 추가하세요." />
+  <meta name="twitter:image" content="https://shop.motiphysio.com/assets/features/moire.jpg" />
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GM9BE8D39V"></script>
   <script>
@@ -18,9 +39,15 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="premium-theme.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* 접근성: 키보드 포커스 명확한 아웃라인 */
+    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [role="button"]:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
+      border-radius: inherit;
+    }
+    a:focus:not(:focus-visible), button:focus:not(:focus-visible) { outline: none; }
     :root {
       --navy:    #06101E;
       --navy2:   #0C1B30;
@@ -338,7 +365,8 @@
       z-index: 0;
     }
     .problem .section-inner, .reviews .section-inner {
-      position: relative; z-index: 1;
+      position: relative;
+      /* z-index 제거: 카드 backdrop-filter가 ::before 그라디언트를 blur할 수 있도록 스태킹 컨텍스트 격리 안 함 */
     }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
@@ -1204,7 +1232,7 @@
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('assets/features/moire.jpg')">
         <div class="feat-thumb">
-          <img src="assets/features/moire.jpg" alt="모아레 분석 화면" />
+          <img src="assets/features/moire.jpg" alt="모아레 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-hot">인기</span>
           <h3>모아레 (Moiré)</h3>
@@ -1213,7 +1241,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/nerve.png')">
         <div class="feat-thumb">
-          <img src="assets/features/nerve.png" alt="3D 신경·림프·장기 분석 화면" />
+          <img src="assets/features/nerve.png" alt="3D 신경·림프·장기 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-new">신규</span>
           <h3>3D 신경 · 림프 · 장기</h3>
@@ -1222,7 +1250,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/spinedetail.png')">
         <div class="feat-thumb">
-          <img src="assets/features/spinedetail.png" alt="척추 세부 분석 화면" />
+          <img src="assets/features/spinedetail.png" alt="척추 세부 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>척추 세부 분석</h3>
@@ -1231,7 +1259,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/lossheight.png')">
         <div class="feat-thumb">
-          <img src="assets/features/lossheight.png" alt="손실키 분석 화면" />
+          <img src="assets/features/lossheight.png" alt="손실키 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>손실키 분석</h3>
@@ -1240,7 +1268,7 @@
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/face.png')">
         <div class="feat-thumb">
-          <img src="assets/features/face.png" alt="안면 여백·탄력 분석 화면" />
+          <img src="assets/features/face.png" alt="안면 여백·탄력 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>안면 여백 / 탄력</h3>
@@ -1251,16 +1279,16 @@
         <div class="feat-thumb feat-thumb-all">
           <div class="all-marquee">
             <div class="all-marquee-track">
-              <div class="all-marquee-card"><img src="assets/features/moire.jpg" alt="모아레" /></div>
-              <div class="all-marquee-card"><img src="assets/features/nerve.png" alt="3D 신경·림프·장기" /></div>
-              <div class="all-marquee-card"><img src="assets/features/spinedetail.png" alt="척추 세부" /></div>
-              <div class="all-marquee-card"><img src="assets/features/lossheight.png" alt="손실키" /></div>
-              <div class="all-marquee-card"><img src="assets/features/face.png" alt="안면 여백" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/moire.jpg" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/nerve.png" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/spinedetail.png" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/lossheight.png" alt="" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/face.png" alt="" /></div>
+              <div class="all-marquee-card"><img src="assets/features/moire.jpg" alt="모아레" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card"><img src="assets/features/nerve.png" alt="3D 신경·림프·장기" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card"><img src="assets/features/spinedetail.png" alt="척추 세부" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card"><img src="assets/features/lossheight.png" alt="손실키" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card"><img src="assets/features/face.png" alt="안면 여백" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/moire.jpg" alt="" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/nerve.png" alt="" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/spinedetail.png" alt="" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/lossheight.png" alt="" loading="lazy" decoding="async" /></div>
+              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/face.png" alt="" loading="lazy" decoding="async" /></div>
             </div>
           </div>
           <div class="feat-thumb-gradient"></div>
