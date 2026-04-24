@@ -1,7 +1,8 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const cfg = require('./config');
 
-const db = new Database(path.join(__dirname, 'motishop.db'));
+const db = new Database(path.isAbsolute(cfg.DB_PATH) ? cfg.DB_PATH : path.join(__dirname, cfg.DB_PATH));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS subscribers (
@@ -43,5 +44,14 @@ db.exec(`
 // 컬럼 마이그레이션 (이미 존재하면 무시)
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN pw_hash TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN pw_salt TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_7d INTEGER DEFAULT 0`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_1d INTEGER DEFAULT 0`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN billkey_deleted INTEGER DEFAULT 0`); } catch(e) {}
+
+// 인덱스
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_phone ON subscribers(phone)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_status_date ON subscribers(status, next_billing_date)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_log_subscriber ON billing_logs(subscriber_id)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_session_token ON sessions(token)`); } catch(e) {}
 
 module.exports = db;

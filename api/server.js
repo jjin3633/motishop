@@ -1,16 +1,16 @@
+const cfg = require('./config');
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const db = require('./db');
 const { scheduleBilling } = require('./scheduler');
+const { deleteBillKey, notifySlack } = require('./innopay');
 
 const app = express();
 app.use(express.json());
 
-const ADMIN_PW = 'tmdwls12!@';
-
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://shop.motiphysio.com');
+  res.setHeader('Access-Control-Allow-Origin', cfg.CORS_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-pw, x-session-token');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
@@ -92,7 +92,7 @@ app.post('/api/subscribe', (req, res) => {
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 function adminAuth(req, res, next) {
-  if (req.headers['x-admin-pw'] === ADMIN_PW) return next();
+  if (req.headers['x-admin-pw'] === cfg.ADMIN_PW) return next();
   res.status(403).json({ ok: false, msg: 'Forbidden' });
 }
 
@@ -149,11 +149,28 @@ app.get('/api/logs', adminAuth, (req, res) => {
   res.json(rows);
 });
 
-app.post('/api/cancel', adminAuth, (req, res) => {
+app.post('/api/cancel', adminAuth, async (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ ok: false });
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(id);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+
   db.prepare(`UPDATE subscribers SET status = 'cancelled' WHERE id = ?`).run(id);
-  res.json({ ok: true });
+
+  // 빌키 삭제 (InnoPay) — 실패해도 해지는 유지
+  let billkeyResult = { ok: false, resultMsg: 'skipped' };
+  if (sub.bill_key && !sub.billkey_deleted) {
+    billkeyResult = await deleteBillKey({ billKey: sub.bill_key, userId: sub.id });
+    if (billkeyResult.ok) {
+      db.prepare(`UPDATE subscribers SET billkey_deleted = 1 WHERE id = ?`).run(id);
+      console.log(`[빌키삭제 ✓] subscriber_id=${id} / ${sub.company}`);
+    } else {
+      console.error(`[빌키삭제 ✗] subscriber_id=${id} / ${billkeyResult.resultCode} ${billkeyResult.resultMsg}`);
+      notifySlack(`⚠️ 빌키 삭제 실패: ${sub.company} (id=${id}) — ${billkeyResult.resultMsg}`);
+    }
+  }
+
+  res.json({ ok: true, billkeyDeleted: billkeyResult.ok });
 });
 
 // 관리자 — 임시 비밀번호 재발급 (시스템이 생성, 관리자는 받아서 고객에게 전달)
@@ -229,9 +246,23 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/mypage/cancel', mypageAuth, (req, res) => {
+app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(req.subscriberId);
   db.prepare(`UPDATE subscribers SET status='cancelled' WHERE id=?`).run(req.subscriberId);
   db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(req.subscriberId);
+
+  // 빌키 삭제 (InnoPay)
+  if (sub && sub.bill_key && !sub.billkey_deleted) {
+    const r = await deleteBillKey({ billKey: sub.bill_key, userId: sub.id });
+    if (r.ok) {
+      db.prepare(`UPDATE subscribers SET billkey_deleted = 1 WHERE id = ?`).run(req.subscriberId);
+      console.log(`[빌키삭제 ✓ mypage] ${sub.company}`);
+    } else {
+      console.error(`[빌키삭제 ✗ mypage] ${sub.company} / ${r.resultMsg}`);
+      notifySlack(`⚠️ 빌키 삭제 실패(셀프 해지): ${sub.company} — ${r.resultMsg}`);
+    }
+  }
+
   res.json({ ok: true });
 });
 
@@ -286,5 +317,5 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
 scheduleBilling();
 
 app.listen(3001, '127.0.0.1', () => {
-  console.log('MotiShop API listening on port 3001');
+  console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);
 });
