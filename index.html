@@ -316,24 +316,52 @@
     }
     .compare-cta:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* ── Problem / Reviews (통일된 모노크롬 카드) ── */
+    /* ── Problem / Reviews (Liquid Glass · iOS 26) ── */
     .problem, .reviews {
       background: white;
-      border-top: 1px solid var(--gray100);
+      position: relative;
+      overflow: hidden;
     }
-    .reviews { border-top: none; border-bottom: 1px solid var(--gray100); }
+    /* 섹션 배경에 그라디언트 메시 (글래스가 반응할 베이스) */
+    .problem::before, .reviews::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 45% 50% at 12% 20%, rgba(26,107,255,.18) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 45% at 88% 80%, rgba(0,212,255,.14) 0%, transparent 55%),
+        radial-gradient(ellipse 35% 30% at 50% 100%, rgba(165,110,255,.10) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .problem .section-inner, .reviews .section-inner {
+      position: relative; z-index: 1;
+    }
     .problem-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 16px; margin-top: 56px;
+      gap: 18px; margin-top: 56px;
     }
-    /* 공통 카드 — Problem·Reviews 동일, 밝은 모노크롬 */
+    /* Liquid Glass 카드 — 반투명 + backdrop blur + 내부 하이라이트 + 3D 레이어드 쉐도우 */
     .problem-card {
       position: relative;
-      background: white;
-      border: 1px solid var(--gray100);
-      border-radius: 16px;
+      background: rgba(255,255,255,.55);
+      -webkit-backdrop-filter: blur(28px) saturate(1.8);
+      backdrop-filter: blur(28px) saturate(1.8);
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 20px;
       padding: 36px 32px 28px;
       display: flex; flex-direction: column;
+      box-shadow:
+        0 1px 2px rgba(14,21,37,.04),
+        0 10px 30px rgba(14,21,37,.07),
+        inset 0 1px 0 rgba(255,255,255,.9);
+      transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s;
+    }
+    .problem-card:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 2px 4px rgba(14,21,37,.05),
+        0 24px 48px rgba(14,21,37,.12),
+        inset 0 1px 0 rgba(255,255,255,1);
     }
     .problem-card h3 {
       font-size: 20px; font-weight: 700;
@@ -351,12 +379,12 @@
     .problem-persona {
       display: flex; flex-direction: column; gap: 3px;
       padding-top: 20px;
-      border-top: 1px solid var(--gray100);
+      border-top: 1px solid rgba(14,21,37,.08);
       margin-top: auto;
     }
     .problem-persona-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .problem-persona-name { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; color: var(--text); }
-    .problem-persona-role { font-size: 12px; font-weight: 400; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--gray400); }
+    .problem-persona-role { font-size: 12px; font-weight: 400; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--gray600); }
 
     /* ── Scroll Reveal (fast) ── */
     .reveal {
@@ -373,7 +401,14 @@
     }
 
     /* ── Features ── */
-    .features { background: var(--navy); }
+    .features { background: var(--navy); position: relative; overflow: hidden; }
+    .features::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 40% 50% at 10% 20%, rgba(26,107,255,.22) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 45% at 90% 75%, rgba(0,212,255,.18) 0%, transparent 55%);
+    }
+    .features .section-inner { position: relative; z-index: 1; }
     .features .section-title { color: white; }
     .features .section-sub { color: rgba(255,255,255,.45); }
     .features .section-label, .features .section-eyebrow { color: var(--cyan); }
@@ -383,14 +418,26 @@
       gap: 16px; margin-top: 56px;
     }
     .feat-card {
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 16px;
-      transition: border-color .25s, background .25s;
+      background: rgba(255,255,255,.04);
+      -webkit-backdrop-filter: blur(30px) saturate(1.6);
+      backdrop-filter: blur(30px) saturate(1.6);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .35s;
       cursor: pointer; position: relative; overflow: hidden;
       display: flex; flex-direction: column;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 20px 40px rgba(0,0,0,.2);
     }
-    .feat-card:hover { border-color: rgba(0,212,255,.3); background: rgba(255,255,255,.05); }
+    .feat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0,212,255,.35);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        0 30px 60px rgba(0,0,0,.35),
+        0 0 40px rgba(0,212,255,.08);
+    }
     /* feat-card — image overlay layout */
     .feat-thumb {
       width: 100%; aspect-ratio: 4/3;
@@ -566,23 +613,52 @@
     }
 
     /* ── Pricing ── */
-    .pricing { background: var(--navy); }
+    .pricing { background: var(--navy); position: relative; overflow: hidden; }
+    .pricing::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 35% 40% at 50% 0%, rgba(26,107,255,.2) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 35% at 50% 100%, rgba(0,212,255,.16) 0%, transparent 60%);
+    }
+    .pricing .section-inner { position: relative; z-index: 1; }
     .pricing .section-title { color: white; }
     .pricing .section-sub { color: rgba(255,255,255,.4); }
     .pricing .section-label, .pricing .section-eyebrow { color: var(--cyan); }
     .pricing .section-label::before { background: var(--cyan); }
     .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 56px; }
     .price-card {
-      background: rgba(255,255,255,.025);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 16px; padding: 32px 28px;
+      background: rgba(255,255,255,.035);
+      -webkit-backdrop-filter: blur(24px) saturate(1.5);
+      backdrop-filter: blur(24px) saturate(1.5);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px; padding: 32px 28px;
       position: relative;
       display: flex; flex-direction: column;
       cursor: default;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.1),
+        0 10px 30px rgba(0,0,0,.18);
+      transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s;
+    }
+    .price-card:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.15),
+        0 20px 50px rgba(0,0,0,.3);
     }
     .price-card.featured {
-      border: 1px solid var(--cyan);
-      background: linear-gradient(180deg, rgba(0,212,255,.08) 0%, rgba(0,212,255,.02) 100%);
+      border: 1px solid rgba(0,212,255,.5);
+      background: linear-gradient(180deg, rgba(0,212,255,.12) 0%, rgba(26,107,255,.04) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.2),
+        0 20px 50px rgba(0,0,0,.25),
+        0 0 50px rgba(0,212,255,.15);
+    }
+    .price-card.featured:hover {
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.25),
+        0 30px 60px rgba(0,0,0,.35),
+        0 0 70px rgba(0,212,255,.22);
     }
     .price-card.featured::before {
       content: '추천';
