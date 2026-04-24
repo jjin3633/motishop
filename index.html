@@ -255,14 +255,19 @@
       letter-spacing: -0.01em;
     }
     .compare-tab.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(14,21,37,.08); }
+    /* compare-slide: 즉시 표시 (opacity/transition 제거, 그림자 경량화) */
     .compare-slide { display: none; }
     .compare-slide.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .compare-card { border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--gray100); }
+    .compare-card {
+      border-radius: var(--radius); overflow: hidden;
+      border: 1.5px solid var(--gray100);
+      contain: layout paint;
+    }
     .compare-card.before { background: white; }
     .compare-card.after {
       background: var(--navy);
       border-color: rgba(26,107,255,.4);
-      box-shadow: 0 20px 60px rgba(26,107,255,.2);
+      box-shadow: 0 8px 20px rgba(26,107,255,.1);
     }
     .compare-head {
       padding: 20px 28px;
