@@ -1002,9 +1002,6 @@
       .compare-slide.active { grid-template-columns: 1fr; }
       .form-layout { grid-template-columns: 1fr; }
       .form-left { padding-top: 0; }
-      /* Hero 버튼: 태블릿부터 세로 1열 */
-      .hero-btns { flex-direction: column; align-items: stretch; gap: 12px; max-width: 360px; margin-left: auto; margin-right: auto; }
-      .btn-primary, .btn-secondary { width: 100%; justify-content: center; text-align: center; }
     }
     @media (max-width: 768px) {
       body { font-size: 16px; }
@@ -1015,8 +1012,8 @@
       .hero h1 { font-size: clamp(32px, 9vw, 52px); line-height: 1.3; }
       .hero-model-wrap { height: 1em; }
       .hero-hook { font-size: 17px; }
-      .hero-btns { flex-direction: column; align-items: stretch; gap: 12px; }
-      .btn-primary, .btn-secondary { font-size: 15px; padding: 14px 20px; text-align: center; justify-content: center; width: 100%; }
+      .hero-btns { flex-direction: row; flex-wrap: nowrap; gap: 8px; justify-content: center; }
+      .btn-primary, .btn-secondary { font-size: 14px; padding: 12px 16px; text-align: center; justify-content: center; flex: 1; min-width: 0; }
       .section-label, .section-eyebrow { font-size: 13px; margin-bottom: 8px; }
       .section-title { font-size: clamp(22px, 6vw, 32px); margin-bottom: 12px; line-height: 1.42; }
       .section-sub { font-size: 14px; }
@@ -1901,17 +1898,17 @@
   let resizeTimer;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fixWrapWidth, 150); });
 
-  // 모바일 Sticky CTA: 폼/푸터 보일 땐 숨김
+  // 모바일 Sticky CTA: .howitworks를 지나면 숨김, 다시 올라오면 표시
   const stickyCta = document.getElementById('mobileStickyCta');
-  const trialSection = document.getElementById('trial');
-  const footerEl = document.querySelector('footer');
-  if (stickyCta && 'IntersectionObserver' in window) {
+  const howItWorks = document.querySelector('.howitworks');
+  if (stickyCta && howItWorks && 'IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
-      const anyVisible = entries.some(e => e.isIntersecting);
-      stickyCta.classList.toggle('hidden', anyVisible);
-    }, { threshold: 0.15 });
-    if (trialSection) io.observe(trialSection);
-    if (footerEl) io.observe(footerEl);
+      const entry = entries[0];
+      // howitworks의 top이 뷰포트 위로 완전히 올라간 상태 = 스크롤 지나감
+      const pastSection = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+      stickyCta.classList.toggle('hidden', pastSection);
+    }, { threshold: 0 });
+    io.observe(howItWorks);
   }
 
   function cycleModel() {
