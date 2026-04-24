@@ -48,6 +48,11 @@ function genToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// ── 공개 설정 (프론트가 InnoPay 호출 시 참조) ──
+app.get('/api/config', (_req, res) => {
+  res.json({ innopayMid: cfg.INNOPAY_MID });
+});
+
 // ── 구독 등록 ──
 function genTempPw() {
   // 기억하기 쉬운 형식: 영문2자 + 숫자4자 (예: AZ8823)
@@ -160,7 +165,7 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
   // 빌키 삭제 (InnoPay) — 실패해도 해지는 유지
   let billkeyResult = { ok: false, resultMsg: 'skipped' };
   if (sub.bill_key && !sub.billkey_deleted) {
-    billkeyResult = await deleteBillKey({ billKey: sub.bill_key, userId: sub.id });
+    billkeyResult = await deleteBillKey({ billKey: sub.bill_key, userId: sub.phone });
     if (billkeyResult.ok) {
       db.prepare(`UPDATE subscribers SET billkey_deleted = 1 WHERE id = ?`).run(id);
       console.log(`[빌키삭제 ✓] subscriber_id=${id} / ${sub.company}`);
@@ -253,7 +258,7 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
 
   // 빌키 삭제 (InnoPay)
   if (sub && sub.bill_key && !sub.billkey_deleted) {
-    const r = await deleteBillKey({ billKey: sub.bill_key, userId: sub.id });
+    const r = await deleteBillKey({ billKey: sub.bill_key, userId: sub.phone });
     if (r.ok) {
       db.prepare(`UPDATE subscribers SET billkey_deleted = 1 WHERE id = ?`).run(req.subscriberId);
       console.log(`[빌키삭제 ✓ mypage] ${sub.company}`);

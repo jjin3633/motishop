@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moti Shop | 기능 구독 서비스</title>
-  <meta name="description" content="기기 교체 없이 필요한 기능을 추가하세요. 30일 무료 체험." />
+  <meta name="description" content="기기 교체 없이 필요한 기능을 추가하세요." />
   <meta name="theme-color" content="#06101E" />
   <link rel="canonical" href="https://shop.motiphysio.com/" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
@@ -13,7 +13,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://shop.motiphysio.com/" />
   <meta property="og:title" content="Moti Shop | 기능 구독 서비스" />
-  <meta property="og:description" content="기기 교체 없이 필요한 기능을 추가하세요. 30일 무료 체험." />
+  <meta property="og:description" content="기기 교체 없이 필요한 기능을 추가하세요." />
   <meta property="og:image" content="https://shop.motiphysio.com/assets/features/moire.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -23,7 +23,7 @@
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Moti Shop | 기능 구독 서비스" />
-  <meta name="twitter:description" content="기기 교체 없이 필요한 기능을 추가하세요. 30일 무료 체험." />
+  <meta name="twitter:description" content="기기 교체 없이 필요한 기능을 추가하세요." />
   <meta name="twitter:image" content="https://shop.motiphysio.com/assets/features/moire.jpg" />
 
   <!-- Google tag (gtag.js) -->
@@ -1985,7 +1985,9 @@
   }
 
   // ── Multi-step form ──
-  const INNOPAY_MID = 'pgmotiph1m';
+  // InnoPay MID는 백엔드에서 받아옴 (test/prod 환경 일치 보장)
+  let INNOPAY_MID = 'pgmotiph1m'; // 로드 실패 시 fallback
+  fetch('/api/config').then(r => r.json()).then(c => { if (c && c.innopayMid) INNOPAY_MID = c.innopayMid; }).catch(() => {});
   let currentStep = 1;
   let billingType = 'monthly';
 
@@ -2126,7 +2128,7 @@
       });
       const data = await res.json();
 
-      if (data.resultCode === '00') {
+      if (data.resultCode === '0000') {
         const billKey = data.billKey || '';
         const amount = [...document.querySelectorAll('.feat-select-item.selected')]
           .reduce((s, i) => s + parseInt(i.dataset[billingType]), 0);

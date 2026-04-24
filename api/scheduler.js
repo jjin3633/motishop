@@ -32,7 +32,7 @@ async function chargeSubscriber(sub) {
     amount: sub.charge_amount,
     goodsName: '모티피지오 구독',
     buyerName: sub.name,
-    buyerTel: sub.phone,
+    userId: sub.phone,  // 등록 시점과 동일한 userId (phone)
   });
 
   // 모든 결과 로그 기록 (성공/실패/재시도)

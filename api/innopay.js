@@ -14,25 +14,26 @@ async function notifySlack(text) {
 }
 
 /**
- * 빌키 자동결제 실행
+ * 빌키 자동결제 실행 (즉시결제 모드 — InnoPay 공식 샘플 기준)
+ * 필수: mid, moid, buyerName, goodsName, amt, billKey, userId
  * @returns {Promise<{ok: boolean, resultCode: string, resultMsg: string, raw?: object}>}
  */
-async function chargeBillKey({ billKey, moid, amount, buyerName, buyerTel, goodsName }) {
+async function chargeBillKey({ billKey, moid, amount, buyerName, userId, goodsName }) {
   try {
     const { data } = await axios.post(cfg.INNOPAY_CHARGE_URL, {
       mid: cfg.INNOPAY_MID,
-      billKey,
-      moid,
-      amount,
-      goodsName: goodsName || '모티피지오 구독',
-      buyerName,
-      buyerTel,
+      moid: String(moid),
+      buyerName: String(buyerName || ''),
+      goodsName: String(goodsName || '모티피지오 구독'),
+      amt: String(amount),  // 문자열 숫자 (N 타입, 최대 12자리)
+      billKey: String(billKey),
+      userId: String(userId || ''),
     }, {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       timeout: 15000,
     });
     return {
-      ok: data.resultCode === '00',
+      ok: data.resultCode === '0000',  // InnoPay 성공 코드 (4자리)
       resultCode: data.resultCode,
       resultMsg: data.resultMsg || '',
       raw: data,
@@ -48,13 +49,13 @@ async function chargeBillKey({ billKey, moid, amount, buyerName, buyerTel, goods
 
 /**
  * 빌키 삭제 (해지 시 호출)
- * @returns {Promise<{ok: boolean, resultCode: string, resultMsg: string}>}
+ * 필수: mid, billKey, userId
  */
 async function deleteBillKey({ billKey, userId }) {
   try {
     const { data } = await axios.post(cfg.INNOPAY_DELETE_BILLKEY_URL, {
       mid: cfg.INNOPAY_MID,
-      billKey,
+      billKey: String(billKey),
       userId: String(userId || ''),
     }, {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
