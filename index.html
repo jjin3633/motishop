@@ -393,8 +393,8 @@
     /* ── Scroll Reveal (snappy) ── */
     .reveal {
       opacity: 0;
-      transform: translateY(6px);
-      transition: opacity .12s ease-out, transform .12s cubic-bezier(.2,.8,.2,1);
+      transform: translateY(4px);
+      transition: opacity .08s ease-out, transform .08s cubic-bezier(.2,.8,.2,1);
     }
     .reveal.active {
       opacity: 1;
@@ -2154,7 +2154,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     const observerOptions = {
       root: null,
-      rootMargin: "0px 0px 120px 0px",
+      rootMargin: "0px 0px 200px 0px",
       threshold: 0
     };
     const observer = new IntersectionObserver((entries, obs) => {
