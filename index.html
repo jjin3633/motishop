@@ -1898,17 +1898,30 @@
   let resizeTimer;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fixWrapWidth, 150); });
 
-  // 모바일 Sticky CTA: .howitworks를 지나면 숨김, 다시 올라오면 표시
+  // 모바일 Sticky CTA: .problem 도달 후 ~ .howitworks 지나기 전까지만 표시
   const stickyCta = document.getElementById('mobileStickyCta');
+  const problemSection = document.querySelector('section.problem');
   const howItWorks = document.querySelector('.howitworks');
-  if (stickyCta && howItWorks && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      // howitworks의 top이 뷰포트 위로 완전히 올라간 상태 = 스크롤 지나감
-      const pastSection = !entry.isIntersecting && entry.boundingClientRect.top < 0;
-      stickyCta.classList.toggle('hidden', pastSection);
+  if (stickyCta && problemSection && howItWorks && 'IntersectionObserver' in window) {
+    let problemReached = false;
+    let pastHowItWorks = false;
+    const update = () => {
+      const shouldShow = problemReached && !pastHowItWorks;
+      stickyCta.classList.toggle('hidden', !shouldShow);
+    };
+    const problemObs = new IntersectionObserver((entries) => {
+      const e = entries[0];
+      problemReached = e.isIntersecting || e.boundingClientRect.top < 0;
+      update();
     }, { threshold: 0 });
-    io.observe(howItWorks);
+    const howItWorksObs = new IntersectionObserver((entries) => {
+      const e = entries[0];
+      pastHowItWorks = !e.isIntersecting && e.boundingClientRect.top < 0;
+      update();
+    }, { threshold: 0 });
+    problemObs.observe(problemSection);
+    howItWorksObs.observe(howItWorks);
+    stickyCta.classList.add('hidden'); // 초기 숨김
   }
 
   function cycleModel() {
