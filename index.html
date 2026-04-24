@@ -577,8 +577,8 @@
     .steps::before {
       content: ''; position: absolute; top: 28px;
       left: calc(12.5% + 28px); right: calc(12.5% + 28px);
-      height: 1px;
-      background: var(--gray100);
+      height: 2px;
+      background: var(--gray400);
     }
     .step { text-align: left; padding: 0; position: relative; }
     .step-num {
@@ -652,18 +652,18 @@
     .trial-form .section-inner { max-width: 600px; }
 
     /* 스텝 인디케이터 */
-    .step-indicator { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 40px; }
+    .step-indicator { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 48px; }
     .si-item { display: flex; align-items: center; gap: 0; }
     .si-dot {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.15);
-      color: rgba(255,255,255,.3); font-size: 13px; font-weight: 800;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.18);
+      color: rgba(255,255,255,.35); font-size: 15px; font-weight: 800;
       display: flex; align-items: center; justify-content: center;
       transition: all .3s; position: relative; z-index: 1;
     }
-    .si-label { font-size: 11px; color: rgba(255,255,255,.3); margin-top: 6px; text-align: center; letter-spacing: 0.03em; font-weight: 600; white-space: nowrap; }
+    .si-label { font-size: 12px; color: rgba(255,255,255,.35); margin-top: 8px; text-align: center; letter-spacing: 0.03em; font-weight: 600; white-space: nowrap; }
     .si-item-wrap { display: flex; flex-direction: column; align-items: center; }
-    .si-line { width: 48px; height: 1.5px; background: rgba(255,255,255,.1); margin: 0 4px; margin-bottom: 18px; transition: background .3s; }
+    .si-line { width: 56px; height: 2px; background: rgba(255,255,255,.12); margin: 0 6px; margin-bottom: 22px; transition: background .3s; }
     .si-dot.active { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; color: white; box-shadow: 0 0 16px rgba(26,107,255,.5); }
     .si-dot.done { background: rgba(0,212,255,.15); border-color: var(--cyan); color: var(--cyan); }
     .si-label.active { color: white; }
