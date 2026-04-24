@@ -1038,15 +1038,22 @@
       .compare-body { padding: 12px 16px; }
       .compare-footer { padding: 14px 16px; }
       .compare-row { font-size: 14px; padding: 8px 0; }
-      .steps { grid-template-columns: 1fr; gap: 0; }
-      .step { display: flex; flex-direction: column; align-items: center; padding: 0 0 8px; }
-      .step:not(:last-child)::after {
-        content: ''; display: block;
-        position: static; left: auto; right: auto; top: auto;
-        width: 2px; height: 28px;
+      /* HowItWorks 모바일: 중앙 수직 타임라인 방식 */
+      .steps { grid-template-columns: 1fr; gap: 0; position: relative; }
+      .steps::before {
+        content: '';
+        position: absolute;
+        top: 56px; bottom: 56px;
+        left: 50%; transform: translateX(-50%);
+        width: 2px;
         background: var(--gray400);
-        margin: 14px auto;
+        z-index: 0;
       }
+      .step { display: flex; flex-direction: column; align-items: center; padding: 32px 0; position: relative; z-index: 1; }
+      .step:first-child { padding-top: 0; }
+      .step:last-child { padding-bottom: 0; }
+      .step-num { position: relative; z-index: 2; }
+      .step:not(:last-child)::after { display: none !important; }
       .step h3 { text-align: center; }
       .step p { text-align: center; }
       .form-left h3 { font-size: 22px; }
