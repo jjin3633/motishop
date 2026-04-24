@@ -2167,7 +2167,8 @@
     }, observerOptions);
 
     // Elements to animate
-    const targets = document.querySelectorAll('.section-title, .problem-card, .feat-card, .price-card, .steps, .faq-item');
+    // 섹션 단위 reveal — 섹션 진입 시 모든 내부 컨텐츠 한번에 표시 (개별 카드별 순차 reveal 제거)
+    const targets = document.querySelectorAll('.stats-bar, .problem, .features, .comparison, .reviews, .pricing, .howitworks, .trial-form, .faq, .cta-banner');
     targets.forEach(el => {
       el.classList.add('reveal');
       observer.observe(el);
