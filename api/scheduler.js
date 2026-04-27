@@ -5,21 +5,26 @@ const { chargeWithRetry, notifySlack } = require('./innopay');
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
+// KST 기준 YYYY-MM-DD
+function kstDateOnly(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(d);
+}
+
 function genMoid() {
-  const d = new Date();
-  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${Math.floor(1000 + Math.random() * 9000)}`;
+  const ymd = kstDateOnly().replace(/-/g, ''); // YYYYMMDD (KST)
+  return `${ymd}${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 function addPeriod(dateStr, billingType) {
   const d = new Date(dateStr);
   if (billingType === 'monthly') d.setMonth(d.getMonth() + 1);
   else d.setFullYear(d.getFullYear() + 1);
-  return d.toISOString().slice(0, 10);
+  return kstDateOnly(d);
 }
 
 function daysFromToday(dateStr) {
-  const today = new Date(new Date().toISOString().slice(0, 10));
-  const target = new Date(dateStr);
+  const today = new Date(kstDateOnly() + 'T00:00:00+09:00');
+  const target = new Date(dateStr + 'T00:00:00+09:00');
   return Math.round((target - today) / (24 * 60 * 60 * 1000));
 }
 
@@ -72,7 +77,7 @@ function markPreNotification(sub, daysLeft) {
 }
 
 function runBillingPass() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateOnly();
 
   // 활성/체험 가입자 중 결제 임박한 건들
   const targets = db.prepare(

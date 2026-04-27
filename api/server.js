@@ -38,6 +38,19 @@ const FEATURE_PRICES = {
 };
 
 // ── 유틸 ──
+// KST 기준 YYYY-MM-DD (toISOString은 항상 UTC라 사용 금지)
+function kstDateOnly(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(d);
+}
+// KST 기준 YYYY-MM
+function kstYearMonth(d = new Date()) {
+  return kstDateOnly(d).slice(0, 7);
+}
+// KST 기준 YYYY
+function kstYear(d = new Date()) {
+  return kstDateOnly(d).slice(0, 4);
+}
+
 function hashPw(pw, salt) {
   return crypto.createHmac('sha256', salt).update(pw).digest('hex');
 }
@@ -68,10 +81,10 @@ app.post('/api/subscribe', (req, res) => {
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
 
-  const trialStart = new Date().toISOString().slice(0, 10);
+  const trialStart = kstDateOnly();
   const firstBilling = new Date();
   firstBilling.setDate(firstBilling.getDate() + 30);
-  const nextBillingDate = firstBilling.toISOString().slice(0, 10);
+  const nextBillingDate = kstDateOnly(firstBilling);
   const chargeAmount = billingType === 'annual' ? amount * 12 : amount;
 
   // 가입 시 자동으로 임시 비밀번호 생성
@@ -112,9 +125,8 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
 });
 
 app.get('/api/revenue', adminAuth, (req, res) => {
-  const now = new Date();
-  const thisMonth = now.toISOString().slice(0, 7);
-  const thisYear  = now.getFullYear().toString();
+  const thisMonth = kstYearMonth();
+  const thisYear  = kstYear();
 
   const thisMonthTotal = db.prepare(
     `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00' AND strftime('%Y-%m',billed_at)=?`
