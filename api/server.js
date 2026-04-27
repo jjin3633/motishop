@@ -454,12 +454,22 @@ app.post('/api/deploy/webhook', (req, res) => {
   console.log(`[webhook] 배포 트리거 ${headCommit}`);
 
   const { spawn } = require('child_process');
-  const child = spawn(cfg.DEPLOY_SCRIPT_PATH, [], {
-    detached: true,
-    stdio: 'ignore',
-    env: { ...process.env, COMMIT: headCommit },
-  });
-  child.unref();
+  let child;
+  try {
+    child = spawn(cfg.DEPLOY_SCRIPT_PATH, [], {
+      detached: true,
+      stdio: 'ignore',
+      env: { ...process.env, COMMIT: headCommit },
+    });
+    child.on('error', (e) => {
+      console.error('[webhook] spawn 에러:', e.message);
+      notifySlack(`🔴 배포 spawn 실패: ${headCommit} / ${e.message}`);
+    });
+    child.unref();
+  } catch (e) {
+    console.error('[webhook] spawn 동기 예외:', e.message);
+    return res.status(500).json({ error: 'spawn failed', detail: e.message });
+  }
 
   notifySlack(`🚀 자동 배포 시작: ${headCommit}`);
   res.json({ ok: true, deploying: true, commit: headCommit });
