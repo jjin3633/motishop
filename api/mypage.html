@@ -297,6 +297,11 @@ const ALL_FEATURES = [
   { key: '안면 여백/탄력', monthly: 29900, annual: 23900 },
   { key: 'ALL IN ONE', monthly: 107900, annual: 89900 },
 ];
+// renderBillingSwitch / openBillingModal에서 사용하는 가격 lookup
+const FEATURE_PRICES = {
+  monthly: Object.fromEntries(ALL_FEATURES.map(f => [f.key, f.monthly])),
+  annual:  Object.fromEntries(ALL_FEATURES.map(f => [f.key, f.annual])),
+};
 
 async function apiFetch(path, options = {}) {
   const res = await fetch(path, {
