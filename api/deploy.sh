@@ -15,8 +15,11 @@ APP_DIR=/home/ec2-user/motishop-api
 
 PREV_HEAD=$(sudo git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo "")
 
-echo "[1/4] git pull"
-sudo git -C "$REPO_DIR" pull origin main
+echo "[1/4] git fetch + reset --hard origin/main"
+# stale lock 정리 (이전 git 작업이 비정상 종료됐을 경우)
+sudo find "$REPO_DIR/.git" -name "*.lock" -mmin +1 -exec rm -f {} \; 2>/dev/null || true
+sudo git -C "$REPO_DIR" fetch origin main --force --prune
+sudo git -C "$REPO_DIR" reset --hard origin/main
 
 NEW_HEAD=$(sudo git -C "$REPO_DIR" rev-parse HEAD)
 echo "      $PREV_HEAD → $NEW_HEAD"
