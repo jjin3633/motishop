@@ -48,6 +48,24 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_7d INTEGER DEFAULT 0`
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_1d INTEGER DEFAULT 0`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN billkey_deleted INTEGER DEFAULT 0`); } catch(e) {}
 
+// 변경 이력 테이블 (기능/구독유형 변경 추적)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS subscriber_changes (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id       INTEGER NOT NULL,
+    change_type         TEXT NOT NULL,
+    before_features     TEXT,
+    after_features      TEXT,
+    before_billing_type TEXT,
+    after_billing_type  TEXT,
+    before_amount       INTEGER,
+    after_amount        INTEGER,
+    changed_at          TEXT DEFAULT (datetime('now', '+9 hours')),
+    FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_change_sub ON subscriber_changes(subscriber_id)`); } catch(e) {}
+
 // 인덱스
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_phone ON subscribers(phone)`); } catch(e) {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_status_date ON subscribers(status, next_billing_date)`); } catch(e) {}

@@ -458,7 +458,7 @@ function closeDetail() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
 function renderDetail(d) {
-  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related;
+  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related, changes = d.changes || [];
   const statusMap = { trial:'체험중', active:'구독중', cancelled:'해지' };
   const billingTypeMap = { monthly:'월 구독', annual:'연 구독' };
   const dDays = s.next_billing_date && s.status !== 'cancelled'
@@ -519,15 +519,50 @@ function renderDetail(d) {
       ` : '<div class="detail-empty">결제 이력 없음</div>'}
     </div>
 
+    ${changes.length ? `
+      <div class="detail-section">
+        <h4>변경 이력 (${changes.length}건)</h4>
+        <div class="detail-related">
+          ${changes.map(c => {
+            const ts = (c.changed_at||'').slice(0,16);
+            if (c.change_type === 'features') {
+              return `<div class="detail-related-row" style="cursor:default;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${ts} · 기능 변경</div>
+                <div style="font-size:13px;color:var(--gray600);"><s>${c.before_features||'-'}</s></div>
+                <div style="font-size:13px;color:var(--text);font-weight:600;">→ ${c.after_features||'-'}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${fmt(c.before_amount)}원 → <strong style="color:var(--text);">${fmt(c.after_amount)}원</strong></div>
+              </div>`;
+            }
+            if (c.change_type === 'billing_type') {
+              return `<div class="detail-related-row" style="cursor:default;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${ts} · 구독 유형 변경</div>
+                <div style="font-size:13px;color:var(--text);font-weight:600;">${billingTypeMap[c.before_billing_type]||c.before_billing_type} → ${billingTypeMap[c.after_billing_type]||c.after_billing_type}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${fmt(c.before_amount)}원 → <strong style="color:var(--text);">${fmt(c.after_amount)}원</strong></div>
+              </div>`;
+            }
+            return '';
+          }).join('')}
+        </div>
+      </div>
+    ` : ''}
+
     ${related.length ? `
       <div class="detail-section">
-        <h4>동일 연락처 다른 가입 이력 (${related.length}건)</h4>
+        <h4>이전 구독 이력 (${related.length}건)</h4>
         <div class="detail-related">
-          ${related.map(r => `
-            <div class="detail-related-row" onclick="openDetail(${r.id})">
-              <strong>id=${r.id}</strong> · ${statusMap[r.status]||r.status} · ${billingTypeMap[r.billing_type]||r.billing_type} · ${fmt(r.charge_amount)}원 · 가입 ${(r.created_at||'').slice(0,10)}
-            </div>
-          `).join('')}
+          ${related.map(r => {
+            const period = r.trial_start && r.next_billing_date
+              ? `${(r.trial_start||'').slice(0,10)} ~ ${(r.next_billing_date||'').slice(0,10)}`
+              : (r.created_at||'').slice(0,10);
+            return `<div class="detail-related-row" onclick="openDetail(${r.id})">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="badge b-${r.status}">${statusMap[r.status]||r.status}</span>
+                <span style="font-size:13px;font-weight:700;color:var(--text);">${billingTypeMap[r.billing_type]||r.billing_type} · ${fmt(r.charge_amount)}원</span>
+              </div>
+              <div style="font-size:12px;color:var(--gray600);">${r.features||'-'}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${period}</div>
+            </div>`;
+          }).join('')}
         </div>
       </div>
     ` : ''}

@@ -150,12 +150,20 @@ app.get('/api/subscribers/:id', adminAuth, (req, res) => {
   `).get(id);
 
   const related = db.prepare(`
-    SELECT id, status, billing_type, charge_amount, created_at, next_billing_date
+    SELECT id, status, billing_type, charge_amount, features, created_at, trial_start, next_billing_date
     FROM subscribers WHERE phone = ? AND id != ?
     ORDER BY id DESC
   `).all(sub.phone, id);
 
-  res.json({ ok: true, subscriber: sub, billingLogs, stats, related });
+  // 기능/구독유형 변경 이력 (최신순)
+  const changes = db.prepare(`
+    SELECT id, change_type, before_features, after_features, before_billing_type, after_billing_type,
+           before_amount, after_amount, changed_at
+    FROM subscriber_changes WHERE subscriber_id = ?
+    ORDER BY changed_at DESC
+  `).all(id);
+
+  res.json({ ok: true, subscriber: sub, billingLogs, stats, related, changes });
 });
 
 app.get('/api/revenue', adminAuth, (req, res) => {
@@ -334,6 +342,13 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
   }
 
   const featStr = features.join(', ');
+  // 변경 이력 기록 (실제 변경된 경우에만)
+  if (sub.features !== featStr || sub.charge_amount !== newAmount) {
+    db.prepare(`INSERT INTO subscriber_changes
+      (subscriber_id, change_type, before_features, after_features, before_amount, after_amount)
+      VALUES (?, 'features', ?, ?, ?, ?)`).run(req.subscriberId, sub.features, featStr, sub.charge_amount, newAmount);
+  }
+
   db.prepare(`UPDATE subscribers SET features=?, charge_amount=? WHERE id=?`)
     .run(featStr, newAmount, req.subscriberId);
 
@@ -356,6 +371,13 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
     newAmount = prices['ALL IN ONE'];
   } else {
     newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+  }
+
+  // 변경 이력 기록
+  if (sub.billing_type !== billingType || sub.charge_amount !== newAmount) {
+    db.prepare(`INSERT INTO subscriber_changes
+      (subscriber_id, change_type, before_billing_type, after_billing_type, before_amount, after_amount)
+      VALUES (?, 'billing_type', ?, ?, ?, ?)`).run(req.subscriberId, sub.billing_type, billingType, sub.charge_amount, newAmount);
   }
 
   db.prepare(`UPDATE subscribers SET billing_type=?, charge_amount=? WHERE id=?`)
