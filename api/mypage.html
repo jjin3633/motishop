@@ -284,6 +284,35 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
   </div>
 </div>
 
+<!-- 기능 변경 확인 모달 (추가/해지) -->
+<div class="modal-overlay" id="featChangeModal">
+  <div class="modal">
+    <h3 id="featChangeTitle">기능을 변경하시겠습니까?</h3>
+    <p id="featChangeDesc" style="white-space:pre-line;"></p>
+    <div style="background:var(--gray50); border:1px solid var(--gray100); border-radius:10px; padding:14px; margin-bottom:16px; font-size:13px;">
+      <div style="display:flex; justify-content:space-between; padding:4px 0;">
+        <span style="color:var(--gray600);">현재 결제액</span>
+        <span style="font-weight:700;" id="featChangeBefore">—</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0;">
+        <span style="color:var(--gray600);">변경 후 결제액</span>
+        <span style="font-weight:900; color:var(--blue);" id="featChangeAfter">—</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0; border-top:1px solid var(--gray100); margin-top:6px; padding-top:8px;">
+        <span style="color:var(--gray600);">다음 결제일</span>
+        <span style="font-weight:700;" id="featChangeDate">—</span>
+      </div>
+    </div>
+    <p style="font-size:12px; color:var(--gray400); margin-top:-4px; margin-bottom:14px; line-height:1.6;">
+      ⓘ 변경 사항은 다음 결제일부터 반영됩니다. 무료 체험은 최초 가입일 기준 30일이며, 기능 추가에는 별도 체험이 적용되지 않습니다.
+    </p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFeatChange()">취소</button>
+      <button class="modal-confirm" id="featChangeConfirmBtn" onclick="confirmFeatChange()">변경하기</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let sessionToken = sessionStorage.getItem('moti_token');
 let currentSubscriber = null;
@@ -484,6 +513,48 @@ async function changeBillingType() {
   }
 }
 
+// 기능 추가/해지 — 확인 모달로 결제 변동 명시
+let pendingFeatures = null;
+
+function calcAmount(features, billingType) {
+  const prices = FEATURE_PRICES[billingType] || FEATURE_PRICES.monthly;
+  if (features.includes('ALL IN ONE')) return prices['ALL IN ONE'];
+  return features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+}
+
+function openFeatChange(action, featKey, newFeatures) {
+  const s = currentSubscriber;
+  const newAmount = calcAmount(newFeatures, s.billing_type);
+  const isAdd = action === 'add';
+
+  document.getElementById('featChangeTitle').textContent = isAdd
+    ? `'${featKey}' 추가 구독`
+    : `'${featKey}' 해지`;
+  document.getElementById('featChangeDesc').textContent = isAdd
+    ? `다음 결제일부터 '${featKey}' 기능이 추가됩니다.`
+    : `'${featKey}' 기능이 다음 결제일부터 청구되지 않습니다.`;
+  document.getElementById('featChangeBefore').textContent = `${fmt(s.charge_amount)}원`;
+  document.getElementById('featChangeAfter').textContent = `${fmt(newAmount)}원`;
+  document.getElementById('featChangeDate').textContent = (s.next_billing_date||'').slice(0,10);
+
+  const btn = document.getElementById('featChangeConfirmBtn');
+  btn.textContent = isAdd ? '추가하기' : '해지하기';
+  btn.classList.toggle('danger', !isAdd);
+
+  pendingFeatures = newFeatures;
+  document.getElementById('featChangeModal').classList.add('open');
+}
+function closeFeatChange() {
+  document.getElementById('featChangeModal').classList.remove('open');
+  pendingFeatures = null;
+}
+async function confirmFeatChange() {
+  if (!pendingFeatures) return;
+  const f = pendingFeatures;
+  closeFeatChange();
+  await updateFeatures(f);
+}
+
 async function cancelFeat(featKey) {
   const s = currentSubscriber;
   const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
@@ -492,16 +563,14 @@ async function cancelFeat(featKey) {
     if (!confirm(`'${featKey}'를 해지하면 구독 중인 기능이 없게 됩니다. 전체 해지로 진행하시겠습니까?`)) return;
     openCancelModal(); return;
   }
-  if (!confirm(`'${featKey}' 구독을 해지하시겠습니까?\n다음 결제일부터 반영됩니다.`)) return;
-  await updateFeatures(remaining);
+  openFeatChange('cancel', featKey, remaining);
 }
 
 async function addFeat(featKey) {
   const s = currentSubscriber;
   const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
   const updated = [...subscribed, featKey];
-  if (!confirm(`'${featKey}'를 추가 구독하시겠습니까?\n다음 결제일부터 반영됩니다.`)) return;
-  await updateFeatures(updated);
+  openFeatChange('add', featKey, updated);
 }
 
 async function updateFeatures(features) {

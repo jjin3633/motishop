@@ -63,6 +63,21 @@ nav { position:fixed; top:0; left:0; right:0; z-index:100; height:60px; backgrou
 .panel { display:none; }
 .panel.active { display:block; }
 
+/* ── Policy Info Box ── */
+.policy-info { background:linear-gradient(135deg, rgba(26,107,255,.04), rgba(0,212,255,.04)); border:1px solid rgba(26,107,255,.18); border-radius:12px; padding:14px 18px; margin-bottom:16px; }
+.policy-info summary { cursor:pointer; font-size:13px; font-weight:700; color:var(--blue); display:flex; align-items:center; gap:8px; list-style:none; user-select:none; }
+.policy-info summary::-webkit-details-marker { display:none; }
+.policy-info summary::before { content:'ⓘ'; font-size:14px; }
+.policy-info[open] summary { margin-bottom:12px; }
+.policy-info-body { font-size:13px; color:var(--text-sub); line-height:1.65; }
+.policy-info-body strong { color:var(--text); font-weight:700; }
+.policy-info-body ul { margin:6px 0 0 18px; padding:0; }
+.policy-info-body li { margin-bottom:4px; }
+.policy-info-body .rule { display:flex; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(26,107,255,.12); }
+.policy-info-body .rule:last-child { border-bottom:none; }
+.policy-info-body .rule-num { flex:0 0 22px; height:22px; border-radius:50%; background:var(--blue); color:white; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.policy-info-body .rule-text { flex:1; }
+
 /* ── Toolbar ── */
 .toolbar { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 .toolbar input, .toolbar select {
@@ -278,6 +293,31 @@ tr:hover td { background:var(--gray50); }
 
     <!-- ── 가입자 목록 ── -->
     <div class="panel active" id="panel-subscribers">
+      <details class="policy-info">
+        <summary>결제 정책 안내 (클릭해서 펼치기)</summary>
+        <div class="policy-info-body">
+          <div class="rule">
+            <div class="rule-num">1</div>
+            <div class="rule-text"><strong>최초 30일 무료 체험</strong> — 카드 등록일 기준 30일간 결제되지 않습니다. 31일째 되는 날 첫 결제가 발생합니다.</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">2</div>
+            <div class="rule-text"><strong>구독 중 기능 추가/제거</strong> — 다음 결제일에 변경된 기능 구성으로 전체 금액이 결제됩니다. 추가 기능에는 별도 무료 체험이 적용되지 않습니다.</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">3</div>
+            <div class="rule-text"><strong>월구독 ↔ 연구독 전환</strong> — 다음 결제일부터 새로운 주기로 적용됩니다. 진행 중인 주기는 그대로 유지됩니다.</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">4</div>
+            <div class="rule-text"><strong>해지</strong> — 즉시 해지되며 이후 결제가 발생하지 않습니다. 동일 연락처로 재가입 시 기존 계정에 이력이 누적됩니다 (재가입은 무료 체험 없이 즉시 결제).</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">5</div>
+            <div class="rule-text"><strong>결제 실패</strong> — 자동 재시도 2회 후 실패 시 Slack에 알림이 발송됩니다. 다음 결제일까지 카드 정보 갱신 필요.</div>
+          </div>
+        </div>
+      </details>
       <div class="toolbar">
         <input type="text" id="search" placeholder="🔍  업체명 · 원장님 이름 검색" oninput="filterSubscribers()" />
         <select id="filter-status" onchange="filterSubscribers()">
