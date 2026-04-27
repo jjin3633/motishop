@@ -970,8 +970,9 @@
     .cta-banner p { font-size: 18px; font-weight: 400; color: rgba(255,255,255,.55); margin-bottom: 40px; position: relative; line-height: 1.7; letter-spacing: -0.01em; }
 
     /* ── Footer ── */
-    footer { background: var(--navy); padding: 56px 7% 36px; text-align: left; border-top: 1px solid rgba(255,255,255,.05); }
-    .footer-links { display: flex; gap: 26px; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,.07); margin-bottom: 24px; flex-wrap: wrap; }
+    footer { background: var(--navy); padding: 56px 24px 36px; text-align: left; border-top: 1px solid rgba(255,255,255,.05); }
+    .footer-inner { max-width: 1200px; margin: 0 auto; }
+    .footer-links { display: flex; gap: 26px; padding: 22px 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); margin: 6px 0 22px; flex-wrap: wrap; }
     .footer-links a { font-size: 14px; color: rgba(255,255,255,.95); font-weight: 700; text-decoration: none; cursor: pointer; transition: color .15s; letter-spacing: -.01em; }
     .footer-links a:hover { color: #fff; }
     .footer-company { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.85); margin: 0 0 14px; letter-spacing: -.01em; }
@@ -1932,22 +1933,24 @@
 
 <!-- ── FOOTER ── -->
 <footer>
-  <div class="footer-links">
-    <a onclick="openFooterTerms('terms')">이용약관</a>
-    <a onclick="openFooterTerms('privacy')">개인정보처리방침</a>
-    <a onclick="openFooterTerms('refund')">환불 정책</a>
-  </div>
+  <div class="footer-inner">
+    <p class="footer-company">(주)엠지솔루션스</p>
+    <div class="footer-info">
+      <p>대표자 : 박재현</p>
+      <p>사업자 등록 번호 : 217-86-00674</p>
+      <p>통신판매업 신고번호 : 제 2022-서울마포-1090호</p>
+      <p>주소 : 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오</p>
+      <p>고객센터 : <a href="tel:07043657740">070-4365-7740</a></p>
+    </div>
 
-  <p class="footer-company">(주)엠지솔루션스</p>
-  <div class="footer-info">
-    <p>대표자 : 박재현</p>
-    <p>사업자 등록 번호 : 217-86-00674</p>
-    <p>통신판매업 신고번호 : 제 2022-서울마포-1090호</p>
-    <p>주소 : 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오</p>
-    <p>고객센터 : <a href="tel:07043657740">070-4365-7740</a></p>
-  </div>
+    <div class="footer-links">
+      <a onclick="openFooterTerms('terms')">이용약관</a>
+      <a onclick="openFooterTerms('privacy')">개인정보처리방침</a>
+      <a onclick="openFooterTerms('refund')">환불 정책</a>
+    </div>
 
-  <p class="footer-copy">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
+    <p class="footer-copy">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
+  </div>
 </footer>
 
 <!-- ── Footer Terms Modal ── -->
