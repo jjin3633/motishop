@@ -148,6 +148,48 @@ tr:hover td { background:var(--gray50); }
 .month-detail-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .month-detail-title span { font-size:11px; color:var(--text-muted); font-weight:500; }
 
+/* ── 가입자 상세 모달 ── */
+.detail-modal { display:none; position:fixed; inset:0; z-index:200; background:rgba(6,16,30,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); align-items:flex-start; justify-content:center; padding:60px 20px 20px; overflow-y:auto; }
+.detail-modal.open { display:flex; }
+.detail-modal-box { background:white; border-radius:16px; max-width:720px; width:100%; padding:32px; max-height:calc(100vh - 80px); overflow-y:auto; position:relative; box-shadow:0 24px 60px rgba(14,21,37,.25); }
+.detail-modal-close { position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%; background:var(--gray100); border:none; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; color:var(--text-sub); }
+.detail-modal-close:hover { background:var(--gray200); color:var(--text); }
+.detail-head { margin-bottom:24px; padding-right:36px; }
+.detail-head h3 { font-size:22px; font-weight:900; color:var(--text); letter-spacing:-.02em; margin-bottom:6px; }
+.detail-head .meta { font-size:13px; color:var(--text-sub); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.detail-section { margin-bottom:22px; }
+.detail-section h4 { font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px; }
+.detail-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px 24px; }
+.detail-row { display:flex; flex-direction:column; gap:2px; }
+.detail-row .lbl { font-size:11px; color:var(--text-muted); }
+.detail-row .val { font-size:14px; font-weight:600; color:var(--text); }
+.detail-row.full { grid-column:1/-1; }
+.detail-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.detail-stat { background:var(--gray50); border:1px solid var(--gray100); border-radius:10px; padding:14px; text-align:center; }
+.detail-stat .num { font-size:18px; font-weight:900; color:var(--text); letter-spacing:-.02em; }
+.detail-stat .num small { font-size:12px; color:var(--text-muted); margin-left:2px; }
+.detail-stat .lbl { font-size:11px; color:var(--text-muted); margin-top:4px; }
+.detail-log-list { max-height:240px; overflow-y:auto; border:1px solid var(--gray100); border-radius:10px; }
+.detail-log-row { display:grid; grid-template-columns:1fr 110px 90px; gap:8px; padding:10px 14px; font-size:12px; border-bottom:1px solid var(--gray100); align-items:center; }
+.detail-log-row:last-child { border-bottom:none; }
+.detail-log-row .amt { text-align:right; font-weight:700; }
+.detail-log-row .res { text-align:right; font-size:11px; }
+.detail-log-row.fail { background:rgba(239,68,68,.04); }
+.detail-log-row.fail .res { color:var(--red); font-weight:700; }
+.detail-log-row.ok .res { color:#16a34a; font-weight:700; }
+.detail-empty { padding:14px; color:var(--text-muted); font-size:13px; text-align:center; }
+.detail-related { display:flex; flex-direction:column; gap:6px; }
+.detail-related-row { padding:10px 14px; background:var(--gray50); border:1px solid var(--gray100); border-radius:8px; font-size:13px; cursor:pointer; transition:background .15s; }
+.detail-related-row:hover { background:var(--gray100); }
+.detail-actions { display:flex; gap:8px; flex-wrap:wrap; padding-top:18px; border-top:1px solid var(--gray100); margin-top:6px; }
+
+/* 가입자 행 클릭 */
+.tbl-row-clickable { cursor:pointer; transition:background .12s; }
+.tbl-row-clickable:hover td { background:var(--gray50); }
+.tbl-row-clickable td.actions-cell { cursor:default; }
+
+/* ── Responsive ── */
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .top-stats { grid-template-columns:repeat(3,1fr); }
@@ -155,6 +197,15 @@ tr:hover td { background:var(--gray50); }
   .rev-grid { grid-template-columns:1fr; }
 }
 @media (max-width: 768px) {
+  .detail-modal { padding:20px 12px; }
+  .detail-modal-box { padding:22px 18px; max-height:calc(100vh - 40px); border-radius:14px; }
+  .detail-head h3 { font-size:18px; }
+  .detail-grid { grid-template-columns:1fr; gap:10px; }
+  .detail-stats { grid-template-columns:1fr; gap:8px; }
+  .detail-stat { padding:12px; }
+  .detail-stat .num { font-size:16px; }
+  .detail-log-row { grid-template-columns:1fr 90px; padding:8px 12px; font-size:11px; }
+  .detail-log-row .res { grid-column:1/-1; text-align:left; padding-top:2px; }
   .container { padding:20px 16px; }
   .nav-inner { padding:0 16px; }
   .nav-logo { font-size:19px; }
@@ -230,10 +281,11 @@ tr:hover td { background:var(--gray50); }
       <div class="toolbar">
         <input type="text" id="search" placeholder="🔍  업체명 · 원장님 이름 검색" oninput="filterSubscribers()" />
         <select id="filter-status" onchange="filterSubscribers()">
-          <option value="">전체 상태</option>
+          <option value="active_or_trial" selected>활성 가입자</option>
           <option value="trial">체험 중</option>
           <option value="active">구독 중</option>
           <option value="cancelled">해지</option>
+          <option value="">전체 상태</option>
         </select>
         <select id="filter-billing" onchange="filterSubscribers()">
           <option value="">전체 타입</option>
@@ -338,6 +390,14 @@ tr:hover td { background:var(--gray50); }
   </div>
 </div>
 
+<!-- 가입자 상세 모달 -->
+<div class="detail-modal" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-modal-box">
+    <button class="detail-modal-close" onclick="closeDetail()" aria-label="닫기">✕</button>
+    <div id="detailContent"><div class="detail-empty">불러오는 중...</div></div>
+  </div>
+</div>
+
 <script>
 const ADMIN_PW = 'tmdwls12!@';
 let token = sessionStorage.getItem('admin_token');
@@ -377,6 +437,115 @@ function switchTab(name, el) {
   document.getElementById('panel-' + name).classList.add('active');
 }
 
+// ── 가입자 상세 모달 ──
+async function openDetail(id) {
+  const m = document.getElementById('detailModal');
+  m.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('detailContent').innerHTML = '<div class="detail-empty">불러오는 중...</div>';
+  try {
+    const d = await apiFetch('/api/subscribers/' + id);
+    if (!d || !d.ok) throw new Error('not found');
+    renderDetail(d);
+  } catch (e) {
+    document.getElementById('detailContent').innerHTML = '<div class="detail-empty" style="color:var(--red);">불러오기 실패</div>';
+  }
+}
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+function renderDetail(d) {
+  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related;
+  const statusMap = { trial:'체험중', active:'구독중', cancelled:'해지' };
+  const billingTypeMap = { monthly:'월 구독', annual:'연 구독' };
+  const dDays = s.next_billing_date && s.status !== 'cancelled'
+    ? Math.ceil((new Date(s.next_billing_date + 'T00:00:00+09:00') - new Date()) / 86400000)
+    : null;
+  const dDaysLabel = dDays === null ? '' :
+    dDays > 0 ? ` <small style="color:var(--text-muted);">(D-${dDays})</small>` :
+    dDays === 0 ? ` <small style="color:var(--gold);">(오늘)</small>` :
+    ` <small style="color:var(--red);">(${-dDays}일 경과)</small>`;
+  const escName = (s.name || '').replace(/'/g, "\\'");
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-head">
+      <h3>${s.company}</h3>
+      <div class="meta">
+        <span>${s.name}</span>
+        <span>·</span>
+        <span>${s.phone}</span>
+        <span class="badge b-${s.status}" style="margin-left:auto;">${statusMap[s.status]||s.status}</span>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>구독 정보</h4>
+      <div class="detail-grid">
+        <div class="detail-row"><span class="lbl">타입</span><span class="val">${billingTypeMap[s.billing_type]||s.billing_type}</span></div>
+        <div class="detail-row"><span class="lbl">결제액</span><span class="val">${fmt(s.charge_amount)}원</span></div>
+        <div class="detail-row full"><span class="lbl">구독 기능</span><span class="val">${s.features||'-'}</span></div>
+        <div class="detail-row"><span class="lbl">가입일</span><span class="val">${(s.created_at||'').slice(0,10)}</span></div>
+        <div class="detail-row"><span class="lbl">체험 시작</span><span class="val">${s.trial_start||'-'}</span></div>
+        <div class="detail-row"><span class="lbl">다음 결제일</span><span class="val">${s.next_billing_date||'-'}${dDaysLabel}</span></div>
+        <div class="detail-row"><span class="lbl">빌키 상태</span><span class="val">${s.billkey_deleted ? '삭제됨' : '활성'}</span></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>결제 통계</h4>
+      <div class="detail-stats">
+        <div class="detail-stat"><div class="num">${fmt(stats.totalPaid)}<small>원</small></div><div class="lbl">누적 결제액</div></div>
+        <div class="detail-stat"><div class="num">${stats.successCount}<small>회</small></div><div class="lbl">결제 성공</div></div>
+        <div class="detail-stat"><div class="num">${stats.failCount}<small>회</small></div><div class="lbl">결제 실패</div></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>결제 이력 (${logs.length}건)</h4>
+      ${logs.length ? `
+        <div class="detail-log-list">
+          ${logs.map(l => {
+            const isOk = l.result_code === '0000' || l.result_code === '00';
+            return `<div class="detail-log-row ${isOk?'ok':'fail'}">
+              <span>${(l.billed_at||'').slice(0,16)}</span>
+              <span class="amt">${fmt(l.amount)}원</span>
+              <span class="res">${isOk?'✓ 성공':'✗ '+(l.result_code||'')}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      ` : '<div class="detail-empty">결제 이력 없음</div>'}
+    </div>
+
+    ${related.length ? `
+      <div class="detail-section">
+        <h4>동일 연락처 다른 가입 이력 (${related.length}건)</h4>
+        <div class="detail-related">
+          ${related.map(r => `
+            <div class="detail-related-row" onclick="openDetail(${r.id})">
+              <strong>id=${r.id}</strong> · ${statusMap[r.status]||r.status} · ${billingTypeMap[r.billing_type]||r.billing_type} · ${fmt(r.charge_amount)}원 · 가입 ${(r.created_at||'').slice(0,10)}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <div class="detail-actions">
+      ${s.status !== 'cancelled' ? `<button class="btn-cancel" onclick="cancelSubFromDetail(${s.id})">해지</button>` : ''}
+      <button class="btn-cancel" style="border-color:rgba(26,107,255,.3);background:rgba(26,107,255,.06);color:var(--blue2);" onclick="resetPw(${s.id},'${escName}')">임시비번 재발급</button>
+    </div>
+  `;
+}
+
+async function cancelSubFromDetail(id) {
+  if (!confirm('구독을 해지하시겠습니까?')) return;
+  await fetch('/api/cancel', { method:'POST', headers:{'Content-Type':'application/json','x-admin-pw':ADMIN_PW}, body: JSON.stringify({id}) });
+  await loadSubscribers();
+  openDetail(id); // 모달 갱신
+}
+
 const fmt = n => Number(n || 0).toLocaleString();
 
 async function apiFetch(path) {
@@ -410,7 +579,7 @@ function renderSubscribers(rows) {
   document.getElementById('sub-count').textContent = `총 ${rows.length}명`;
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty">해당하는 가입자가 없습니다</td></tr>'; return; }
   tbody.innerHTML = rows.map(r => `
-    <tr>
+    <tr class="tbl-row-clickable" onclick="openDetail(${r.id})">
       <td style="color:var(--gray400)">${r.id}</td>
       <td><strong>${r.company}</strong></td>
       <td>${r.name}</td>
@@ -421,7 +590,7 @@ function renderSubscribers(rows) {
       <td><span class="badge b-${r.status}">${{trial:'체험중',active:'구독중',cancelled:'해지'}[r.status]||r.status}</span></td>
       <td>${(r.next_billing_date||'').slice(0,10)}</td>
       <td style="color:var(--gray400)">${(r.created_at||'').slice(0,10)}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+      <td class="actions-cell" style="display:flex;gap:6px;flex-wrap:wrap;" onclick="event.stopPropagation()">
         ${r.status!=='cancelled'?`<button class="btn-cancel" onclick="cancelSub(${r.id},this)">해지</button>`:''}
         <button class="btn-cancel" style="border-color:rgba(26,107,255,.3);background:rgba(26,107,255,.06);color:var(--blue2);" onclick="resetPw(${r.id},'${r.name}')">임시비번 재발급</button>
       </td>
@@ -434,7 +603,10 @@ function filterSubscribers() {
   const bt = document.getElementById('filter-billing').value;
   const filtered = allSubscribers.filter(r => {
     const matchQ = !q || r.company.includes(q) || r.name.includes(q);
-    const matchSt = !st || r.status === st;
+    let matchSt;
+    if (!st) matchSt = true;
+    else if (st === 'active_or_trial') matchSt = (r.status === 'trial' || r.status === 'active');
+    else matchSt = r.status === st;
     const matchBt = !bt || r.billing_type === bt;
     return matchQ && matchSt && matchBt;
   });

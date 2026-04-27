@@ -124,6 +124,40 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
   res.json(rows);
 });
 
+// 가입자 상세 — 본인 + 결제 통계 + 결제 이력 + 동일 phone 재가입 이력
+app.get('/api/subscribers/:id', adminAuth, (req, res) => {
+  const id = parseInt(req.params.id);
+  const sub = db.prepare(`
+    SELECT id, company, name, phone, features, billing_type, charge_amount,
+           trial_start, next_billing_date, status, created_at,
+           billkey_deleted, notified_7d, notified_1d
+    FROM subscribers WHERE id = ?
+  `).get(id);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+
+  const billingLogs = db.prepare(`
+    SELECT id, moid, amount, result_code, result_msg, billed_at
+    FROM billing_logs WHERE subscriber_id = ?
+    ORDER BY billed_at DESC
+  `).all(id);
+
+  const stats = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN result_code IN ('0000','00') THEN amount ELSE 0 END), 0) AS totalPaid,
+      COUNT(CASE WHEN result_code IN ('0000','00') THEN 1 END) AS successCount,
+      COUNT(CASE WHEN result_code NOT IN ('0000','00') THEN 1 END) AS failCount
+    FROM billing_logs WHERE subscriber_id = ?
+  `).get(id);
+
+  const related = db.prepare(`
+    SELECT id, status, billing_type, charge_amount, created_at, next_billing_date
+    FROM subscribers WHERE phone = ? AND id != ?
+    ORDER BY id DESC
+  `).all(sub.phone, id);
+
+  res.json({ ok: true, subscriber: sub, billingLogs, stats, related });
+});
+
 app.get('/api/revenue', adminAuth, (req, res) => {
   const thisMonth = kstYearMonth();
   const thisYear  = kstYear();
