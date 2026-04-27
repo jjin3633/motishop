@@ -971,16 +971,23 @@
 
     /* ── Footer ── */
     footer { background: var(--navy); padding: 56px 24px 36px; text-align: center; border-top: 1px solid rgba(255,255,255,.05); }
-    .footer-block { margin-bottom: 26px; }
-    .footer-block strong { display: block; font-size: 14px; font-weight: 700; color: rgba(255,255,255,.55); margin-bottom: 12px; letter-spacing: -.01em; }
-    .footer-block p { font-size: 13px; color: rgba(255,255,255,.3); line-height: 1.85; margin: 0; }
-    .footer-block a { color: rgba(255,255,255,.45); text-decoration: none; }
-    .footer-block a:hover { color: rgba(255,255,255,.75); }
-    .footer-links { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); margin: 8px auto 22px; max-width: 520px; }
-    .footer-links a { font-size: 13px; color: rgba(255,255,255,.6); text-decoration: none; padding: 4px 6px; border-radius: 4px; transition: color .15s; }
-    .footer-links a:hover { color: rgba(255,255,255,.95); }
-    .footer-links span { color: rgba(255,255,255,.18); margin: 0 6px; font-size: 11px; }
-    .footer-copy { font-size: 12px; color: rgba(255,255,255,.22); margin-top: 14px; letter-spacing: .02em; }
+    .footer-company { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.7); margin: 0 0 18px; letter-spacing: -.01em; }
+    .footer-info { font-size: 13px; color: rgba(255,255,255,.32); line-height: 2; margin: 0; }
+    .footer-info a { color: rgba(255,255,255,.55); text-decoration: none; }
+    .footer-info a:hover { color: rgba(255,255,255,.85); }
+    .footer-info .sep { color: rgba(255,255,255,.15); margin: 0 10px; }
+    .footer-links { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); margin: 22px auto; max-width: 520px; }
+    .footer-links a { font-size: 13px; color: rgba(255,255,255,.7); text-decoration: none; padding: 4px 8px; cursor: pointer; transition: color .15s; }
+    .footer-links a:hover { color: rgba(255,255,255,1); }
+    .footer-links .sep { color: rgba(255,255,255,.18); margin: 0 4px; font-size: 12px; }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,.22); margin: 0; letter-spacing: .02em; }
+    @media (max-width: 600px) {
+      footer { padding: 42px 18px 28px; }
+      .footer-info { font-size: 12px; line-height: 1.95; }
+      .footer-info .sep { display: none; }
+      .footer-info .mobile-break { display: block; }
+    }
+    .footer-info .mobile-break { display: none; }
 
     /* ── Footer Terms Modal ── */
     .footer-terms-modal { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.78); align-items: center; justify-content: center; padding: 20px; }
@@ -1761,7 +1768,7 @@
 
 제3조의2 (구독 내용 변경에 따른 결제) ① 최초 가입일로부터 30일간은 무료 체험 기간으로 결제가 발생하지 않습니다. ② 무료 체험 종료 후 매월(또는 매년) 동일한 결제일에 자동 결제됩니다. ③ 구독 기간 중 기능을 추가·제거하거나 결제 주기(월구독↔연구독)를 변경하는 경우, 변경 사항은 다음 결제일부터 반영되며 변경된 기능 구성 전체에 대해 결제가 청구됩니다. ④ 추가되는 기능에 대해서는 별도의 무료 체험이 적용되지 않습니다. ⑤ 해지 후 동일 명의로 재가입하는 경우, 무료 체험은 적용되지 않으며 즉시 결제가 발생합니다.
 
-제3조의3 (환불 정책) ① 무료 체험 기간(가입 후 30일) 내 해지 시 결제가 발생하지 않으므로 환불 사유가 없습니다. ② 정기 결제 후 7일 이내에 서비스를 전혀 이용하지 않은 경우 전액 환불 가능합니다. ③ 서비스 이용 중 회사의 책임 있는 사유(서비스 장애, 기능 미제공 등)로 정상 이용이 불가했던 경우 사용 불가 기간에 비례하여 환불합니다. ④ 사용자의 단순 변심에 의한 환불 요청은 결제일로부터 7일 이내에 한해 처리하며, 이미 사용한 기간은 일할 계산하여 차감합니다. ⑤ 환불 요청은 (주)엠지솔루션스 고객센터(070-4365-7740) 또는 이메일로 접수하며, 영업일 기준 3일 이내에 처리됩니다. ⑥ 환불은 결제 시 사용한 카드로 취소 처리되며, 카드사 정책에 따라 영업일 기준 3~7일 후 반영됩니다.
+제3조의3 (환불 정책) ① 무료 체험 기간(가입 후 30일) 내 해지 시 결제가 발생하지 않으므로 환불 사유가 없습니다. ② 정기 결제가 이루어진 이후에는 단순 변심에 의한 환불은 불가하며, 해지 신청 시 다음 결제일부터 자동결제가 중단됩니다. ③ 회사의 책임 있는 사유(서비스 장애, 약관에 명시된 기능 미제공 등)로 정상적인 서비스 이용이 불가했던 경우, 해당 사용 불가 기간에 비례하여 환불합니다. ④ 환불 요청은 (주)엠지솔루션스 고객센터(070-4365-7740) 또는 이메일(contact@motiphysio.com)로 접수하며, 영업일 기준 3일 이내에 처리됩니다. ⑤ 환불은 결제 시 사용한 카드로 취소 처리되며, 카드사 정책에 따라 영업일 기준 3~7일 후 반영됩니다.
 
 제4조 (과실책임) 잔액 부족, 한도 초과 등 고객 과실로 자동결제가 불가한 경우 발생한 손해는 고객이 부담합니다.
 
@@ -1801,7 +1808,13 @@
   - 서비스 해지 후 1년 (단, 관련 법령에 따라 보존이 필요한 경우 해당 기간)
 
 ■ 동의 거부 권리 및 불이익
-  - 위 개인정보 수집·이용에 동의하지 않으실 수 있습니다. 단, 동의 거부 시 서비스 이용이 제한될 수 있습니다.</div>
+  - 위 개인정보 수집·이용에 동의하지 않으실 수 있습니다. 단, 동의 거부 시 서비스 이용이 제한될 수 있습니다.
+
+■ 개인정보보호책임자
+  - 성명: 박재현 (대표)
+  - 연락처: 070-4365-7740
+  - 이메일: contact@motiphysio.com
+  - 정보주체는 개인정보 열람·정정·삭제·처리정지 요구 등의 권리를 행사할 수 있으며, 위 연락처로 요청하실 수 있습니다.</div>
             </div>
           </div>
 
@@ -1922,21 +1935,15 @@
 
 <!-- ── FOOTER ── -->
 <footer>
-  <div class="footer-block">
-    <strong>(주)엠지솔루션스</strong>
-    <p>대표자 박재현 · 사업자등록번호 217-86-00674</p>
-    <p>통신판매업신고 제 2022-서울마포-1090호</p>
-    <p>서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오</p>
-  </div>
-
-  <div class="footer-block">
-    <p>대표번호 <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00 (점심 13:00–14:00)</p>
-    <p>이메일 <a href="mailto:contact@motiphysio.com">contact@motiphysio.com</a></p>
-    <p>개인정보보호책임자 박재현</p>
-  </div>
+  <p class="footer-company">(주)엠지솔루션스</p>
+  <p class="footer-info">
+    대표자 : 박재현<br>
+    사업자 등록 번호 : 217-86-00674 <span class="sep">|</span><span class="mobile-break"></span>통신판매업 신고번호 : 제 2022-서울마포-1090호<br>
+    주소 : 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오 <span class="sep">|</span><span class="mobile-break"></span>고객센터 : <a href="tel:07043657740">070-4365-7740</a>
+  </p>
 
   <div class="footer-links">
-    <a href="javascript:void(0)" onclick="openFooterTerms('terms')">이용약관</a><span>·</span><a href="javascript:void(0)" onclick="openFooterTerms('privacy')">개인정보처리방침</a><span>·</span><a href="javascript:void(0)" onclick="openFooterTerms('refund')">환불 정책</a>
+    <a onclick="openFooterTerms('terms')">이용약관</a><span class="sep">|</span><a onclick="openFooterTerms('privacy')">개인정보처리방침</a><span class="sep">|</span><a onclick="openFooterTerms('refund')">환불 정책</a>
   </div>
 
   <p class="footer-copy">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
