@@ -262,7 +262,7 @@ tr:hover td { background:var(--gray50); }
 
     <!-- Top Stats -->
     <div class="top-stats">
-      <div class="stat-card"><div class="lbl">전체 가입자</div><div class="val" id="st-total">—</div></div>
+      <div class="stat-card"><div class="lbl">전체 고객</div><div class="val" id="st-total">—</div></div>
       <div class="stat-card"><div class="lbl">체험 중</div><div class="val" id="st-trial">—</div></div>
       <div class="stat-card"><div class="lbl">구독 중</div><div class="val" id="st-active">—</div></div>
       <div class="stat-card"><div class="lbl">이번 달 수익</div><div class="val" id="st-month">—<small>원</small></div></div>
@@ -565,23 +565,58 @@ async function loadAll(btn) {
 async function loadSubscribers() {
   allSubscribers = await apiFetch('/api/subscribers').catch(() => []);
   updateTopStats();
-  renderSubscribers(allSubscribers);
+  filterSubscribers();
+}
+
+// 같은 phone의 row들 중 "대표" 1개를 뽑음 (활성 우선, 그 다음 id 큰 것)
+function pickPrimary(rows) {
+  const score = s => s === 'trial' || s === 'active' ? 2 : (s === 'cancelled' ? 0 : 1);
+  return [...rows].sort((a, b) => {
+    const sd = score(b.status) - score(a.status);
+    if (sd) return sd;
+    return b.id - a.id;
+  })[0];
+}
+
+// phone 기준으로 그룹화
+function groupByPhone(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    const key = r.phone || `__id_${r.id}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  }
+  // 각 그룹의 대표 row + 그룹 정보
+  return Array.from(map.values()).map(group => {
+    const primary = pickPrimary(group);
+    return {
+      ...primary,
+      _groupSize: group.length,
+      _groupIds: group.map(g => g.id),
+    };
+  });
 }
 
 function updateTopStats() {
-  document.getElementById('st-total').innerHTML = allSubscribers.length;
-  document.getElementById('st-trial').innerHTML = allSubscribers.filter(r=>r.status==='trial').length;
-  document.getElementById('st-active').innerHTML = allSubscribers.filter(r=>r.status==='active').length;
+  const grouped = groupByPhone(allSubscribers);
+  const activeCustomers = grouped.filter(c => c.status === 'trial' || c.status === 'active');
+  document.getElementById('st-total').innerHTML = grouped.length;
+  document.getElementById('st-trial').innerHTML = activeCustomers.filter(c => c.status === 'trial').length;
+  document.getElementById('st-active').innerHTML = activeCustomers.filter(c => c.status === 'active').length;
 }
 
 function renderSubscribers(rows) {
   const tbody = document.getElementById('tbody-subscribers');
-  document.getElementById('sub-count').textContent = `총 ${rows.length}명`;
+  document.getElementById('sub-count').textContent = `총 ${rows.length}명 (고객 기준)`;
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty">해당하는 가입자가 없습니다</td></tr>'; return; }
-  tbody.innerHTML = rows.map(r => `
+  tbody.innerHTML = rows.map(r => {
+    const reSub = r._groupSize > 1
+      ? ` <span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(26,107,255,.1);color:var(--blue2);margin-left:4px;">재가입 ${r._groupSize}회</span>`
+      : '';
+    return `
     <tr class="tbl-row-clickable" onclick="openDetail(${r.id})">
       <td style="color:var(--gray400)">${r.id}</td>
-      <td><strong>${r.company}</strong></td>
+      <td><strong>${r.company}</strong>${reSub}</td>
       <td>${r.name}</td>
       <td>${r.phone}</td>
       <td style="max-width:180px;font-size:12px;color:var(--gray600);line-height:1.6">${r.features}</td>
@@ -594,14 +629,18 @@ function renderSubscribers(rows) {
         ${r.status!=='cancelled'?`<button class="btn-cancel" onclick="cancelSub(${r.id},this)">해지</button>`:''}
         <button class="btn-cancel" style="border-color:rgba(26,107,255,.3);background:rgba(26,107,255,.06);color:var(--blue2);" onclick="resetPw(${r.id},'${r.name}')">임시비번 재발급</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function filterSubscribers() {
   const q = document.getElementById('search').value.trim().toLowerCase();
   const st = document.getElementById('filter-status').value;
   const bt = document.getElementById('filter-billing').value;
-  const filtered = allSubscribers.filter(r => {
+  // 1) phone 기준 그룹화 → 고객 단위 행 1개씩
+  const grouped = groupByPhone(allSubscribers);
+  // 2) 필터 (대표 row 기준)
+  const filtered = grouped.filter(r => {
     const matchQ = !q || r.company.includes(q) || r.name.includes(q);
     let matchSt;
     if (!st) matchSt = true;
