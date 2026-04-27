@@ -32,6 +32,8 @@ sudo rsync -a \
   --exclude='backup/' \
   --exclude='node_modules/' \
   "$REPO_DIR/api/" "$APP_DIR/"
+# rsync -a는 source 권한·소유자(root) 보존 → SQLite write/journal 위해 ec2-user로 통일
+sudo chown -R ec2-user:ec2-user "$APP_DIR"
 
 if [ -n "$PREV_HEAD" ] && sudo git -C "$REPO_DIR" diff --name-only "$PREV_HEAD" "$NEW_HEAD" | grep -q '^api/package.*\.json$'; then
   echo "[3/4] package.json 변경 감지 → npm install --omit=dev"
