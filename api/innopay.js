@@ -76,6 +76,43 @@ async function deleteBillKey({ billKey, userId }) {
 }
 
 /**
+ * 결제 취소·환불 (이미 승인된 결제를 취소)
+ * InnoPay netCancel 또는 cancelPay 엔드포인트 사용 (시점에 따라 다름)
+ * 필수: mid, moid, transSeq(또는 cancelMoid), amt, cancelReason
+ *
+ * NOTE: InnoPay 운영 환경에서는 결제 후 24시간 내는 netCancel(망취소),
+ *       이후는 정식 cancelPay를 사용. 우리 자동결제는 정기과금이라 보통 cancelPay.
+ *       transSeq는 결제 응답에서 받은 거래번호를 billing_logs에 저장해두고 사용.
+ */
+async function refundBillKey({ moid, transSeq, amount, reason }) {
+  try {
+    const url = cfg.INNOPAY_CANCEL_URL || 'https://api.innopay.co.kr/api/cancelPay';
+    const { data } = await axios.post(url, {
+      mid: cfg.INNOPAY_MID,
+      moid: String(moid),
+      transSeq: String(transSeq || ''),
+      amt: String(amount),
+      cancelReason: String(reason || '구독 환불'),
+    }, {
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      timeout: 15000,
+    });
+    return {
+      ok: data.resultCode === '0000',
+      resultCode: data.resultCode,
+      resultMsg: data.resultMsg || '',
+      raw: data,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      resultCode: 'ERR',
+      resultMsg: e.message || 'unknown network error',
+    };
+  }
+}
+
+/**
  * 재시도 래퍼 (일시적 오류 대응)
  */
 async function chargeWithRetry(params, { maxAttempts = 2, delayMs = 2000 } = {}) {
@@ -90,4 +127,4 @@ async function chargeWithRetry(params, { maxAttempts = 2, delayMs = 2000 } = {})
   return last;
 }
 
-module.exports = { chargeBillKey, chargeWithRetry, deleteBillKey, notifySlack };
+module.exports = { chargeBillKey, chargeWithRetry, deleteBillKey, refundBillKey, notifySlack };

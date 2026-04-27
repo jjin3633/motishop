@@ -2,11 +2,37 @@ const cfg = require('./config');
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const { scheduleBilling } = require('./scheduler');
-const { deleteBillKey, notifySlack } = require('./innopay');
+const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
+
+// PII 마스킹 헬퍼 — 로그/Slack용 (전화 010-****-1234, 이름 양*진)
+function maskPhone(p) {
+  if (!p) return '';
+  const s = String(p).replace(/[^0-9]/g, '');
+  if (s.length < 7) return s.replace(/.(?=.{2})/g, '*');
+  return s.slice(0, 3) + '-****-' + s.slice(-4);
+}
+function maskName(n) {
+  if (!n) return '';
+  const s = String(n);
+  if (s.length <= 1) return s;
+  if (s.length === 2) return s[0] + '*';
+  return s[0] + '*'.repeat(s.length - 2) + s.slice(-1);
+}
 
 const app = express();
+app.set('trust proxy', 1);  // nginx 뒤 → req.ip가 실제 클라이언트 IP
+
+// 보안 헤더 — webhook은 contentSecurityPolicy 영향 안 받음 (JSON 응답)
+app.use(helmet({
+  contentSecurityPolicy: false,  // mypage/admin HTML이 inline script/style 사용 — 별도 CSP 정의 필요 시 활성화
+  crossOriginEmbedderPolicy: false,
+}));
+
+// 본문 파싱 — webhook 서명 검증 위해 rawBody 캡처
 app.use(express.json({
   verify: (req, _res, buf) => { req.rawBody = buf; },
 }));
@@ -17,6 +43,22 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-pw, x-session-token');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
+});
+
+// Rate limiting — 민감 엔드포인트 보호
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15분
+  max: 10,                    // IP당 15분에 10회 시도까지
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, msg: '너무 많은 시도입니다. 15분 후 다시 시도해주세요.' },
+});
+const subscribeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,  // 1시간
+  max: 5,                     // IP당 1시간에 5회 가입까지 (봇 가입 방지)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, msg: '가입 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' },
 });
 
 // ── 기능 가격표 ──
@@ -63,6 +105,31 @@ function genToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// ── 헬스체크 (UptimeRobot 등 외부 모니터링용) ──
+app.get('/api/health', (_req, res) => {
+  try {
+    const r = db.prepare(`SELECT 1 as ok`).get();
+    res.json({ ok: true, db: r && r.ok === 1, uptime: process.uptime(), timestamp: new Date().toISOString() });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: e.message });
+  }
+});
+
+// ── InnoPay 결제 노티 콜백 (이중 통지 — payAutoCardBill 응답과 cross-check용) ──
+// InnoPay 운영 환경에서 별도 등록 시 활성화. 보안: PG_IP 화이트리스트 + moid 매칭으로 검증
+app.post('/api/innopay/noti', (req, res) => {
+  const payload = req.body || {};
+  try {
+    db.prepare(`INSERT INTO payment_notis (moid, trans_seq, result_code, result_msg, raw_payload) VALUES (?, ?, ?, ?, ?)`)
+      .run(payload.moid || '', payload.transSeq || payload.tno || '', payload.resultCode || '', payload.resultMsg || '', JSON.stringify(payload).slice(0, 4000));
+    console.log(`[노티] moid=${payload.moid} code=${payload.resultCode}`);
+  } catch (e) {
+    console.error('[노티 저장 실패]', e.message);
+  }
+  // InnoPay 명세에 따라 보통 "OK" 문자열로 200 응답
+  res.status(200).type('text/plain').send('OK');
+});
+
 // ── 공개 설정 (프론트가 InnoPay 호출 시 참조) ──
 app.get('/api/config', (_req, res) => {
   res.json({ innopayMid: cfg.INNOPAY_MID });
@@ -78,8 +145,21 @@ function genTempPw() {
   return l1 + l2 + nums;
 }
 
-app.post('/api/subscribe', (req, res) => {
-  const { company, name, phone, features, billingType, billKey, moid, amount } = req.body;
+// 약관 동의 기록 — 법적 분쟁 시 증거로 활용
+const TERMS_VERSION = '2026-04-27';  // 약관 텍스트 변경 시 갱신
+function saveTermsConsent(subscriberId, agreedKeys, req) {
+  if (!subscriberId || !agreedKeys) return;
+  const ip = (req.ip || req.connection?.remoteAddress || '').toString().slice(0, 64);
+  const ua = (req.get('User-Agent') || '').slice(0, 256);
+  const keys = Array.isArray(agreedKeys) ? agreedKeys : ['all'];
+  const stmt = db.prepare(`INSERT INTO terms_consents (subscriber_id, terms_key, terms_version, ip, user_agent) VALUES (?, ?, ?, ?, ?)`);
+  for (const k of keys) {
+    try { stmt.run(subscriberId, String(k).slice(0, 64), TERMS_VERSION, ip, ua); } catch (e) { console.error('[약관저장 실패]', e.message); }
+  }
+}
+
+app.post('/api/subscribe', subscribeLimiter, (req, res) => {
+  const { company, name, phone, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
 
@@ -107,7 +187,8 @@ app.post('/api/subscribe', (req, res) => {
         WHERE id=?`)
         .run(company, name, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
 
-      console.log(`[재가입 ✓] id=${existing.id} ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate} (기존 비밀번호 유지)`);
+      saveTermsConsent(existing.id, termsAgreed, req);
+      console.log(`[재가입 ✓] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
       return res.json({ ok: true, trialStart, nextBillingDate, reactivated: true, subscriberId: existing.id });
     }
 
@@ -121,7 +202,10 @@ app.post('/api/subscribe', (req, res) => {
         (company, name, phone, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(company, name, cleanPhone, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
-    console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate} / 임시PW: ${tempPw}`);
+    saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
+    // ⚠️ tempPw는 임시로 응답 페이로드 + 서버 로그에 남김 (SMS 미연동 상태)
+    // SMS 연동 후 제거 예정 — 운영 시 사용자가 비밀번호를 받을 수단이 SMS 외 없어짐
+    console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate} / 임시PW: ${tempPw}`);
     res.json({ ok: true, trialStart, nextBillingDate, tempPassword: tempPw, reactivated: false, subscriberId: r.lastInsertRowid });
   } catch (e) {
     console.error('[DB 오류]', e.message);
@@ -248,11 +332,44 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
       console.log(`[빌키삭제 ✓] subscriber_id=${id} / ${sub.company}`);
     } else {
       console.error(`[빌키삭제 ✗] subscriber_id=${id} / ${billkeyResult.resultCode} ${billkeyResult.resultMsg}`);
-      notifySlack(`⚠️ 빌키 삭제 실패: ${sub.company} (id=${id}) — ${billkeyResult.resultMsg}`);
+      notifySlack(`⚠️ 빌키 삭제 실패: ${sub.company} (id=${id}, ${maskName(sub.name)}) — ${billkeyResult.resultMsg}`);
     }
   }
 
   res.json({ ok: true, billkeyDeleted: billkeyResult.ok });
+});
+
+// 관리자 — 환불 처리 (전자상거래법: 단순 변심 7일, 서비스 결함은 즉시)
+app.post('/api/admin/refund', adminAuth, async (req, res) => {
+  const { id, billingLogId, amount, reason } = req.body;
+  if (!id || !billingLogId) return res.status(400).json({ ok: false, msg: '필수값 누락 (id, billingLogId)' });
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(id);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+  const log = db.prepare(`SELECT * FROM billing_logs WHERE id = ? AND subscriber_id = ?`).get(billingLogId, id);
+  if (!log) return res.status(404).json({ ok: false, msg: '결제 로그 없음' });
+  if (log.result_code !== '0000') return res.status(400).json({ ok: false, msg: '성공한 결제만 환불 가능' });
+
+  const refundAmount = Number(amount) || log.amount;
+  const refundReason = reason || '관리자 환불 처리';
+
+  // InnoPay 취소 API 호출
+  const { refundBillKey } = require('./innopay');
+  const result = await refundBillKey({
+    moid: log.moid,
+    transSeq: log.trans_seq || '',
+    amount: refundAmount,
+    reason: refundReason,
+  });
+
+  db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .run(id, log.moid, refundAmount, refundReason, result.resultCode || 'ERR', result.resultMsg || '', 'admin');
+
+  if (result.ok) {
+    notifySlack(`💸 환불 처리: ${sub.company} (id=${id}) / ${refundAmount.toLocaleString()}원 — ${refundReason}`);
+    return res.json({ ok: true, resultMsg: result.resultMsg });
+  }
+  notifySlack(`🔴 환불 실패: ${sub.company} (id=${id}) — ${result.resultCode} ${result.resultMsg}`);
+  res.status(502).json({ ok: false, msg: '환불 실패', resultCode: result.resultCode, resultMsg: result.resultMsg });
 });
 
 // 관리자 — 임시 비밀번호 재발급 (시스템이 생성, 관리자는 받아서 고객에게 전달)
@@ -280,7 +397,7 @@ function mypageAuth(req, res, next) {
   next();
 }
 
-app.post('/api/mypage/login', (req, res) => {
+app.post('/api/mypage/login', loginLimiter, (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) return res.status(400).json({ ok: false, msg: '전화번호와 비밀번호를 입력해주세요.' });
 

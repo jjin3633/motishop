@@ -549,10 +549,11 @@ function renderDetail(d) {
         <div class="detail-log-list">
           ${logs.map(l => {
             const isOk = l.result_code === '0000' || l.result_code === '00';
+            const refundBtn = isOk ? `<button onclick="refundFromDetail(${s.id}, ${l.id}, ${l.amount})" style="margin-left:8px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:var(--red);font-family:inherit;">환불</button>` : '';
             return `<div class="detail-log-row ${isOk?'ok':'fail'}">
               <span>${(l.billed_at||'').slice(0,16)}</span>
               <span class="amt">${fmt(l.amount)}원</span>
-              <span class="res">${isOk?'✓ 성공':'✗ '+(l.result_code||'')}</span>
+              <span class="res">${isOk?'✓ 성공':'✗ '+(l.result_code||'')}${refundBtn}</span>
             </div>`;
           }).join('')}
         </div>
@@ -627,6 +628,27 @@ async function cancelSubFromDetail(id) {
   await fetch('/api/cancel', { method:'POST', headers:{'Content-Type':'application/json','x-admin-pw':ADMIN_PW}, body: JSON.stringify({id}) });
   await loadSubscribers();
   openDetail(id); // 모달 갱신
+}
+
+async function refundFromDetail(id, billingLogId, originalAmount) {
+  const amountStr = prompt(`환불 금액을 입력하세요 (원래 결제: ${Number(originalAmount).toLocaleString()}원, 부분환불 가능)`, String(originalAmount));
+  if (amountStr === null) return;
+  const amount = parseInt(String(amountStr).replace(/[^0-9]/g, ''));
+  if (!amount || amount <= 0 || amount > originalAmount) { alert('금액이 올바르지 않습니다.'); return; }
+  const reason = prompt('환불 사유 (고객 통보 + 로그 기록용)', '단순 변심');
+  if (!reason) return;
+  if (!confirm(`${amount.toLocaleString()}원 환불을 InnoPay에 요청합니다. 진행하시겠습니까?`)) return;
+  try {
+    const res = await fetch('/api/admin/refund', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-pw': ADMIN_PW },
+      body: JSON.stringify({ id, billingLogId, amount, reason }),
+    });
+    const data = await res.json();
+    if (data.ok) { alert('환불 완료: ' + (data.resultMsg || '')); }
+    else { alert('환불 실패: ' + (data.resultMsg || data.msg || '')); }
+  } catch (e) { alert('네트워크 오류: ' + e.message); }
+  openDetail(id);
 }
 
 const fmt = n => Number(n || 0).toLocaleString();

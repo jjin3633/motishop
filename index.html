@@ -1737,6 +1737,8 @@
 
 제3조의2 (구독 내용 변경에 따른 결제) ① 최초 가입일로부터 30일간은 무료 체험 기간으로 결제가 발생하지 않습니다. ② 무료 체험 종료 후 매월(또는 매년) 동일한 결제일에 자동 결제됩니다. ③ 구독 기간 중 기능을 추가·제거하거나 결제 주기(월구독↔연구독)를 변경하는 경우, 변경 사항은 다음 결제일부터 반영되며 변경된 기능 구성 전체에 대해 결제가 청구됩니다. ④ 추가되는 기능에 대해서는 별도의 무료 체험이 적용되지 않습니다. ⑤ 해지 후 동일 명의로 재가입하는 경우, 무료 체험은 적용되지 않으며 즉시 결제가 발생합니다.
 
+제3조의3 (환불 정책) ① 무료 체험 기간(가입 후 30일) 내 해지 시 결제가 발생하지 않으므로 환불 사유가 없습니다. ② 정기 결제 후 7일 이내에 서비스를 전혀 이용하지 않은 경우 전액 환불 가능합니다. ③ 서비스 이용 중 회사의 책임 있는 사유(서비스 장애, 기능 미제공 등)로 정상 이용이 불가했던 경우 사용 불가 기간에 비례하여 환불합니다. ④ 사용자의 단순 변심에 의한 환불 요청은 결제일로부터 7일 이내에 한해 처리하며, 이미 사용한 기간은 일할 계산하여 차감합니다. ⑤ 환불 요청은 (주)엠지솔루션스 고객센터(070-4365-7740) 또는 이메일로 접수하며, 영업일 기준 3일 이내에 처리됩니다. ⑥ 환불은 결제 시 사용한 카드로 취소 처리되며, 카드사 정책에 따라 영업일 기준 3~7일 후 반영됩니다.
+
 제4조 (과실책임) 잔액 부족, 한도 초과 등 고객 과실로 자동결제가 불가한 경우 발생한 손해는 고객이 부담합니다.
 
 제5조 (결제우선순위) 동일 결제일에 복수 청구 건이 있는 경우 우선순위는 회사 또는 금융기관이 정하는 바에 따릅니다.
@@ -1899,8 +1901,15 @@
   <p>
     <strong style="color:rgba(255,255,255,.45); font-size:15px;">(주)엠지솔루션스</strong><br><br>
     대표자: 박재현 &nbsp;|&nbsp; 사업자등록번호: 217-86-00674<br>
+    통신판매업신고: 제 0000-0000-0000 호 <span style="color:rgba(255,255,255,.15);">(등록 후 갱신 예정)</span><br>
     주소: 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오<br>
-    대표번호: <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00 (점심 13:00–14:00)
+    대표번호: <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00 (점심 13:00–14:00)<br>
+    개인정보보호책임자: 박재현 &nbsp;|&nbsp; 이메일: <a href="mailto:contact@motiphysio.com">contact@motiphysio.com</a><br>
+    결제대행: 주식회사 인피니소프트 (InnoPay)
+  </p>
+  <p style="margin-top:14px; font-size:12px; color:rgba(255,255,255,.25);">
+    환불 안내: 무료 체험 30일 내 해지 시 결제 없음 · 정기결제 후 7일 이내 미사용 시 전액 환불 · 자세한 내용은 약관 참조<br>
+    문의·환불·해지: <a href="tel:07043657740">070-4365-7740</a> 또는 <a href="mailto:contact@motiphysio.com">contact@motiphysio.com</a>
   </p>
   <p style="margin-top:16px; font-size:13px;">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
 </footer>
@@ -2134,11 +2143,14 @@
         const amount = [...document.querySelectorAll('.feat-select-item.selected')]
           .reduce((s, i) => s + parseInt(i.dataset[billingType]), 0);
 
+        // 약관 동의 키 수집 (DB에 동의 시점·약관 키별로 기록 — 법적 증거)
+        const termsAgreed = ['전자금융거래기본약관', '자동결제이용약관', '개인정보수집이용', '개인정보제3자제공'];
+
         // 구독 DB 저장
         fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company, name, phone, features: feats, billingType, billKey, moid, amount })
+          body: JSON.stringify({ company, name, phone, features: feats, billingType, billKey, moid, amount, termsAgreed })
         }).catch(e => console.error('subscribe API 오류:', e));
 
         document.getElementById('card-form-area').style.display = 'none';

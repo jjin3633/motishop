@@ -22,6 +22,8 @@ cp .env.example .env
 | `NOTIFY_ENABLED` | 사전 안내 발송 | `false` |
 | `GITHUB_WEBHOOK_SECRET` | GitHub Webhook HMAC 시크릿 (빈 값이면 자동배포 비활성) | 없음 |
 | `DEPLOY_SCRIPT_PATH` | 배포 스크립트 경로 | `/home/ec2-user/motishop-api/deploy.sh` |
+| `INNOPAY_CANCEL_URL` | 결제 취소 API | `https://api.innopay.co.kr/api/cancelPay` |
+| `BACKUP_S3_BUCKET` | DB 백업 S3 버킷 (옵션) | 없음 |
 
 ## 실행
 

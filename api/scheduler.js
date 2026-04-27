@@ -29,6 +29,19 @@ function daysFromToday(dateStr) {
 }
 
 async function chargeSubscriber(sub) {
+  // 멱등성: 같은 가입자 + 결제예정일 조합으로 이미 성공한 결제가 있으면 스킵
+  const today = kstDateOnly();
+  const dup = db.prepare(`
+    SELECT id FROM billing_logs
+    WHERE subscriber_id = ? AND result_code = '0000'
+      AND DATE(billed_at) = DATE(?)
+    LIMIT 1
+  `).get(sub.id, today + ' 00:00:00');
+  if (dup) {
+    console.log(`[스킵] ${sub.company} — 오늘 이미 성공 결제 존재 (log_id=${dup.id})`);
+    return;
+  }
+
   const moid = genMoid();
 
   const result = await chargeWithRetry({
@@ -40,9 +53,10 @@ async function chargeSubscriber(sub) {
     userId: sub.phone,  // 등록 시점과 동일한 userId (phone)
   });
 
-  // 모든 결과 로그 기록 (성공/실패/재시도)
-  db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg) VALUES (?, ?, ?, ?, ?)`)
-    .run(sub.id, moid, sub.charge_amount, result.resultCode || 'ERR', result.resultMsg || '');
+  // 모든 결과 로그 기록 (성공/실패/재시도) — transSeq는 환불 시 필요
+  const transSeq = (result.raw && (result.raw.transSeq || result.raw.tno)) || '';
+  db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+    .run(sub.id, moid, sub.charge_amount, result.resultCode || 'ERR', result.resultMsg || '', transSeq);
 
   if (result.ok) {
     const next = addPeriod(sub.next_billing_date, sub.billing_type);
@@ -104,15 +118,32 @@ function runBillingPass() {
 }
 
 async function processDueBillings() {
-  const due = runBillingPass();
-  for (const sub of due) {
-    await chargeSubscriber(sub);
+  // 동시 실행 방지 (multi-instance 환경 대비) — 5분 이상 묵은 lock은 stale로 간주
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const lockResult = db.prepare(`
+    INSERT INTO scheduler_locks (name, locked_at, pid) VALUES ('billing', datetime('now'), ?)
+    ON CONFLICT(name) DO UPDATE SET locked_at = datetime('now'), pid = excluded.pid
+    WHERE locked_at < ?
+  `).run(process.pid, fiveMinAgo);
+
+  if (lockResult.changes === 0) {
+    console.warn('[스케줄러] 다른 인스턴스가 이미 실행 중 — 스킵');
+    return;
+  }
+
+  try {
+    const due = runBillingPass();
+    for (const sub of due) {
+      await chargeSubscriber(sub);
+    }
+  } finally {
+    db.prepare(`DELETE FROM scheduler_locks WHERE name = 'billing' AND pid = ?`).run(process.pid);
   }
 }
 
 function scheduleBilling() {
-  // 매일 KST 09:00 실행
-  cron.schedule('0 9 * * *', async () => {
+  // 매일 KST 10:00 실행
+  cron.schedule('0 10 * * *', async () => {
     try {
       await processDueBillings();
     } catch (e) {
@@ -121,7 +152,7 @@ function scheduleBilling() {
     }
   }, { timezone: 'Asia/Seoul' });
 
-  console.log('결제 스케줄러 시작 (매일 09:00 KST · 사전안내 7일/1일 전 · 재시도 2회)');
+  console.log('결제 스케줄러 시작 (매일 10:00 KST · 사전안내 7일/1일 전 · 재시도 2회)');
 }
 
 module.exports = { scheduleBilling, chargeSubscriber, processDueBillings };

@@ -7,7 +7,9 @@
     "better-sqlite3": "^9.4.3",
     "node-cron": "^3.0.3",
     "axios": "^1.6.7",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.4.0"
   },
   "scripts": {
     "start": "node server.js",

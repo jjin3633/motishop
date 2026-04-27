@@ -18,7 +18,21 @@ try {
   fs.copyFileSync(src, dest);
   console.log(`[backup] ${dest} (${fs.statSync(dest).size} bytes)`);
 
-  // 30일 이상된 백업 자동 정리
+  // S3 외부 백업 (선택) — 환경변수 BACKUP_S3_BUCKET 설정 시 aws cli로 업로드
+  // EC2에 IAM role 또는 ~/.aws/credentials 필요. aws cli 미설치 시 자동 스킵.
+  const s3Bucket = process.env.BACKUP_S3_BUCKET;
+  if (s3Bucket) {
+    const { execSync } = require('child_process');
+    try {
+      const s3Path = `s3://${s3Bucket}/motishop/${path.basename(dest)}`;
+      execSync(`aws s3 cp "${dest}" "${s3Path}" --only-show-errors`, { stdio: 'inherit' });
+      console.log(`[backup → S3] ${s3Path}`);
+    } catch (e) {
+      console.error('[backup → S3] 실패 (로컬 백업은 정상):', e.message);
+    }
+  }
+
+  // 30일 이상된 로컬 백업 자동 정리
   const keepDays = 30;
   const cutoff = Date.now() - keepDays * 24 * 60 * 60 * 1000;
   for (const f of fs.readdirSync(backupDir)) {

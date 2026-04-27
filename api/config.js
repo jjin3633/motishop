@@ -17,6 +17,7 @@ module.exports = {
   INNOPAY_MID: required('INNOPAY_MID'),
   INNOPAY_CHARGE_URL: required('INNOPAY_CHARGE_URL', 'https://api.innopay.co.kr/api/payAutoCardBill'),
   INNOPAY_DELETE_BILLKEY_URL: required('INNOPAY_DELETE_BILLKEY_URL', 'https://api.innopay.co.kr/api/delAutoCardBill'),
+  INNOPAY_CANCEL_URL: required('INNOPAY_CANCEL_URL', 'https://api.innopay.co.kr/api/cancelPay'),
   CORS_ORIGIN: required('CORS_ORIGIN', 'https://shop.motiphysio.com'),
   SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || '',
   DB_PATH: required('DB_PATH', './motishop.db'),
