@@ -995,7 +995,7 @@
     .footer-terms-close:hover { background: #e0e0e3; color: #000; }
     .footer-terms-box h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; padding-right: 40px; color: #0a0a0a; letter-spacing: -.02em; }
     .footer-terms-meta { font-size: 11px; color: #999; margin: 0 0 18px; }
-    .footer-terms-body { font-size: 13px; line-height: 1.75; white-space: pre-wrap; color: #333; overflow-y: auto; flex: 1; padding-right: 8px; }
+    .footer-terms-body { font-size: 13.5px; line-height: 1.85; white-space: pre-wrap; color: #2a2a2a; overflow-y: auto; flex: 1; padding-right: 8px; letter-spacing: -.01em; word-break: keep-all; }
     .footer-terms-body::-webkit-scrollbar { width: 6px; }
     .footer-terms-body::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     @media (max-width: 600px) {
@@ -2218,23 +2218,45 @@
   }
 
   // ── Footer 약관 모달 (가입 폼 .terms-body 텍스트 재사용 — single source of truth) ──
+  function formatTermsBody(raw) {
+    // 가독성: 조항 헤더, ①~⑩ 항목, ■ 섹션 헤더 앞에 줄바꿈 + 들여쓰기
+    return raw
+      // "제N조" / "제N조의N" 헤더 — 줄바꿈 + 빈 줄
+      .replace(/\s*(제\s*\d+\s*조(?:의\s*\d+)?\s*\([^)]+\))/g, '\n\n▸ $1\n')
+      // ①~⑩ 항목 — 들여쓰기로 구분
+      .replace(/\s*([①②③④⑤⑥⑦⑧⑨⑩])\s*/g, '\n   $1 ')
+      // ■ 섹션 헤더 (개인정보처리방침)
+      .replace(/\s*(■\s*[^\n]+)/g, '\n\n$1\n')
+      // " - " 하위 항목 (개인정보처리방침)
+      .replace(/\s+-\s+/g, '\n   • ')
+      // 시행일 등 메타정보
+      .replace(/\s*(시행일\s*:)/g, '\n\n$1')
+      // 연속 줄바꿈 정리
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   function openFooterTerms(key) {
     const bodies = document.querySelectorAll('.terms-body');
     let title = '', body = '';
     if (key === 'terms') {
       title = '이용약관';
-      body = '【1. 전자금융거래 기본약관 (InnoPay)】\n\n' + (bodies[0]?.textContent || '').trim()
-           + '\n\n\n【2. 자동결제 서비스 이용약관 (InnoPay)】\n\n' + (bodies[1]?.textContent || '').trim();
+      body = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n1. 전자금융거래 기본약관 (InnoPay)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+           + formatTermsBody(bodies[0]?.textContent || '')
+           + '\n\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n2. 자동결제 서비스 이용약관 (InnoPay)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+           + formatTermsBody(bodies[1]?.textContent || '');
     } else if (key === 'privacy') {
       title = '개인정보처리방침';
-      body = '【개인정보 수집·이용 동의】\n\n' + (bodies[2]?.textContent || '').trim()
-           + '\n\n\n【개인정보 제3자 제공 및 처리 위탁 동의】\n\n' + (bodies[3]?.textContent || '').trim();
+      body = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n개인정보 수집·이용 동의\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+           + formatTermsBody(bodies[2]?.textContent || '')
+           + '\n\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n개인정보 제3자 제공 및 처리 위탁 동의\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+           + formatTermsBody(bodies[3]?.textContent || '');
     } else if (key === 'refund') {
       title = '환불 정책';
       const all = bodies[1]?.textContent || '';
       const start = all.indexOf('제3조의3');
       const end = all.indexOf('제4조');
-      body = (start >= 0 ? all.slice(start, end > 0 ? end : undefined) : all).trim();
+      body = formatTermsBody((start >= 0 ? all.slice(start, end > 0 ? end : undefined) : all));
     }
     document.getElementById('footerTermsTitle').textContent = title;
     document.getElementById('footerTermsBody').textContent = body;
