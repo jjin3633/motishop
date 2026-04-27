@@ -141,3 +141,4 @@ Repo → Settings → Webhooks → **Add webhook**
 `.env`에서 `GITHUB_WEBHOOK_SECRET=` 비우고 재시작하면 503 응답.
 
 
+
