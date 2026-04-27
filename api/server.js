@@ -282,12 +282,25 @@ app.post('/api/mypage/login', (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) return res.status(400).json({ ok: false, msg: '전화번호와 비밀번호를 입력해주세요.' });
 
-  const sub = db.prepare(`SELECT * FROM subscribers WHERE phone=?`).get(phone.replace(/[^0-9]/g, ''));
+  // 같은 phone에 여러 row가 있을 수 있음 — 활성(trial/active) 우선, 그 다음 최신 id
+  // 활성 row가 있으면 그것만으로 인증, 없으면 가장 최근 cancelled row로 시도 (재가입 유도용)
+  const sub = db.prepare(`
+    SELECT * FROM subscribers WHERE phone = ?
+    ORDER BY
+      CASE status WHEN 'trial' THEN 0 WHEN 'active' THEN 0 WHEN 'cancelled' THEN 1 ELSE 2 END,
+      id DESC
+    LIMIT 1
+  `).get(phone.replace(/[^0-9]/g, ''));
+
   if (!sub) return res.status(401).json({ ok: false, msg: '등록되지 않은 전화번호입니다.' });
   if (!sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 설정되지 않았습니다. 담당자에게 문의해주세요.' });
 
   const hash = hashPw(password, sub.pw_salt);
   if (hash !== sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 올바르지 않습니다.' });
+
+  if (sub.status === 'cancelled') {
+    return res.status(403).json({ ok: false, msg: '해지된 계정입니다. 다시 가입하시려면 메인 페이지에서 신청해 주세요.' });
+  }
 
   const token = genToken();
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
