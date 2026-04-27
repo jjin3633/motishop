@@ -970,24 +970,21 @@
     .cta-banner p { font-size: 18px; font-weight: 400; color: rgba(255,255,255,.55); margin-bottom: 40px; position: relative; line-height: 1.7; letter-spacing: -0.01em; }
 
     /* ── Footer ── */
-    footer { background: var(--navy); padding: 56px 24px 36px; text-align: center; border-top: 1px solid rgba(255,255,255,.05); }
-    .footer-company { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.7); margin: 0 0 18px; letter-spacing: -.01em; }
-    .footer-info { font-size: 13px; color: rgba(255,255,255,.32); line-height: 2; margin: 0; }
-    .footer-info a { color: rgba(255,255,255,.55); text-decoration: none; }
-    .footer-info a:hover { color: rgba(255,255,255,.85); }
-    .footer-info .sep { color: rgba(255,255,255,.15); margin: 0 10px; }
-    .footer-links { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); margin: 22px auto; max-width: 520px; }
-    .footer-links a { font-size: 13px; color: rgba(255,255,255,.7); text-decoration: none; padding: 4px 8px; cursor: pointer; transition: color .15s; }
-    .footer-links a:hover { color: rgba(255,255,255,1); }
-    .footer-links .sep { color: rgba(255,255,255,.18); margin: 0 4px; font-size: 12px; }
+    footer { background: var(--navy); padding: 56px 7% 36px; text-align: left; border-top: 1px solid rgba(255,255,255,.05); }
+    .footer-links { display: flex; gap: 26px; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,.07); margin-bottom: 24px; flex-wrap: wrap; }
+    .footer-links a { font-size: 13px; color: rgba(255,255,255,.85); font-weight: 700; text-decoration: none; cursor: pointer; transition: color .15s; letter-spacing: -.01em; }
+    .footer-links a:hover { color: #fff; }
+    .footer-company { font-size: 14px; font-weight: 700; color: rgba(255,255,255,.6); margin: 0 0 14px; letter-spacing: -.01em; }
+    .footer-info { font-size: 13px; color: rgba(255,255,255,.35); line-height: 1.95; margin: 0 0 28px; }
+    .footer-info p { margin: 0; }
+    .footer-info a { color: rgba(255,255,255,.5); text-decoration: none; }
+    .footer-info a:hover { color: rgba(255,255,255,.8); }
     .footer-copy { font-size: 12px; color: rgba(255,255,255,.22); margin: 0; letter-spacing: .02em; }
-    @media (max-width: 600px) {
-      footer { padding: 42px 18px 28px; }
-      .footer-info { font-size: 12px; line-height: 1.95; }
-      .footer-info .sep { display: none; }
-      .footer-info .mobile-break { display: block; }
+    @media (max-width: 768px) {
+      footer { padding: 42px 24px 28px; }
+      .footer-links { gap: 18px; }
+      .footer-info { font-size: 12px; line-height: 1.9; }
     }
-    .footer-info .mobile-break { display: none; }
 
     /* ── Footer Terms Modal ── */
     .footer-terms-modal { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.78); align-items: center; justify-content: center; padding: 20px; }
@@ -1935,15 +1932,19 @@
 
 <!-- ── FOOTER ── -->
 <footer>
-  <p class="footer-company">(주)엠지솔루션스</p>
-  <p class="footer-info">
-    대표자 : 박재현<br>
-    사업자 등록 번호 : 217-86-00674 <span class="sep">|</span><span class="mobile-break"></span>통신판매업 신고번호 : 제 2022-서울마포-1090호<br>
-    주소 : 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오 <span class="sep">|</span><span class="mobile-break"></span>고객센터 : <a href="tel:07043657740">070-4365-7740</a>
-  </p>
-
   <div class="footer-links">
-    <a onclick="openFooterTerms('terms')">이용약관</a><span class="sep">|</span><a onclick="openFooterTerms('privacy')">개인정보처리방침</a><span class="sep">|</span><a onclick="openFooterTerms('refund')">환불 정책</a>
+    <a onclick="openFooterTerms('terms')">이용약관</a>
+    <a onclick="openFooterTerms('privacy')">개인정보처리방침</a>
+    <a onclick="openFooterTerms('refund')">환불 정책</a>
+  </div>
+
+  <p class="footer-company">(주)엠지솔루션스</p>
+  <div class="footer-info">
+    <p>대표자 : 박재현</p>
+    <p>사업자 등록 번호 : 217-86-00674</p>
+    <p>통신판매업 신고번호 : 제 2022-서울마포-1090호</p>
+    <p>주소 : 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오</p>
+    <p>고객센터 : <a href="tel:07043657740">070-4365-7740</a></p>
   </div>
 
   <p class="footer-copy">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
