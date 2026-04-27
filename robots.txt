@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# 관리자/구독자 전용 영역은 크롤링 차단
+Disallow: /admin
+Disallow: /api/
+Disallow: /mypage
+
+Sitemap: https://shop.motiphysio.com/sitemap.xml
