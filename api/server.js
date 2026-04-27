@@ -7,7 +7,9 @@ const { scheduleBilling } = require('./scheduler');
 const { deleteBillKey, notifySlack } = require('./innopay');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => { req.rawBody = buf; },
+}));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', cfg.CORS_ORIGIN);
@@ -419,6 +421,48 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
 
   console.log(`[구독유형변경] ${sub.company} → ${billingType} / ${newAmount}원`);
   res.json({ ok: true, billing_type: billingType, charge_amount: newAmount });
+});
+
+// ── GitHub Webhook (자동 배포) ──
+app.post('/api/deploy/webhook', (req, res) => {
+  if (!cfg.GITHUB_WEBHOOK_SECRET) {
+    return res.status(503).json({ error: 'webhook disabled' });
+  }
+  const sig = req.header('X-Hub-Signature-256') || '';
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', cfg.GITHUB_WEBHOOK_SECRET)
+    .update(req.rawBody || Buffer.alloc(0))
+    .digest('hex');
+
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expected);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    console.warn('[webhook] 서명 불일치');
+    return res.status(401).json({ error: 'invalid signature' });
+  }
+
+  const event = req.header('X-GitHub-Event');
+  if (event === 'ping') return res.json({ ok: true, pong: true });
+  if (event !== 'push') return res.json({ skipped: `event: ${event}` });
+
+  const ref = req.body && req.body.ref;
+  if (ref !== 'refs/heads/main') {
+    return res.json({ skipped: `ref: ${ref}` });
+  }
+
+  const headCommit = ((req.body.head_commit && req.body.head_commit.id) || '').slice(0, 7);
+  console.log(`[webhook] 배포 트리거 ${headCommit}`);
+
+  const { spawn } = require('child_process');
+  const child = spawn(cfg.DEPLOY_SCRIPT_PATH, [], {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, COMMIT: headCommit },
+  });
+  child.unref();
+
+  notifySlack(`🚀 자동 배포 시작: ${headCommit}`);
+  res.json({ ok: true, deploying: true, commit: headCommit });
 });
 
 scheduleBilling();

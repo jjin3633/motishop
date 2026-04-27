@@ -21,4 +21,6 @@ module.exports = {
   SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || '',
   DB_PATH: required('DB_PATH', './motishop.db'),
   NOTIFY_ENABLED: (process.env.NOTIFY_ENABLED || 'false').toLowerCase() === 'true',
+  GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET || '',
+  DEPLOY_SCRIPT_PATH: process.env.DEPLOY_SCRIPT_PATH || '/home/ec2-user/motishop-api/deploy.sh',
 };
