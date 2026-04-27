@@ -540,6 +540,14 @@ function renderDetail(d) {
                 <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${fmt(c.before_amount)}원 → <strong style="color:var(--text);">${fmt(c.after_amount)}원</strong></div>
               </div>`;
             }
+            if (c.change_type === 'reactivate') {
+              return `<div class="detail-related-row" style="cursor:default;border-left:3px solid var(--blue);">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${ts} · <strong style="color:var(--blue);">재가입</strong> (해지 후 다시 가입)</div>
+                ${c.before_features !== c.after_features ? `<div style="font-size:12px;color:var(--gray600);">기능: <s>${c.before_features||'-'}</s> → <strong style="color:var(--text);">${c.after_features||'-'}</strong></div>` : ''}
+                ${c.before_billing_type !== c.after_billing_type ? `<div style="font-size:12px;color:var(--gray600);">유형: ${billingTypeMap[c.before_billing_type]||'-'} → <strong style="color:var(--text);">${billingTypeMap[c.after_billing_type]||'-'}</strong></div>` : ''}
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${fmt(c.before_amount)}원 → <strong style="color:var(--text);">${fmt(c.after_amount)}원</strong></div>
+              </div>`;
+            }
             return '';
           }).join('')}
         </div>

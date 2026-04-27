@@ -81,25 +81,46 @@ app.post('/api/subscribe', (req, res) => {
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
 
+  const cleanPhone = String(phone).replace(/[^0-9]/g, '');
   const trialStart = kstDateOnly();
   const firstBilling = new Date();
   firstBilling.setDate(firstBilling.getDate() + 30);
   const nextBillingDate = kstDateOnly(firstBilling);
   const chargeAmount = billingType === 'annual' ? amount * 12 : amount;
 
-  // 가입 시 자동으로 임시 비밀번호 생성
-  const tempPw = genTempPw();
-  const salt = genSalt();
-  const hash = hashPw(tempPw, salt);
+  // 동일 phone 기존 가입자 검색 → 있으면 재활성화, 없으면 신규
+  const existing = db.prepare(`SELECT * FROM subscribers WHERE phone = ? ORDER BY id DESC LIMIT 1`).get(cleanPhone);
 
   try {
-    db.prepare(`
+    if (existing) {
+      // 재활성화 — 기존 row UPDATE, pw_hash 유지
+      db.prepare(`INSERT INTO subscriber_changes
+        (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
+        VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
+        .run(existing.id, existing.features, features, existing.billing_type, billingType, existing.charge_amount, chargeAmount);
+
+      db.prepare(`UPDATE subscribers SET
+        company=?, name=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
+        trial_start=?, next_billing_date=?, status='trial', billkey_deleted=0, notified_7d=0, notified_1d=0
+        WHERE id=?`)
+        .run(company, name, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
+
+      console.log(`[재가입 ✓] id=${existing.id} ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate} (기존 비밀번호 유지)`);
+      return res.json({ ok: true, trialStart, nextBillingDate, reactivated: true, subscriberId: existing.id });
+    }
+
+    // 신규 가입 — 임시 비밀번호 생성
+    const tempPw = genTempPw();
+    const salt = genSalt();
+    const hash = hashPw(tempPw, salt);
+
+    const r = db.prepare(`
       INSERT INTO subscribers
         (company, name, phone, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(company, name, phone, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
-    console.log(`[신규 가입] ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate} / 임시PW: ${tempPw}`);
-    res.json({ ok: true, trialStart, nextBillingDate, tempPassword: tempPw });
+    `).run(company, name, cleanPhone, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+    console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${name} / ${billingType} / 첫 결제일: ${nextBillingDate} / 임시PW: ${tempPw}`);
+    res.json({ ok: true, trialStart, nextBillingDate, tempPassword: tempPw, reactivated: false, subscriberId: r.lastInsertRowid });
   } catch (e) {
     console.error('[DB 오류]', e.message);
     res.status(500).json({ ok: false, msg: 'DB 저장 실패' });
