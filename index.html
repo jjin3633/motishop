@@ -618,14 +618,14 @@
     /* ── How it works ── */
     .howitworks { background: white; }
     .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 56px; position: relative; }
-    .step { text-align: center; padding: 0; position: relative; }
+    .step { text-align: left; padding: 0; position: relative; }
     /* 각 단계 → 다음 단계로 이어지는 연결선 (박스 끝부터 다음 박스 시작까지 정확히 연결) */
     .step:not(:last-child)::after {
       content: '';
       position: absolute;
       top: 27px;
-      left: calc(50% + 28px);
-      right: calc(-50% + 28px);
+      left: 56px;
+      right: -24px;
       height: 2px;
       background: var(--gray400);
     }
@@ -634,7 +634,7 @@
       background: var(--text);
       color: white; font-size: 24px; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px;
+      margin: 0 0 24px;
       position: relative; z-index: 1;
       border: none;
       letter-spacing: -0.02em;
@@ -1062,6 +1062,7 @@
     @media (max-width: 1024px) {
       .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+      .problem-grid { grid-template-columns: repeat(2, 1fr); }
       .feat-card h3 { font-size: 22px; }
       .compare-slide.active { grid-template-columns: 1fr; }
       .form-layout { grid-template-columns: 1fr; }
@@ -1105,36 +1106,24 @@
       .compare-footer { padding: 14px 16px; }
       .compare-row { font-size: 20px; padding: 8px 0; }
       /* HowItWorks 모바일: 좌측 거터 타임라인 (GitHub 스타일) */
-      .steps { grid-template-columns: 1fr; gap: 0; margin-top: 28px; position: relative; padding-left: 56px; }
+      .steps { grid-template-columns: 1fr; gap: 36px; margin-top: 28px; position: relative; padding-left: 0; }
       .steps::before { display: none; }
       .step {
         position: relative;
         display: block;
-        padding: 0 0 28px;
-        min-height: 68px;
-        text-align: left;
+        padding: 0;
+        text-align: center;
       }
-      .step:last-child { padding-bottom: 0; min-height: 40px; }
       .step-num {
-        position: absolute;
-        left: -56px; top: 0;
-        width: 40px; height: 40px;
+        position: relative;
+        left: auto; top: auto;
+        width: 48px; height: 48px;
         border-radius: 12px;
-        font-size: 20px;
-        margin: 0;
+        font-size: 22px;
+        margin: 0 auto 12px;
         z-index: 2;
       }
-      /* step-num 하단 → 다음 step-num 상단 연결선 (좌측 gutter 내) */
-      .step:not(:last-child)::after {
-        content: '';
-        top: 40px;
-        left: -37px;
-        right: auto;
-        bottom: 0;
-        width: 2px;
-        height: auto;
-        background: var(--gray400);
-      }
+      .step:not(:last-child)::after { display: none; }
       .step h3 { text-align: left; margin: 0 0 6px; font-size: 22px; line-height: 1.4; }
       .step p { text-align: left; font-size: 18px; line-height: 1.7; }
       .form-left h3 { font-size: 28px; }
