@@ -109,6 +109,10 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 .resub-modal-box { max-width: 560px; padding: 30px 32px; max-height: 92vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
 .resub-modal-box::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .resub-modal-box .modal-btns { margin-top: 22px; }
+.resub-modal-box .modal-err { display: none; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); border-radius: 9px; padding: 10px 14px; color: var(--red); font-size: 13px; font-weight: 600; margin: 12px 0 0; line-height: 1.5; }
+.resub-modal-box .modal-err.show { display: flex; align-items: flex-start; gap: 8px; }
+.resub-modal-box .modal-err.show::before { content: '⚠'; font-size: 15px; flex-shrink: 0; }
+.resub-modal-box .input-invalid { border-color: var(--red) !important; background: rgba(239,68,68,.05) !important; box-shadow: 0 0 0 3px rgba(239,68,68,.08); }
 .resub-feat-list { background: var(--gray50); border-radius: 10px; padding: 6px; margin: 14px 0; }
 .resub-feat-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; border-radius: 8px; cursor: pointer; transition: all .15s; user-select: none; }
 .resub-feat-item:hover { background: white; }
@@ -364,7 +368,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
     <div class="modal-err" id="resubErr"></div>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeResubModal()">취소</button>
-      <button class="modal-confirm" id="resubConfirmBtn" onclick="submitResub()">카드 등록 + 결제</button>
+      <button class="modal-confirm" id="resubConfirmBtn" onclick="submitResub()">카드 등록</button>
     </div>
   </div>
 </div>
@@ -780,21 +784,57 @@ function renderResubModal() {
   document.getElementById('resubConfirmBtn').disabled = resubFeats.size === 0;
 }
 
-async function submitResub() {
+function showResubErr(msg, focusId) {
+  const errEl = document.getElementById('resubErr');
+  errEl.textContent = msg;
+  errEl.classList.add('show');
+  document.querySelectorAll('#resubModal .input-invalid').forEach(el => el.classList.remove('input-invalid'));
+  if (focusId) {
+    const el = document.getElementById(focusId);
+    if (el) {
+      el.classList.add('input-invalid');
+      el.focus();
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else {
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+function clearResubErr() {
   const errEl = document.getElementById('resubErr');
   errEl.textContent = '';
+  errEl.classList.remove('show');
+  document.querySelectorAll('#resubModal .input-invalid').forEach(el => el.classList.remove('input-invalid'));
+}
+// 입력 시 자동으로 에러 클리어
+document.querySelectorAll('#resubModal input').forEach(inp => {
+  inp.addEventListener('input', () => {
+    inp.classList.remove('input-invalid');
+    const errEl = document.getElementById('resubErr');
+    if (errEl.classList.contains('show')) clearResubErr();
+  });
+});
 
-  if (resubFeats.size === 0) { errEl.textContent = '기능을 하나 이상 선택해주세요.'; return; }
+async function submitResub() {
+  clearResubErr();
+
+  if (resubFeats.size === 0) { showResubErr('구독할 기능을 하나 이상 선택해주세요.'); return; }
 
   const cardNum = document.getElementById('resubCardNum').value.trim();
   const cardExp = document.getElementById('resubCardExp').value.trim();
   const cardPwd = document.getElementById('resubCardPwd').value.trim();
   const idNum = document.getElementById('resubIdNum').value.trim();
 
-  if (cardNum.length < 14 || cardNum.length > 19) { errEl.textContent = '카드번호를 확인해주세요.'; return; }
-  if (cardExp.length !== 4) { errEl.textContent = '만료일은 MMYY 4자리입니다.'; return; }
-  if (cardPwd.length !== 2) { errEl.textContent = '비밀번호 앞 2자리를 입력해주세요.'; return; }
-  if (idNum.length !== 6 && idNum.length !== 10) { errEl.textContent = '생년월일 6자리 또는 사업자번호 10자리를 입력해주세요.'; return; }
+  if (!cardNum) { showResubErr('카드번호를 입력해주세요.', 'resubCardNum'); return; }
+  if (cardNum.length < 14 || cardNum.length > 19) { showResubErr('카드번호 자릿수가 올바르지 않습니다 (14~19자리).', 'resubCardNum'); return; }
+  if (!cardExp) { showResubErr('카드 만료일을 입력해주세요. (예: 0828)', 'resubCardExp'); return; }
+  if (cardExp.length !== 4) { showResubErr('카드 만료일은 MMYY 4자리입니다. (예: 08년 28월 → 0828)', 'resubCardExp'); return; }
+  const expMm = parseInt(cardExp.slice(0, 2));
+  if (expMm < 1 || expMm > 12) { showResubErr('카드 만료 월(MM)이 올바르지 않습니다.', 'resubCardExp'); return; }
+  if (!cardPwd) { showResubErr('카드 비밀번호 앞 2자리를 입력해주세요.', 'resubCardPwd'); return; }
+  if (cardPwd.length !== 2) { showResubErr('카드 비밀번호 앞 2자리를 입력해주세요.', 'resubCardPwd'); return; }
+  if (!idNum) { showResubErr('생년월일(개인) 6자리 또는 사업자번호(법인) 10자리를 입력해주세요.', 'resubIdNum'); return; }
+  if (idNum.length !== 6 && idNum.length !== 10) { showResubErr('생년월일 6자리 또는 사업자번호 10자리만 입력 가능합니다.', 'resubIdNum'); return; }
 
   const btn = document.getElementById('resubConfirmBtn');
   btn.textContent = '처리 중...';
@@ -825,13 +865,13 @@ async function submitResub() {
     const data = await res.json();
     if (data.resultCode !== '0000') {
       errEl.textContent = '카드 등록 실패: ' + (data.resultMsg || '카드 정보를 확인해주세요.');
-      btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+      btn.textContent = '카드 등록'; btn.disabled = false;
       return;
     }
     billKey = data.billKey || '';
   } catch (e) {
     errEl.textContent = '카드 등록 중 네트워크 오류가 발생했습니다.';
-    btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+    btn.textContent = '카드 등록'; btn.disabled = false;
     return;
   }
 
@@ -847,11 +887,11 @@ async function submitResub() {
       await loadMypage();
     } else {
       errEl.textContent = data.msg || '재구독 처리 중 오류가 발생했습니다.';
-      btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+      btn.textContent = '카드 등록'; btn.disabled = false;
     }
   } catch (e) {
     errEl.textContent = '서버 오류가 발생했습니다. 담당자에게 문의해주세요.';
-    btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+    btn.textContent = '카드 등록'; btn.disabled = false;
   }
 }
 
