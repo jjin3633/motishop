@@ -106,7 +106,9 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 .btn-resub:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
 /* ── Resubscribe Modal ── */
-.resub-modal-box { max-width: 560px; padding: 30px 32px; max-height: 92vh; overflow-y: auto; }
+.resub-modal-box { max-width: 560px; padding: 30px 32px; max-height: 92vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.resub-modal-box::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.resub-modal-box .modal-btns { margin-top: 22px; }
 .resub-feat-list { background: var(--gray50); border-radius: 10px; padding: 6px; margin: 14px 0; }
 .resub-feat-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; border-radius: 8px; cursor: pointer; transition: all .15s; user-select: none; }
 .resub-feat-item:hover { background: white; }
@@ -142,7 +144,9 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 /* ── Modal ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(14,21,37,.55); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(8px); }
 .modal-overlay.open { display: flex; }
-.modal { background: white; border: 1px solid var(--gray100); border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 400px; box-shadow: 0 24px 60px rgba(14,21,37,.2); }
+.modal { background: white; border: 1px solid var(--gray100); border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 400px; box-shadow: 0 24px 60px rgba(14,21,37,.2); position: relative; }
+.modal-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--gray100); border: none; cursor: pointer; font-size: 17px; color: var(--text-sub); display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; transition: background .15s; font-family: inherit; }
+.modal-close:hover { background: var(--gray200); color: var(--text); }
 .modal h3 { font-size: 18px; font-weight: 900; color: var(--text); margin-bottom: 6px; letter-spacing: -.02em; }
 .modal p { font-size: 13px; color: var(--text-sub); margin-bottom: 24px; line-height: 1.7; white-space: pre-line; }
 .modal input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--gray100); background: var(--gray50); color: var(--text); font-size: 14px; font-family: inherit; outline: none; margin-bottom: 12px; transition: border-color .2s; }
@@ -323,6 +327,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 <!-- 재구독 모달 -->
 <div class="modal-overlay" id="resubModal">
   <div class="modal resub-modal-box">
+    <button class="modal-close" onclick="closeResubModal()" aria-label="닫기">×</button>
     <h3>다시 구독하기</h3>
     <p style="font-size:13px;color:var(--text-sub);margin-bottom:8px;">기능과 결제 주기를 선택하고 카드를 등록하면 즉시 결제가 발생합니다.<br>무료 체험은 적용되지 않습니다.</p>
 
