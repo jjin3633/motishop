@@ -325,8 +325,10 @@
     .compare-card.after .compare-row .feat-name.highlight { color: white; }
     .chk { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; flex-shrink: 0; border: 1.5px solid; }
     .chk-y, .chk-y-bright { background: rgba(26,107,255,.12); border-color: rgba(26,107,255,.4); color: var(--blue2); }
-    .chk-n { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.7); }
-    .chk-n-dark { background: rgba(14,21,37,.04); border-color: rgba(14,21,37,.22); color: rgba(14,21,37,.6); }
+    .chk-n { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.55); color: var(--red); }
+    .chk-n-dark { background: rgba(239,68,68,.22); border-color: rgba(239,68,68,.6); color: #fca5a5; }
+    /* compare-row의 opacity:.45 합성 보정 — chk만 따로 강조 */
+    .compare-row .chk-n, .compare-row .chk-n-dark { opacity: 1; filter: saturate(1.4); }
     .compare-footer {
       padding: 20px 28px;
       border-top: 1px solid rgba(255,255,255,.07);
@@ -1535,11 +1537,11 @@
     <h2 class="section-title">먼저 써본 원장님들이 증명합니다.</h2>
     <div class="problem-grid">
       <div class="problem-card">
-        <h3>30대 환자분이 측정 결과 보더니<br><span class="hl">그 자리에서 도수 3개월권 결제</span>하셨어요.<br><br>"제가 1.5cm 줄었다고요?" 하시면서요.</h3>
+        <h3>30대 환자분이 측정 결과 보더니<br><span class="hl">그 자리에서 3개월권 결제</span>하셨어요.<br><br>"제가 1.5cm 줄었다고요?" 하시면서요.</h3>
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">박** 원장</span>
-            <span class="problem-persona-role">재활의학센터</span>
+            <span class="problem-persona-role">○○ 재활의학센터 · Mini · 척추 세부 분석 구독</span>
           </div>
         </div>
       </div>
