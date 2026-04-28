@@ -325,7 +325,8 @@
     .compare-card.after .compare-row .feat-name.highlight { color: white; }
     .chk { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; flex-shrink: 0; border: 1.5px solid; }
     .chk-y, .chk-y-bright { background: rgba(26,107,255,.12); border-color: rgba(26,107,255,.4); color: var(--blue2); }
-    .chk-n, .chk-n-dark { background: transparent; border-color: rgba(150,160,180,.2); color: rgba(150,160,180,.35); }
+    .chk-n { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.7); }
+    .chk-n-dark { background: rgba(14,21,37,.04); border-color: rgba(14,21,37,.22); color: rgba(14,21,37,.6); }
     .compare-footer {
       padding: 20px 28px;
       border-top: 1px solid rgba(255,255,255,.07);
@@ -383,6 +384,7 @@
       border-radius: 20px;
       padding: 36px 32px 28px;
       display: flex; flex-direction: column;
+      height: 100%;
       box-shadow:
         0 1px 2px rgba(14,21,37,.04),
         0 10px 30px rgba(14,21,37,.07),
@@ -397,7 +399,7 @@
         inset 0 1px 0 rgba(255,255,255,1);
     }
     .problem-card h3 {
-      font-size: 26px; font-weight: 700;
+      font-size: 22px; font-weight: 700;
       color: var(--text);
       line-height: 1.6; letter-spacing: -0.02em;
       margin-bottom: 32px;
@@ -637,7 +639,7 @@
     }
     .step-num.active { background: var(--text); color: white; }
     .step h3 { font-size: 22px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; letter-spacing: -0.015em; color: var(--text); }
-    .step p { font-size: 20px; font-weight: 400; color: var(--gray600); line-height: 1.75; }
+    .step p { font-size: 18px; font-weight: 400; color: var(--gray600); line-height: 1.75; }
     .step .step-tag {
       display: inline-block; margin-top: 12px;
       font-size: 18px; font-weight: 700; padding: 3px 10px;
@@ -973,15 +975,15 @@
     /* ── Footer ── */
     footer { background: var(--navy); padding: 56px 24px 36px; text-align: left; border-top: 1px solid rgba(255,255,255,.05); }
     .footer-inner { max-width: 1200px; margin: 0 auto; }
-    .footer-links { display: flex; gap: 26px; padding: 22px 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); margin: 6px 0 22px; flex-wrap: wrap; }
-    .footer-links a { font-size: 20px; color: rgba(255,255,255,.95); font-weight: 700; text-decoration: none; cursor: pointer; transition: color .15s; letter-spacing: -.01em; }
+    .footer-links { display: flex; gap: 26px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); margin: 6px 0 18px; flex-wrap: wrap; }
+    .footer-links a { font-size: 14px; color: rgba(255,255,255,.95); font-weight: 700; text-decoration: none; cursor: pointer; transition: color .15s; letter-spacing: -.01em; }
     .footer-links a:hover { color: #fff; }
-    .footer-company { font-size: 20px; font-weight: 700; color: rgba(255,255,255,.85); margin: 0 0 14px; letter-spacing: -.01em; }
-    .footer-info { font-size: 18px; color: rgba(255,255,255,.6); line-height: 1.95; margin: 0 0 28px; }
+    .footer-company { font-size: 14px; font-weight: 700; color: rgba(255,255,255,.85); margin: 0 0 12px; letter-spacing: -.01em; }
+    .footer-info { font-size: 13px; color: rgba(255,255,255,.6); line-height: 1.85; margin: 0 0 22px; }
     .footer-info p { margin: 0; }
     .footer-info a { color: rgba(255,255,255,.75); text-decoration: none; }
     .footer-info a:hover { color: #fff; }
-    .footer-copy { font-size: 18px; color: rgba(255,255,255,.4); margin: 0; letter-spacing: .02em; }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,.4); margin: 0; letter-spacing: .02em; }
     @media (max-width: 768px) {
       footer { padding: 42px 24px 28px; }
       .footer-links { gap: 18px; }
@@ -1267,7 +1269,7 @@
           <span class="feat-badge badge-hot">인기</span>
           <h3>모아레 (Moiré)</h3>
         </div>
-        <p>수치로 설명하기 어려운 불균형,<br>등고선 이미지 한 장이면 됩니다.<br>10분짜리 상담이 1분에 끝납니다.</p>
+        <p>수치로 어려운 불균형,<br>등고선 이미지 한 장으로 1분 상담.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/nerve.png')">
         <div class="feat-thumb">
@@ -1276,7 +1278,7 @@
           <span class="feat-badge badge-new">신규</span>
           <h3>3D 신경 · 림프 · 장기</h3>
         </div>
-        <p>체형만 보던 눈이, 내부 구조까지 봅니다.<br>다른 센터에선 꺼내기 어려운 이야기를<br>이미지로 풀어냅니다.</p>
+        <p>체형만 보던 눈이 내부 구조까지.<br>다른 센터엔 없는 이야기를 이미지로.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/spinedetail.png')">
         <div class="feat-thumb">
@@ -1294,7 +1296,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>손실키 분석</h3>
         </div>
-        <p>"자세가 안 좋으면 키가 줄어요" —<br>이제 말 대신 숫자로 보여주세요.<br>교정 동기는 수치가 만듭니다.</p>
+        <p>"자세가 안 좋으면 키가 줄어요"<br>이제 말 대신 숫자로 보여주세요.</p>
       </div>
       <div class="feat-card" onclick="openFeatModal('assets/features/face.png')">
         <div class="feat-thumb">
@@ -1303,7 +1305,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <h3>안면 여백 / 탄력</h3>
         </div>
-        <p>체형 다음은 얼굴입니다.<br>윤곽과 탄력까지 짚어주는,<br>복합 센터의 차별화 포인트.</p>
+        <p>체형 다음은 얼굴.<br>윤곽·탄력까지, 복합 센터의 차별화.</p>
       </div>
       <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
         <div class="feat-thumb feat-thumb-all">
@@ -1537,7 +1539,7 @@
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">박** 원장</span>
-            <span class="problem-persona-role">○○ 재활의학센터 · Mini · 손실키 분석 구독</span>
+            <span class="problem-persona-role">재활의학센터</span>
           </div>
         </div>
       </div>
@@ -1546,7 +1548,7 @@
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">윤** 원장</span>
-            <span class="problem-persona-role">바른라인 필라테스 · White · 안면 여백·탄력 구독</span>
+            <span class="problem-persona-role">필라테스 센터</span>
           </div>
         </div>
       </div>
@@ -1555,7 +1557,7 @@
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 트레이너</span>
-            <span class="problem-persona-role">○○ PT 스튜디오 · Mini · ALL IN ONE 구독</span>
+            <span class="problem-persona-role">PT 스튜디오</span>
           </div>
         </div>
       </div>
@@ -1952,7 +1954,7 @@
       </div>
 
     </div>
-    <p class="form-footnote">카드 유효성 확인 10원은 즉시 취소 · 체험 기간 내 언제든 해지 가능 · 위약금·계약서 없음</p>
+    <p class="form-footnote">카드 유효성 확인 10원은 즉시 취소 · 체험 기간 내 언제든 해지 가능</p>
   </div>
 </section>
 
