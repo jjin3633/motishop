@@ -97,6 +97,34 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 .contact-box p { font-size: 13px; color: var(--text-sub); line-height: 1.8; }
 .contact-box a { color: var(--blue); font-weight: 700; text-decoration: none; }
 
+/* ── Resubscribe Box (해지 상태) ── */
+.resub-box { background: linear-gradient(135deg, rgba(26,107,255,.06), rgba(0,212,255,.06)); border: 1px solid rgba(26,107,255,.25); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+.resub-box h3 { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -.01em; }
+.resub-box p { font-size: 13px; color: var(--text-sub); line-height: 1.7; margin-bottom: 16px; }
+.btn-resub { background: linear-gradient(90deg, var(--blue), var(--cyan)); color: white; border: none; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 2px 10px rgba(26,107,255,.3); transition: transform .15s; }
+.btn-resub:hover { transform: translateY(-1px); }
+.btn-resub:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* ── Resubscribe Modal ── */
+.resub-modal-box { max-width: 480px; padding: 28px 28px; max-height: 92vh; overflow-y: auto; }
+.resub-feat-list { background: var(--gray50); border-radius: 10px; padding: 6px; margin: 14px 0; }
+.resub-feat-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; border-radius: 8px; cursor: pointer; transition: all .15s; user-select: none; }
+.resub-feat-item:hover { background: white; }
+.resub-feat-item.selected { background: white; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.resub-feat-left { display: flex; align-items: center; gap: 10px; }
+.resub-feat-check { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--gray200); flex-shrink: 0; transition: all .15s; }
+.resub-feat-item.selected .resub-feat-check { background: var(--blue); border-color: var(--blue); position: relative; }
+.resub-feat-item.selected .resub-feat-check::after { content: '✓'; color: white; font-size: 11px; font-weight: 900; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.resub-feat-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.resub-feat-price { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.resub-toggle { display: flex; gap: 6px; background: var(--gray50); padding: 4px; border-radius: 10px; margin: 14px 0; }
+.resub-toggle button { flex: 1; padding: 9px; border: none; background: transparent; border-radius: 7px; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer; font-family: inherit; transition: all .15s; }
+.resub-toggle button.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.resub-summary { background: var(--navy); color: white; border-radius: 10px; padding: 14px 16px; margin: 14px 0; display: flex; justify-content: space-between; align-items: center; }
+.resub-summary .lbl { font-size: 12px; color: rgba(255,255,255,.55); }
+.resub-summary .amt { font-size: 18px; font-weight: 900; color: var(--cyan); }
+.resub-notice { font-size: 11px; color: var(--text-muted); line-height: 1.6; margin-top: 8px; padding: 10px; background: var(--gray50); border-radius: 8px; }
+
 /* ── Billing Type Switch ── */
 .billing-switch-box {
   background: white; border-radius: 14px; border: 1px solid var(--gray100);
@@ -211,6 +239,13 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
       </div>
     </div>
 
+    <!-- 해지 상태 — 재구독 박스 (status='cancelled'일 때만 표시) -->
+    <div class="resub-box" id="resubBox" style="display:none;">
+      <h3>구독이 해지되었습니다</h3>
+      <p>이전 결제 이력과 변경 내역은 그대로 보관됩니다.<br>같은 카드 또는 다른 카드를 등록하시면 즉시 다시 구독을 시작할 수 있어요.</p>
+      <button class="btn-resub" onclick="openResubModal()">다시 구독하기</button>
+    </div>
+
     <!-- 구독 기능 관리 -->
     <div class="section-title">기능 구독 관리</div>
     <div class="feat-list" id="featList"></div>
@@ -277,9 +312,54 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
   <div class="modal">
     <h3>구독을 해지하시겠습니까?</h3>
     <p>해지 후에는 다음 결제일부터 청구되지 않습니다. 현재 체험/구독 중인 기능은 기간이 끝날 때까지 유지됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">언제든 마이페이지에서 다시 구독을 시작할 수 있습니다.</p>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeCancelModal()">취소</button>
       <button class="modal-confirm danger" onclick="cancelSubscription()">해지하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 재구독 모달 -->
+<div class="modal-overlay" id="resubModal">
+  <div class="modal resub-modal-box">
+    <h3>다시 구독하기</h3>
+    <p style="font-size:13px;color:var(--text-sub);margin-bottom:8px;">기능과 결제 주기를 선택하고 카드를 등록하면 즉시 결제가 발생합니다.<br>무료 체험은 적용되지 않습니다.</p>
+
+    <div class="resub-toggle">
+      <button id="resubMonthlyBtn" class="active" onclick="setResubBilling('monthly')">월 구독</button>
+      <button id="resubAnnualBtn" onclick="setResubBilling('annual')">연 구독 <span style="color:var(--cyan);font-size:11px;">−20%</span></button>
+    </div>
+
+    <div class="resub-feat-list" id="resubFeatList"></div>
+
+    <div class="resub-summary">
+      <div>
+        <div class="lbl">결제 예정 금액</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);" id="resubBillingLabel">월 결제</div>
+      </div>
+      <div class="amt" id="resubAmount">0원</div>
+    </div>
+
+    <div style="border-top:1px solid var(--gray100); padding-top:18px; margin-top:6px;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;">카드 정보</div>
+      <input type="tel" id="resubCardNum" placeholder="카드번호 (16자리, 숫자만)" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; margin-bottom:8px; outline:none;" />
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <input type="tel" id="resubCardExp" placeholder="MMYY (예: 0828)" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+        <input type="password" id="resubCardPwd" placeholder="비번 앞 2자리" maxlength="2" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+      </div>
+      <input type="tel" id="resubIdNum" placeholder="생년월일 6자리 또는 사업자번호 10자리" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+    </div>
+
+    <div class="resub-notice">
+      ⓘ 카드 등록 직후 위 금액이 <strong>즉시 결제</strong>됩니다. 다음 결제일은 오늘 기준 1개월(또는 1년) 후입니다.<br>
+      ⓘ 무료 체험은 적용되지 않습니다.
+    </div>
+
+    <div class="modal-err" id="resubErr"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeResubModal()">취소</button>
+      <button class="modal-confirm" id="resubConfirmBtn" onclick="submitResub()">카드 등록 + 결제</button>
     </div>
   </div>
 </div>
@@ -390,7 +470,12 @@ async function showApp() {
   badge.className = 'status-badge ' + cls;
   badge.textContent = txt;
 
-  if (s.status === 'cancelled') document.getElementById('cancelBtn').style.display = 'none';
+  if (s.status === 'cancelled') {
+    document.getElementById('cancelBtn').style.display = 'none';
+    document.getElementById('resubBox').style.display = 'block';
+  } else {
+    document.getElementById('resubBox').style.display = 'none';
+  }
 
   currentSubscriber = s;
   renderFeatList();
@@ -616,8 +701,153 @@ function openCancelModal() { document.getElementById('cancelModal').classList.ad
 function closeCancelModal() { document.getElementById('cancelModal').classList.remove('open'); }
 async function cancelSubscription() {
   const data = await apiFetch('/api/mypage/cancel', { method: 'POST' });
-  if (data.ok) { alert('구독이 해지되었습니다.'); logout(); }
-  else alert('오류가 발생했습니다. 담당자에게 문의해주세요.');
+  if (data.ok) {
+    alert('구독이 해지되었습니다. 마이페이지에서 언제든 다시 구독하실 수 있습니다.');
+    closeCancelModal();
+    // 해지 후에도 로그인 유지 — currentSubscriber 새로고침
+    await loadMypage();
+  } else {
+    alert('오류가 발생했습니다. 담당자에게 문의해주세요.');
+  }
+}
+
+// ── 재구독 ──
+let INNOPAY_MID = 'arstest03m';
+fetch('/api/config').then(r => r.json()).then(c => { if (c && c.innopayMid) INNOPAY_MID = c.innopayMid; }).catch(() => {});
+
+let resubBilling = 'monthly';
+let resubFeats = new Set();
+
+function openResubModal() {
+  resubBilling = 'monthly';
+  resubFeats = new Set();
+  // 해지 직전 기능을 default로 선택
+  const prev = (currentSubscriber?.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  prev.forEach(f => resubFeats.add(f));
+  if (currentSubscriber?.billing_type === 'annual') resubBilling = 'annual';
+
+  renderResubModal();
+  document.getElementById('resubErr').textContent = '';
+  document.getElementById('resubCardNum').value = '';
+  document.getElementById('resubCardExp').value = '';
+  document.getElementById('resubCardPwd').value = '';
+  document.getElementById('resubIdNum').value = '';
+  document.getElementById('resubModal').classList.add('open');
+}
+function closeResubModal() { document.getElementById('resubModal').classList.remove('open'); }
+
+function setResubBilling(type) {
+  resubBilling = type;
+  document.getElementById('resubMonthlyBtn').classList.toggle('active', type === 'monthly');
+  document.getElementById('resubAnnualBtn').classList.toggle('active', type === 'annual');
+  renderResubModal();
+}
+
+function toggleResubFeat(key) {
+  if (key === 'ALL IN ONE') {
+    if (resubFeats.has('ALL IN ONE')) resubFeats.delete('ALL IN ONE');
+    else { resubFeats = new Set(['ALL IN ONE']); }
+  } else {
+    if (resubFeats.has(key)) resubFeats.delete(key);
+    else { resubFeats.delete('ALL IN ONE'); resubFeats.add(key); }
+  }
+  renderResubModal();
+}
+
+function renderResubModal() {
+  const list = document.getElementById('resubFeatList');
+  list.innerHTML = ALL_FEATURES.map(f => {
+    const sel = resubFeats.has(f.key);
+    const price = f[resubBilling];
+    return `<div class="resub-feat-item ${sel?'selected':''}" onclick="toggleResubFeat('${f.key}')">
+      <div class="resub-feat-left">
+        <div class="resub-feat-check"></div>
+        <div class="resub-feat-name">${f.key}</div>
+      </div>
+      <div class="resub-feat-price">월 ${fmt(price)}원</div>
+    </div>`;
+  }).join('');
+
+  const monthly = [...resubFeats].reduce((s, k) => s + (FEATURE_PRICES[resubBilling][k] || 0), 0);
+  const total = resubBilling === 'annual' ? monthly * 12 : monthly;
+  document.getElementById('resubAmount').textContent = fmt(total) + '원';
+  document.getElementById('resubBillingLabel').textContent = resubBilling === 'annual' ? '연 결제 (1회 청구)' : '월 결제';
+  document.getElementById('resubConfirmBtn').disabled = resubFeats.size === 0;
+}
+
+async function submitResub() {
+  const errEl = document.getElementById('resubErr');
+  errEl.textContent = '';
+
+  if (resubFeats.size === 0) { errEl.textContent = '기능을 하나 이상 선택해주세요.'; return; }
+
+  const cardNum = document.getElementById('resubCardNum').value.trim();
+  const cardExp = document.getElementById('resubCardExp').value.trim();
+  const cardPwd = document.getElementById('resubCardPwd').value.trim();
+  const idNum = document.getElementById('resubIdNum').value.trim();
+
+  if (cardNum.length < 14 || cardNum.length > 19) { errEl.textContent = '카드번호를 확인해주세요.'; return; }
+  if (cardExp.length !== 4) { errEl.textContent = '만료일은 MMYY 4자리입니다.'; return; }
+  if (cardPwd.length !== 2) { errEl.textContent = '비밀번호 앞 2자리를 입력해주세요.'; return; }
+  if (idNum.length !== 6 && idNum.length !== 10) { errEl.textContent = '생년월일 6자리 또는 사업자번호 10자리를 입력해주세요.'; return; }
+
+  const btn = document.getElementById('resubConfirmBtn');
+  btn.textContent = '처리 중...';
+  btn.disabled = true;
+
+  const features = [...resubFeats];
+  const monthlyAmount = features.reduce((s, k) => s + (FEATURE_PRICES[resubBilling][k] || 0), 0);
+  const amount = resubBilling === 'annual' ? monthlyAmount * 12 : monthlyAmount;
+
+  const mm = cardExp.slice(0, 2);
+  const yy = cardExp.slice(2, 4);
+  const cardExpire = yy + mm;
+
+  const pad = n => String(n).padStart(2, '0');
+  const now = new Date();
+  const moid = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + Math.floor(1000 + Math.random() * 9000);
+  const phone = (currentSubscriber?.phone || '').toString();
+  const buyerName = currentSubscriber?.name || '';
+
+  // 1) InnoPay 빌키 발급
+  let billKey = '';
+  try {
+    const res = await fetch('https://api.innopay.co.kr/api/regAutoCardBill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ mid: INNOPAY_MID, moid, buyerName, cardNum, cardExpire, cardPwd, idNum, userId: phone, arsUseYn: 'N' }),
+    });
+    const data = await res.json();
+    if (data.resultCode !== '0000') {
+      errEl.textContent = '카드 등록 실패: ' + (data.resultMsg || '카드 정보를 확인해주세요.');
+      btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+      return;
+    }
+    billKey = data.billKey || '';
+  } catch (e) {
+    errEl.textContent = '카드 등록 중 네트워크 오류가 발생했습니다.';
+    btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+    return;
+  }
+
+  // 2) 서버에 재구독 + 즉시 결제 요청
+  try {
+    const data = await apiFetch('/api/mypage/resubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount }),
+    });
+    if (data.ok) {
+      alert('재구독이 완료되었습니다.\n결제 금액: ' + fmt(data.charge_amount) + '원\n다음 결제일: ' + (data.next_billing_date || ''));
+      closeResubModal();
+      await loadMypage();
+    } else {
+      errEl.textContent = data.msg || '재구독 처리 중 오류가 발생했습니다.';
+      btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+    }
+  } catch (e) {
+    errEl.textContent = '서버 오류가 발생했습니다. 담당자에게 문의해주세요.';
+    btn.textContent = '카드 등록 + 결제'; btn.disabled = false;
+  }
 }
 
 // 자동 로그인

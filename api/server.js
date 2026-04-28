@@ -417,10 +417,7 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
   const hash = hashPw(password, sub.pw_salt);
   if (hash !== sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 올바르지 않습니다.' });
 
-  if (sub.status === 'cancelled') {
-    return res.status(403).json({ ok: false, msg: '해지된 계정입니다. 다시 가입하시려면 메인 페이지에서 신청해 주세요.' });
-  }
-
+  // 해지 상태도 로그인 허용 — 마이페이지에서 이력 확인 + 재구독 가능
   const token = genToken();
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   db.prepare(`INSERT INTO sessions (subscriber_id, token, expires_at) VALUES (?, ?, ?)`).run(sub.id, token, expires);
@@ -476,6 +473,68 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// 마이페이지 재구독 — 해지된 계정이 카드 재등록 후 호출
+// 정책: 무료 체험 없이 즉시 결제 (정기 결제 사이클 신규 시작)
+app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
+  const { features, billingType, billKey, moid, amount } = req.body;
+  if (!features || !Array.isArray(features) || features.length === 0 || !billingType || !billKey || !amount) {
+    return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
+  }
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+
+  const prices = FEATURE_PRICES[billingType] || FEATURE_PRICES.monthly;
+  const featStr = features.join(', ');
+  const monthlyAmount = features.includes('ALL IN ONE') ? prices['ALL IN ONE'] : features.reduce((s, f) => s + (prices[f] || 0), 0);
+  const chargeAmount = billingType === 'annual' ? monthlyAmount * 12 : monthlyAmount;
+  if (chargeAmount !== Number(amount)) {
+    return res.status(400).json({ ok: false, msg: '결제 금액 불일치' });
+  }
+
+  // 즉시 결제 시도 (재구독은 무료 체험 없음)
+  const { chargeWithRetry } = require('./innopay');
+  const newMoid = moid || (kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000));
+  const result = await chargeWithRetry({
+    billKey,
+    moid: newMoid,
+    amount: chargeAmount,
+    goodsName: '모티피지오 구독 (재구독)',
+    buyerName: sub.name,
+    userId: sub.phone,
+  });
+
+  const transSeq = (result.raw && (result.raw.transSeq || result.raw.tno)) || '';
+  db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+    .run(req.subscriberId, newMoid, chargeAmount, result.resultCode || 'ERR', result.resultMsg || '', transSeq);
+
+  if (!result.ok) {
+    notifySlack(`🔴 재구독 결제 실패: ${sub.company} (id=${sub.id}) — ${result.resultCode} ${result.resultMsg}`);
+    return res.status(502).json({ ok: false, msg: '결제 실패: ' + (result.resultMsg || '카드 정보를 확인해주세요.'), resultCode: result.resultCode });
+  }
+
+  // 다음 결제일 = today + 1개월/1년
+  const next = new Date();
+  if (billingType === 'monthly') next.setMonth(next.getMonth() + 1);
+  else next.setFullYear(next.getFullYear() + 1);
+  const nextBilling = kstDateOnly(next);
+
+  // 변경 이력 기록
+  db.prepare(`INSERT INTO subscriber_changes
+    (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
+    VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
+    .run(req.subscriberId, sub.features, featStr, sub.billing_type, billingType, sub.charge_amount, chargeAmount);
+
+  // 가입자 정보 갱신
+  db.prepare(`UPDATE subscribers SET
+    features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
+    next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0
+    WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextBilling, req.subscriberId);
+
+  console.log(`[재구독 ✓] ${sub.company} / ${featStr} / ${chargeAmount}원 / 다음: ${nextBilling}`);
+  notifySlack(`🔁 재구독: ${sub.company} (id=${sub.id}) / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);
+  res.json({ ok: true, charge_amount: chargeAmount, next_billing_date: nextBilling });
 });
 
 // 기능 추가/해지
