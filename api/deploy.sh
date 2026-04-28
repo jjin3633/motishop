@@ -24,9 +24,15 @@ APP_DIR=/home/ec2-user/motishop-api
 PREV_HEAD=$(sudo git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo "")
 
 echo "[1/4] git fetch + reset --hard origin/main"
-# stale lock 정리 (이전 git 작업이 비정상 종료됐을 경우)
-sudo find "$REPO_DIR/.git" -name "*.lock" -mmin +1 -exec rm -f {} \; 2>/dev/null || true
-sudo git -C "$REPO_DIR" fetch origin main --force --prune
+# stale lock 즉시 정리 (이전 git 작업이 비정상 종료됐을 경우)
+sudo find "$REPO_DIR/.git" -name "*.lock" -exec rm -f {} \; 2>/dev/null || true
+# fetch 실패 시 ref 강제 정리 후 재시도 (stale ref 대응)
+if ! sudo git -C "$REPO_DIR" fetch origin main --force --prune 2>&1; then
+  echo "[deploy] fetch 1차 실패 — ref 강제 정리 후 재시도"
+  sudo find "$REPO_DIR/.git/refs" -name "*.lock" -exec rm -f {} \; 2>/dev/null || true
+  sudo git -C "$REPO_DIR" update-ref -d refs/remotes/origin/main 2>/dev/null || true
+  sudo git -C "$REPO_DIR" fetch origin main --force --prune
+fi
 sudo git -C "$REPO_DIR" reset --hard origin/main
 
 NEW_HEAD=$(sudo git -C "$REPO_DIR" rev-parse HEAD)
