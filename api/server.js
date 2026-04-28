@@ -662,7 +662,6 @@ app.post('/api/deploy/webhook', (req, res) => {
     return res.status(500).json({ error: 'spawn failed', detail: e.message });
   }
 
-  notifySlack(`🚀 자동 배포 시작: ${headCommit}`);
   res.json({ ok: true, deploying: true, commit: headCommit });
 });
 
