@@ -600,6 +600,9 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
 });
 
 // ── GitHub Webhook (자동 배포) ──
+// 디바운스: 마지막 deploy 트리거 후 N초 내 추가 요청은 무시 (빠른 연속 push 보호)
+let _lastDeployAt = 0;
+const DEPLOY_DEBOUNCE_MS = 12000;
 app.post('/api/deploy/webhook', (req, res) => {
   if (!cfg.GITHUB_WEBHOOK_SECRET) {
     return res.status(503).json({ error: 'webhook disabled' });
@@ -627,6 +630,15 @@ app.post('/api/deploy/webhook', (req, res) => {
   }
 
   const headCommit = ((req.body.head_commit && req.body.head_commit.id) || '').slice(0, 7);
+
+  // 디바운스 — 빠른 연속 push 시 stale ref 충돌 방지
+  const now = Date.now();
+  if (now - _lastDeployAt < DEPLOY_DEBOUNCE_MS) {
+    const skipMs = DEPLOY_DEBOUNCE_MS - (now - _lastDeployAt);
+    console.log(`[webhook] 디바운스 스킵 ${headCommit} (${skipMs}ms 남음)`);
+    return res.json({ ok: true, debounced: true, commit: headCommit, retryAfterMs: skipMs });
+  }
+  _lastDeployAt = now;
   console.log(`[webhook] 배포 트리거 ${headCommit}`);
 
   const { spawn } = require('child_process');

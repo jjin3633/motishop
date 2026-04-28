@@ -23,15 +23,34 @@ APP_DIR=/home/ec2-user/motishop-api
 
 PREV_HEAD=$(sudo git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo "")
 
-echo "[1/4] git fetch + reset --hard origin/main"
-# stale lock 즉시 정리 (이전 git 작업이 비정상 종료됐을 경우)
+echo "[1/4] git sync (3단 retry)"
+# stale lock 즉시 정리
 sudo find "$REPO_DIR/.git" -name "*.lock" -exec rm -f {} \; 2>/dev/null || true
-# fetch 실패 시 ref 강제 정리 후 재시도 (stale ref 대응)
-if ! sudo git -C "$REPO_DIR" fetch origin main --force --prune 2>&1; then
-  echo "[deploy] fetch 1차 실패 — ref 강제 정리 후 재시도"
-  sudo find "$REPO_DIR/.git/refs" -name "*.lock" -exec rm -f {} \; 2>/dev/null || true
+
+# 시도 1: 일반 fetch
+FETCH_OK=0
+if sudo git -C "$REPO_DIR" fetch origin main --force --prune 2>&1; then
+  FETCH_OK=1
+else
+  echo "[deploy] 1차 fetch 실패 — ref 강제 정리 후 재시도"
+  sudo find "$REPO_DIR/.git" -name "*.lock" -exec rm -f {} \; 2>/dev/null || true
   sudo git -C "$REPO_DIR" update-ref -d refs/remotes/origin/main 2>/dev/null || true
-  sudo git -C "$REPO_DIR" fetch origin main --force --prune
+  # 시도 2: ref 삭제 후 fetch
+  if sudo git -C "$REPO_DIR" fetch origin main --force --prune 2>&1; then
+    FETCH_OK=1
+  else
+    echo "[deploy] 2차 fetch 실패 — fresh clone으로 재초기화"
+    sudo rm -rf "$REPO_DIR.bak" 2>/dev/null || true
+    sudo cp -a "$REPO_DIR" "$REPO_DIR.bak" 2>/dev/null || true
+    sudo rm -rf "$REPO_DIR/.git"
+    sudo git clone --bare https://github.com/jjin3633/motishop.git /tmp/motishop-fresh.git
+    sudo mv /tmp/motishop-fresh.git "$REPO_DIR/.git"
+    sudo git -C "$REPO_DIR" config core.bare false
+    sudo git -C "$REPO_DIR" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+    sudo git -C "$REPO_DIR" fetch origin main --force --prune
+    FETCH_OK=1
+    echo "[deploy] fresh clone 복구 완료 (백업: $REPO_DIR.bak)"
+  fi
 fi
 sudo git -C "$REPO_DIR" reset --hard origin/main
 
