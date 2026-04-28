@@ -76,38 +76,54 @@ async function deleteBillKey({ billKey, userId }) {
 }
 
 /**
- * 결제 취소·환불 (이미 승인된 결제를 취소)
- * InnoPay netCancel 또는 cancelPay 엔드포인트 사용 (시점에 따라 다름)
- * 필수: mid, moid, transSeq(또는 cancelMoid), amt, cancelReason
+ * 결제 취소·환불 — InnoPay 통합취소 API (cancelApi)
+ * 공식 spec: 통합취소요청샘플.html 기준
  *
- * NOTE: InnoPay 운영 환경에서는 결제 후 24시간 내는 netCancel(망취소),
- *       이후는 정식 cancelPay를 사용. 우리 자동결제는 정기과금이라 보통 cancelPay.
- *       transSeq는 결제 응답에서 받은 거래번호를 billing_logs에 저장해두고 사용.
+ * 필수: mid, tid, svcCd, partialCancelCode, cancelAmt, cancelMsg, cancelPwd
+ * 카드(svcCd=01) 환불은 refundBank/AcctNo/AcctNm 불필요 (원 결제 카드로 환원)
+ * 성공 응답: resultCode === '2001'
+ *
+ * @param {object} params
+ * @param {string} params.tid          - InnoPay 거래일련번호 (결제 응답의 tid)
+ * @param {number} params.amount       - 취소 금액
+ * @param {string} params.reason       - 취소 사유
+ * @param {boolean} [params.partial]   - true=부분취소, false=전체취소(기본)
+ * @param {string} [params.svcCd]      - '01'=카드(기본), '02'=계좌이체, '04'=가상계좌, '07'=핸드폰
  */
-async function refundBillKey({ moid, transSeq, amount, reason }) {
+async function refundBillKey({ tid, amount, reason, partial = false, svcCd = '01' }) {
+  if (!tid) {
+    return { ok: false, resultCode: 'NO_TID', resultMsg: '거래번호(tid)가 없어 환불 요청을 보낼 수 없습니다. InnoPay 가맹점 페이지에서 직접 환불해 주세요.' };
+  }
+  if (!cfg.INNOPAY_CANCEL_PWD) {
+    return { ok: false, resultCode: 'NO_PWD', resultMsg: '환불 비밀번호(INNOPAY_CANCEL_PWD)가 .env에 설정되지 않았습니다.' };
+  }
   try {
-    const url = cfg.INNOPAY_CANCEL_URL || 'https://api.innopay.co.kr/api/cancelPay';
+    const url = cfg.INNOPAY_CANCEL_URL || 'https://api.innopay.co.kr/api/cancelApi';
     const { data } = await axios.post(url, {
       mid: cfg.INNOPAY_MID,
-      moid: String(moid),
-      transSeq: String(transSeq || ''),
-      amt: String(amount),
-      cancelReason: String(reason || '구독 환불'),
+      tid: String(tid),
+      svcCd: String(svcCd),
+      partialCancelCode: partial ? '1' : '0',
+      cancelAmt: String(amount),
+      cancelMsg: String(reason || '구독 환불').slice(0, 100),
+      cancelPwd: String(cfg.INNOPAY_CANCEL_PWD),
     }, {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       timeout: 15000,
     });
     return {
-      ok: data.resultCode === '0000',
+      ok: data.resultCode === '2001',
       resultCode: data.resultCode,
       resultMsg: data.resultMsg || '',
       raw: data,
     };
   } catch (e) {
+    const status = e.response?.status;
+    const detail = e.response?.data ? JSON.stringify(e.response.data).slice(0, 200) : e.message;
     return {
       ok: false,
-      resultCode: 'ERR',
-      resultMsg: e.message || 'unknown network error',
+      resultCode: status ? 'HTTP_' + status : 'ERR',
+      resultMsg: detail || 'unknown network error',
     };
   }
 }

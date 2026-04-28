@@ -53,10 +53,10 @@ async function chargeSubscriber(sub) {
     userId: sub.phone,  // 등록 시점과 동일한 userId (phone)
   });
 
-  // 모든 결과 로그 기록 (성공/실패/재시도) — transSeq는 환불 시 필요
-  const transSeq = (result.raw && (result.raw.transSeq || result.raw.tno)) || '';
+  // 모든 결과 로그 기록 (성공/실패/재시도) — tid는 환불 시 필요 (InnoPay cancelApi)
+  const tid = (result.raw && (result.raw.tid || result.raw.pgTid || result.raw.transSeq || result.raw.tno)) || '';
   db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(sub.id, moid, sub.charge_amount, result.resultCode || 'ERR', result.resultMsg || '', transSeq);
+    .run(sub.id, moid, sub.charge_amount, result.resultCode || 'ERR', result.resultMsg || '', tid);
 
   if (result.ok) {
     const next = addPeriod(sub.next_billing_date, sub.billing_type);

@@ -352,13 +352,14 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
   const refundAmount = Number(amount) || log.amount;
   const refundReason = reason || '관리자 환불 처리';
 
-  // InnoPay 취소 API 호출
+  // InnoPay 통합취소 API 호출 (cancelApi)
   const { refundBillKey } = require('./innopay');
+  const isPartial = Number(refundAmount) < Number(log.amount);
   const result = await refundBillKey({
-    moid: log.moid,
-    transSeq: log.trans_seq || '',
+    tid: log.trans_seq || '',
     amount: refundAmount,
     reason: refundReason,
+    partial: isPartial,
   });
 
   db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
@@ -505,9 +506,9 @@ app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
     userId: sub.phone,
   });
 
-  const transSeq = (result.raw && (result.raw.transSeq || result.raw.tno)) || '';
+  const tid = (result.raw && (result.raw.tid || result.raw.pgTid || result.raw.transSeq || result.raw.tno)) || '';
   db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(req.subscriberId, newMoid, chargeAmount, result.resultCode || 'ERR', result.resultMsg || '', transSeq);
+    .run(req.subscriberId, newMoid, chargeAmount, result.resultCode || 'ERR', result.resultMsg || '', tid);
 
   if (!result.ok) {
     notifySlack(`🔴 재구독 결제 실패: ${sub.company} (id=${sub.id}) — ${result.resultCode} ${result.resultMsg}`);

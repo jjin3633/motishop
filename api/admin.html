@@ -631,13 +631,13 @@ async function cancelSubFromDetail(id) {
 }
 
 async function refundFromDetail(id, billingLogId, originalAmount) {
-  const amountStr = prompt(`환불 금액을 입력하세요 (원래 결제: ${Number(originalAmount).toLocaleString()}원, 부분환불 가능)`, String(originalAmount));
+  const amountStr = prompt(`환불 금액을 입력하세요 (원 결제: ${Number(originalAmount).toLocaleString()}원, 일부 금액 입력 시 부분환불)`, String(originalAmount));
   if (amountStr === null) return;
   const amount = parseInt(String(amountStr).replace(/[^0-9]/g, ''));
   if (!amount || amount <= 0 || amount > originalAmount) { alert('금액이 올바르지 않습니다.'); return; }
   const reason = prompt('환불 사유 (고객 통보 + 로그 기록용)', '단순 변심');
   if (!reason) return;
-  if (!confirm(`${amount.toLocaleString()}원 환불을 InnoPay에 요청합니다. 진행하시겠습니까?`)) return;
+  if (!confirm(`InnoPay에 ${amount.toLocaleString()}원 환불 요청을 보냅니다. 진행하시겠습니까?`)) return;
   try {
     const res = await fetch('/api/admin/refund', {
       method: 'POST',
@@ -645,8 +645,16 @@ async function refundFromDetail(id, billingLogId, originalAmount) {
       body: JSON.stringify({ id, billingLogId, amount, reason }),
     });
     const data = await res.json();
-    if (data.ok) { alert('환불 완료: ' + (data.resultMsg || '')); }
-    else { alert('환불 실패: ' + (data.resultMsg || data.msg || '')); }
+    if (data.ok) {
+      alert('환불 완료: ' + (data.resultMsg || ''));
+    } else {
+      // InnoPay 측 응답 에러 안내 (no_tid, no_pwd, http_xxx)
+      let msg = data.msg || '';
+      if (data.resultCode === 'NO_TID') msg += '\n\n👉 InnoPay 가맹점 페이지에서 직접 환불 처리해 주세요.';
+      else if (data.resultCode === 'NO_PWD') msg += '\n\n👉 EC2 .env에 INNOPAY_CANCEL_PWD 설정이 필요합니다.';
+      else if (data.resultMsg) msg += '\n\n[상세] ' + data.resultMsg;
+      alert('환불 실패 (' + (data.resultCode || '?') + ')\n' + msg);
+    }
   } catch (e) { alert('네트워크 오류: ' + e.message); }
   openDetail(id);
 }
