@@ -79,9 +79,21 @@ fi
 echo "[4/4] systemctl restart motishop-api"
 sudo systemctl restart motishop-api
 sleep 2
+
+# Slack 알림 helper — .env에서 SLACK_WEBHOOK_URL 읽어 직접 호출
+slack_send() {
+  local webhook
+  webhook=$(grep '^SLACK_WEBHOOK_URL=' "$APP_DIR/.env" 2>/dev/null | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+  [ -z "$webhook" ] && return 0
+  curl -s -X POST "$webhook" -H 'Content-Type: application/json' \
+    -d "{\"text\":\"$1\"}" > /dev/null 2>&1 || true
+}
+
 if sudo systemctl is-active --quiet motishop-api; then
   echo "===== deploy OK ====="
+  slack_send "✅ 자동 배포 성공: \`${NEW_HEAD:0:7}\` (이전: \`${PREV_HEAD:0:7}\`)"
 else
   echo "===== deploy FAILED ====="
+  slack_send "🔴 자동 배포 실패: \`${NEW_HEAD:0:7}\` — motishop-api 시작 안 됨. journalctl 확인 필요"
   exit 1
 fi

@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 
 // PII 마스킹 헬퍼 — 로그/Slack용 (전화 010-****-1234, 이름 양*진)
@@ -322,6 +322,7 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
 
   db.prepare(`UPDATE subscribers SET status = 'cancelled' WHERE id = ?`).run(id);
+  notifySlack(`👋 해지(관리자): ${sub.company} (id=${id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
 
   // 빌키 삭제 (InnoPay) — 실패해도 해지는 유지
   let billkeyResult = { ok: false, resultMsg: 'skipped' };
@@ -460,6 +461,7 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(req.subscriberId);
   db.prepare(`UPDATE subscribers SET status='cancelled' WHERE id=?`).run(req.subscriberId);
   db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(req.subscriberId);
+  if (sub) notifySlack(`👋 해지(셀프): ${sub.company} (id=${sub.id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
 
   // 빌키 삭제 (InnoPay)
   if (sub && sub.bill_key && !sub.billkey_deleted) {
@@ -665,6 +667,7 @@ app.post('/api/deploy/webhook', (req, res) => {
 });
 
 scheduleBilling();
+scheduleHealthCheck();
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);

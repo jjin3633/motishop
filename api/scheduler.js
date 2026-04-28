@@ -66,6 +66,18 @@ async function chargeSubscriber(sub) {
   } else {
     console.error(`[✗ 결제실패] ${sub.company} / ${result.resultCode} ${result.resultMsg}`);
     notifySlack(`🔴 결제실패: ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원\n사유: ${result.resultCode} ${result.resultMsg}`);
+
+    // B. 결제실패 임계치 — 최근 1시간 내 3건 이상 실패 시 추가 알림
+    try {
+      const recent = db.prepare(`
+        SELECT COUNT(*) AS n FROM billing_logs
+        WHERE result_code NOT IN ('0000', '00')
+          AND billed_at > datetime('now', '+9 hours', '-1 hour')
+      `).get();
+      if (recent && recent.n >= 3) {
+        notifySlack(`⚠️ 결제실패 임계치 초과: 최근 1시간 내 ${recent.n}건 실패 — 시스템 점검 권장`);
+      }
+    } catch (e) { /* ignore */ }
   }
 }
 
@@ -141,6 +153,27 @@ async function processDueBillings() {
   }
 }
 
+// C. 헬스체크 자가 모니터 — 5분 간격 DB 쿼리 실패 시 Slack
+function scheduleHealthCheck() {
+  let consecutiveFails = 0;
+  cron.schedule('*/5 * * * *', () => {
+    try {
+      db.prepare('SELECT 1 AS ok').get();
+      if (consecutiveFails >= 1) {
+        notifySlack(`✅ 헬스체크 복구: DB 정상 응답`);
+      }
+      consecutiveFails = 0;
+    } catch (e) {
+      consecutiveFails++;
+      // 첫 실패 또는 5회 연속 실패마다 알림 (스팸 방지)
+      if (consecutiveFails === 1 || consecutiveFails % 5 === 0) {
+        notifySlack(`🚨 헬스체크 실패 (${consecutiveFails}회 연속): DB 응답 없음 — ${e.message}`);
+      }
+    }
+  }, { timezone: 'Asia/Seoul' });
+  console.log('헬스체크 자가 모니터 시작 (5분 간격)');
+}
+
 function scheduleBilling() {
   // 매일 KST 10:00 실행
   cron.schedule('0 10 * * *', async () => {
@@ -155,4 +188,4 @@ function scheduleBilling() {
   console.log('결제 스케줄러 시작 (매일 10:00 KST · 사전안내 7일/1일 전 · 재시도 2회)');
 }
 
-module.exports = { scheduleBilling, chargeSubscriber, processDueBillings };
+module.exports = { scheduleBilling, scheduleHealthCheck, chargeSubscriber, processDueBillings };
