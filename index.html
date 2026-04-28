@@ -1106,24 +1106,36 @@
       .compare-footer { padding: 14px 16px; }
       .compare-row { font-size: 20px; padding: 8px 0; }
       /* HowItWorks 모바일: 좌측 거터 타임라인 (GitHub 스타일) */
-      .steps { grid-template-columns: 1fr; gap: 36px; margin-top: 28px; position: relative; padding-left: 0; }
+      .steps { grid-template-columns: 1fr; gap: 0; margin-top: 28px; position: relative; padding-left: 56px; }
       .steps::before { display: none; }
       .step {
         position: relative;
         display: block;
-        padding: 0;
-        text-align: center;
+        padding: 0 0 28px;
+        min-height: 68px;
+        text-align: left;
       }
+      .step:last-child { padding-bottom: 0; min-height: 40px; }
       .step-num {
-        position: relative;
-        left: auto; top: auto;
-        width: 48px; height: 48px;
+        position: absolute;
+        left: -56px; top: 0;
+        width: 40px; height: 40px;
         border-radius: 12px;
-        font-size: 22px;
-        margin: 0 auto 12px;
+        font-size: 20px;
+        margin: 0;
         z-index: 2;
       }
-      .step:not(:last-child)::after { display: none; }
+      /* step-num 하단 → 다음 step-num 상단 연결선 (좌측 gutter 내) */
+      .step:not(:last-child)::after {
+        content: '';
+        top: 40px;
+        left: -37px;
+        right: auto;
+        bottom: 0;
+        width: 2px;
+        height: auto;
+        background: var(--gray400);
+      }
       .step h3 { text-align: left; margin: 0 0 6px; font-size: 22px; line-height: 1.4; }
       .step p { text-align: left; font-size: 18px; line-height: 1.7; }
       .form-left h3 { font-size: 28px; }
