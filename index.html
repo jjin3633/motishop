@@ -618,14 +618,14 @@
     /* ── How it works ── */
     .howitworks { background: white; }
     .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 56px; position: relative; }
-    .step { text-align: left; padding: 0; position: relative; }
+    .step { text-align: center; padding: 0; position: relative; }
     /* 각 단계 → 다음 단계로 이어지는 연결선 (박스 끝부터 다음 박스 시작까지 정확히 연결) */
     .step:not(:last-child)::after {
       content: '';
       position: absolute;
       top: 27px;
-      left: 56px;
-      right: -24px;
+      left: calc(50% + 28px);
+      right: calc(-50% + 28px);
       height: 2px;
       background: var(--gray400);
     }
@@ -634,7 +634,7 @@
       background: var(--text);
       color: white; font-size: 24px; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 0 24px;
+      margin: 0 auto 24px;
       position: relative; z-index: 1;
       border: none;
       letter-spacing: -0.02em;
