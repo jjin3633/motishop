@@ -7,6 +7,14 @@ set -e
 LOG=/home/ec2-user/deploy.log
 exec >>"$LOG" 2>&1
 
+# 동시 실행 방지 — webhook 빠르게 연속 트리거 시 stale ref 충돌 방지
+exec 9>/tmp/motishop-deploy.lock
+if ! flock -n 9; then
+  echo
+  echo "===== $(date '+%Y-%m-%d %H:%M:%S') deploy SKIP ${COMMIT:+(commit=$COMMIT)} — 다른 deploy 실행 중 ====="
+  exit 0
+fi
+
 echo
 echo "===== $(date '+%Y-%m-%d %H:%M:%S') deploy start ${COMMIT:+(commit=$COMMIT)} ====="
 
