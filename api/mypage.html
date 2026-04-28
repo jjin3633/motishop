@@ -109,6 +109,8 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 .resub-modal-box { max-width: 560px; padding: 30px 32px; max-height: 92vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
 .resub-modal-box::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .resub-modal-box .modal-btns { margin-top: 22px; }
+.resub-modal-box .modal-close { top: 26px; right: 28px; }
+.resub-modal-box h3 { padding-right: 40px; margin: 0; }
 .resub-modal-box .modal-err { display: none; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); border-radius: 9px; padding: 10px 14px; color: var(--red); font-size: 13px; font-weight: 600; margin: 12px 0 0; line-height: 1.5; }
 .resub-modal-box .modal-err.show { display: flex; align-items: flex-start; gap: 8px; }
 .resub-modal-box .modal-err.show::before { content: '⚠'; font-size: 15px; flex-shrink: 0; }
@@ -329,7 +331,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
 </div>
 
 <!-- 재구독 모달 -->
-<div class="modal-overlay" id="resubModal">
+<div class="modal-overlay" id="resubModal" onclick="if(event.target===this)closeResubModal()">
   <div class="modal resub-modal-box">
     <button class="modal-close" onclick="closeResubModal()" aria-label="닫기">×</button>
     <h3>다시 구독하기</h3>
