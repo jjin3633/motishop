@@ -697,12 +697,14 @@
         0 30px 60px rgba(0,0,0,.35),
         0 0 70px rgba(0,212,255,.22);
     }
+    .price-card.featured { z-index: 2; }
     .price-card.featured::before {
       content: '추천';
       position: absolute; top: -10px; left: 24px;
       background: var(--cyan); color: var(--navy);
       font-size: 18px; font-weight: 900; letter-spacing: 0.08em;
       padding: 4px 10px; border-radius: 6px;
+      z-index: 3;
     }
     .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .price-card h4 { font-size: 24px; font-weight: 700; color: white; margin-bottom: 6px; letter-spacing: -0.02em; }
@@ -1090,7 +1092,7 @@
       .problem-persona-name { font-size: 20px; }
       .problem-persona-role { font-size: 18px; }
       .features-grid { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
-      .pricing-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 28px; }
+      .pricing-grid { grid-template-columns: 1fr; gap: 18px; margin-top: 28px; }
       .price-card { padding: 24px 22px; border-radius: 16px; }
       .price-card h4 { font-size: 22px; }
       .faq-q { font-size: 22px; }
