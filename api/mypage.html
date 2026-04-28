@@ -713,8 +713,7 @@ async function cancelSubscription() {
   if (data.ok) {
     alert('구독이 해지되었습니다. 마이페이지에서 언제든 다시 구독하실 수 있습니다.');
     closeCancelModal();
-    // 해지 후에도 로그인 유지 — currentSubscriber 새로고침
-    await loadMypage();
+    location.reload();
   } else {
     alert('오류가 발생했습니다. 담당자에게 문의해주세요.');
   }
@@ -884,7 +883,8 @@ async function submitResub() {
     if (data.ok) {
       alert('재구독이 완료되었습니다.\n결제 금액: ' + fmt(data.charge_amount) + '원\n다음 결제일: ' + (data.next_billing_date || ''));
       closeResubModal();
-      await loadMypage();
+      location.reload();
+      return;
     } else {
       errEl.textContent = data.msg || '재구독 처리 중 오류가 발생했습니다.';
       btn.textContent = '카드 등록'; btn.disabled = false;
