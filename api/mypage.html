@@ -361,7 +361,9 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
     </div>
 
     <div class="resub-notice">
-      ⓘ 카드 등록 직후 위 금액이 <strong>즉시 결제</strong>됩니다. 다음 결제일은 오늘 기준 1개월(또는 1년) 후입니다.<br>
+      ⓘ 카드 등록 직후 위 금액이 <strong>즉시 결제</strong>됩니다.<br>
+      ⓘ <strong>연 구독</strong>은 1년치 금액이 <strong>한 번에 결제</strong>되며, 다음 결제일은 1년 후입니다.<br>
+      ⓘ <strong>월 구독</strong>은 매월 같은 날 자동 결제됩니다.<br>
       ⓘ 무료 체험은 적용되지 않습니다.
     </div>
 
@@ -779,7 +781,11 @@ function renderResubModal() {
   const monthly = [...resubFeats].reduce((s, k) => s + (FEATURE_PRICES[resubBilling][k] || 0), 0);
   const total = resubBilling === 'annual' ? monthly * 12 : monthly;
   document.getElementById('resubAmount').textContent = fmt(total) + '원';
-  document.getElementById('resubBillingLabel').textContent = resubBilling === 'annual' ? '연 결제 (1회 청구)' : '월 결제';
+  if (resubBilling === 'annual') {
+    document.getElementById('resubBillingLabel').innerHTML = '연 1회 일시불 결제 <span style="color:rgba(255,255,255,.55);">· 월 환산 ' + fmt(monthly) + '원</span>';
+  } else {
+    document.getElementById('resubBillingLabel').textContent = '월 결제 (매월 자동)';
+  }
   document.getElementById('resubConfirmBtn').disabled = resubFeats.size === 0;
 }
 
