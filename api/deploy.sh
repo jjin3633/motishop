@@ -91,7 +91,6 @@ slack_send() {
 
 if sudo systemctl is-active --quiet motishop-api; then
   echo "===== deploy OK ====="
-  slack_send "✅ 자동 배포 성공: \`${NEW_HEAD:0:7}\` (이전: \`${PREV_HEAD:0:7}\`)"
 else
   echo "===== deploy FAILED ====="
   slack_send "🔴 자동 배포 실패: \`${NEW_HEAD:0:7}\` — motishop-api 시작 안 됨. journalctl 확인 필요"
