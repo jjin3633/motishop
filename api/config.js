@@ -25,4 +25,8 @@ module.exports = {
   NOTIFY_ENABLED: (process.env.NOTIFY_ENABLED || 'false').toLowerCase() === 'true',
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET || '',
   DEPLOY_SCRIPT_PATH: process.env.DEPLOY_SCRIPT_PATH || '/home/ec2-user/motishop-api/deploy.sh',
+  // 솔라피 (SMS / 카카오 알림톡)
+  SOLAPI_API_KEY: process.env.SOLAPI_API_KEY || '',
+  SOLAPI_API_SECRET: process.env.SOLAPI_API_SECRET || '',
+  SOLAPI_FROM: process.env.SOLAPI_FROM || '',  // 사전 등록된 발신번호
 };

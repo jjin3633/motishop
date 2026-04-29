@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
+const { sendSMS } = require('./sms');
 
 // PII 마스킹 헬퍼 — 로그/Slack용 (전화 010-****-1234, 이름 양*진)
 function maskPhone(p) {
@@ -209,10 +210,15 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(company, name, cleanPhone, cleanEmail, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
-    // ⚠️ tempPw는 임시로 응답 페이로드 + 서버 로그에 남김 (SMS 미연동 상태)
-    // SMS 연동 후 제거 예정 — 운영 시 사용자가 비밀번호를 받을 수단이 SMS 외 없어짐
-    console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate} / 임시PW: ${tempPw}`);
-    res.json({ ok: true, trialStart, nextBillingDate, tempPassword: tempPw, reactivated: false, subscriberId: r.lastInsertRowid });
+    console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
+
+    // 임시 비밀번호 SMS 발송 (솔라피)
+    const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영합니다.\n마이페이지 임시 비밀번호: ${tempPw}\n로그인 후 변경해주세요.\nhttps://shop.motiphysio.com/mypage`;
+    sendSMS({ to: cleanPhone, text: smsText }).then(r => {
+      if (!r.ok) notifySlack(`⚠️ 임시비번 SMS 실패: ${company} (${maskPhone(cleanPhone)}) — ${r.resultCode} ${r.resultMsg}`);
+    }).catch(e => console.error('[SMS 발송 실패]', e.message));
+
+    res.json({ ok: true, trialStart, nextBillingDate, reactivated: false, subscriberId: r.lastInsertRowid });
   } catch (e) {
     console.error('[DB 오류]', e.message);
     res.status(500).json({ ok: false, msg: 'DB 저장 실패' });
@@ -420,12 +426,22 @@ app.post('/api/admin/update-info', adminAuth, (req, res) => {
 app.post('/api/admin/reset-password', adminAuth, (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ ok: false, msg: '필수값 누락' });
+  const sub = db.prepare(`SELECT id, company, name, phone FROM subscribers WHERE id=?`).get(id);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+
   const tempPw = genTempPw();
   const salt = genSalt();
   const hash = hashPw(tempPw, salt);
   db.prepare(`UPDATE subscribers SET pw_hash=?, pw_salt=? WHERE id=?`).run(hash, salt, id);
-  console.log(`[비번재발급] subscriber_id=${id} / 임시PW: ${tempPw}`);
-  res.json({ ok: true, tempPassword: tempPw });
+  console.log(`[비번재발급] subscriber_id=${id} / ${sub.company}`);
+
+  // SMS 발송
+  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 마이페이지 임시 비밀번호가 재발급되었습니다.\n새 임시 비밀번호: ${tempPw}\n로그인 후 변경해주세요.\nhttps://shop.motiphysio.com/mypage`;
+  sendSMS({ to: sub.phone, text: smsText }).then(r => {
+    if (!r.ok) notifySlack(`⚠️ 비번재발급 SMS 실패: ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
+  }).catch(e => console.error('[SMS 발송 실패]', e.message));
+
+  res.json({ ok: true, tempPassword: tempPw, smsSent: true });
 });
 
 // ── 마이페이지 ──

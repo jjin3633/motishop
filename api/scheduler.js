@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const db = require('./db');
 const cfg = require('./config');
 const { chargeWithRetry, notifySlack } = require('./innopay');
+const { sendSMS } = require('./sms');
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -82,23 +83,25 @@ async function chargeSubscriber(sub) {
 }
 
 /**
- * 사전 안내 발송 플래그 처리 (실제 SMS/이메일 발송은 미구현 — 로그만)
+ * 사전 안내 발송 (방통위 자동결제 가이드라인: 결제 7일 전·1일 전 의무)
+ * SMS 발송 (솔라피) + 가입자 row의 notified_7d/notified_1d 플래그 set
  */
 function markPreNotification(sub, daysLeft) {
   if (daysLeft === 7 && !sub.notified_7d) {
     console.log(`[사전안내 7일전] ${sub.company} / 다음 결제일: ${sub.next_billing_date}`);
     db.prepare(`UPDATE subscribers SET notified_7d = 1 WHERE id = ?`).run(sub.id);
-    if (cfg.NOTIFY_ENABLED) {
-      // TODO: SMS/이메일 발송 연동
-      notifySlack(`📨 사전안내(7일전): ${sub.company} / ${sub.next_billing_date} / ${sub.charge_amount.toLocaleString()}원`);
-    }
+    const text = `[Moti Shop] ${sub.company}님, ${sub.next_billing_date}에 ${sub.charge_amount.toLocaleString()}원이 자동 결제됩니다.\n해지·변경은 마이페이지에서: https://shop.motiphysio.com/mypage`;
+    sendSMS({ to: sub.phone, text }).then(r => {
+      if (!r.ok) notifySlack(`⚠️ 사전안내(7일) SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
+    }).catch(e => console.error('[SMS 7일전 실패]', e.message));
   }
   if (daysLeft === 1 && !sub.notified_1d) {
     console.log(`[사전안내 1일전] ${sub.company} / 내일 결제: ${sub.next_billing_date}`);
     db.prepare(`UPDATE subscribers SET notified_1d = 1 WHERE id = ?`).run(sub.id);
-    if (cfg.NOTIFY_ENABLED) {
-      notifySlack(`📨 사전안내(1일전): ${sub.company} / ${sub.next_billing_date} / ${sub.charge_amount.toLocaleString()}원`);
-    }
+    const text = `[Moti Shop] ${sub.company}님, 내일(${sub.next_billing_date}) ${sub.charge_amount.toLocaleString()}원이 자동 결제됩니다.\n해지는 마이페이지에서: https://shop.motiphysio.com/mypage`;
+    sendSMS({ to: sub.phone, text }).then(r => {
+      if (!r.ok) notifySlack(`⚠️ 사전안내(1일) SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
+    }).catch(e => console.error('[SMS 1일전 실패]', e.message));
   }
 }
 
