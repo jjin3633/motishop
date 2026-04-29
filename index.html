@@ -782,6 +782,20 @@
       color: rgba(255,255,255,.5); cursor: pointer; transition: all .2s; font-family: inherit;
     }
     .billing-btn.active { border-color: var(--cyan); background: rgba(0,212,255,.1); color: var(--cyan); }
+
+    /* ── Owner Type Toggle (개인/법인) — 토스 스타일 segmented ── */
+    .owner-toggle { display: flex; gap: 8px; }
+    .owner-btn {
+      flex: 1; padding: 16px; border-radius: 10px; font-size: 18px; font-weight: 700;
+      border: 1.5px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.55); cursor: pointer; transition: all .15s; font-family: inherit;
+      text-align: center; line-height: 1.3;
+    }
+    .owner-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
+    .owner-btn.active {
+      background: var(--blue); border-color: var(--blue); color: white;
+      box-shadow: 0 4px 14px rgba(26,107,255,.35);
+    }
     .feat-select-list { display: flex; flex-direction: column; gap: 8px; }
     .feat-select-item {
       display: flex; align-items: center; justify-content: space-between;
@@ -1926,19 +1940,12 @@
       <div class="form-step" id="fstep4">
         <div id="card-form-area">
           <div class="form-step-title">카드 정보를 입력해주세요</div>
-          <div class="card-secure-note">🔒 카드 정보는 암호화 전송되며 서버에 저장되지 않습니다</div>
 
           <div class="form-row">
             <label>카드 명의 구분 *</label>
-            <div style="display:flex; gap:10px;">
-              <label style="flex:1; display:flex; align-items:center; gap:8px; padding:14px 18px; border:1.5px solid rgba(255,255,255,.12); border-radius:10px; cursor:pointer; background:rgba(26,107,255,.08);" id="ownerType-personal-wrap">
-                <input type="radio" name="owner-type" value="personal" id="ownerType-personal" checked onchange="onOwnerTypeChange()" style="accent-color:var(--blue);" />
-                <span>개인</span>
-              </label>
-              <label style="flex:1; display:flex; align-items:center; gap:8px; padding:14px 18px; border:1.5px solid rgba(255,255,255,.12); border-radius:10px; cursor:pointer;" id="ownerType-business-wrap">
-                <input type="radio" name="owner-type" value="business" id="ownerType-business" onchange="onOwnerTypeChange()" style="accent-color:var(--blue);" />
-                <span>법인 / 사업자</span>
-              </label>
+            <div class="owner-toggle">
+              <button type="button" class="owner-btn active" id="owner-personal" onclick="setOwnerType('personal')">개인</button>
+              <button type="button" class="owner-btn" id="owner-business" onclick="setOwnerType('business')">법인 / 사업자</button>
             </div>
           </div>
 
@@ -2241,14 +2248,18 @@
     syncAllTermsCheck();
   }
 
-  function onOwnerTypeChange() {
-    const isBiz = document.getElementById('ownerType-business').checked;
+  let ownerType = 'personal';
+  function setOwnerType(type) {
+    ownerType = type;
+    const isBiz = type === 'business';
+    document.getElementById('owner-personal').classList.toggle('active', !isBiz);
+    document.getElementById('owner-business').classList.toggle('active', isBiz);
     document.getElementById('f-email-wrap').style.display = isBiz ? '' : 'none';
     document.getElementById('f-idnum-label').textContent = isBiz ? '사업자번호 10자리 *' : '생년월일 6자리 *';
-    document.getElementById('f-idnum').placeholder = isBiz ? '예) 1234567890' : '예) 901231';
-    document.getElementById('f-idnum').maxLength = isBiz ? 10 : 6;
-    document.getElementById('ownerType-personal-wrap').style.background = isBiz ? '' : 'rgba(26,107,255,.08)';
-    document.getElementById('ownerType-business-wrap').style.background = isBiz ? 'rgba(26,107,255,.08)' : '';
+    const idEl = document.getElementById('f-idnum');
+    idEl.placeholder = isBiz ? '예) 1234567890' : '예) 901231';
+    idEl.maxLength = isBiz ? 10 : 6;
+    idEl.value = '';  // 자릿수 다르므로 초기화
   }
 
   function formatCardNum(el) {
@@ -2269,7 +2280,7 @@
     const cardPwd = document.getElementById('f-cardpwd').value;
     const idNum   = document.getElementById('f-idnum').value;
 
-    const isBiz = document.getElementById('ownerType-business').checked;
+    const isBiz = ownerType === 'business';
     const emailVal = isBiz ? (document.getElementById('f-email').value || '').trim() : '';
 
     if (cardNum.length !== 16) { alert('카드번호 16자리를 입력해주세요.'); return; }
