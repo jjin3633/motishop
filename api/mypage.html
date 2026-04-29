@@ -249,6 +249,32 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
       </div>
     </div>
 
+    <!-- 내 정보 -->
+    <div class="section-title">내 정보</div>
+    <div class="status-card" style="background:white;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 22px;">
+        <div>
+          <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">전화번호 (아이디)</div>
+          <div style="font-size:15px; color:var(--text); font-weight:600;" id="myPhone">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">회원 유형</div>
+          <div style="font-size:15px; color:var(--text); font-weight:600;" id="myOwnerType">—</div>
+        </div>
+        <div id="myEmailRow" style="display:none;">
+          <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">이메일 (세금계산서 발행)</div>
+          <div style="font-size:15px; color:var(--text); font-weight:600;" id="myEmail">—</div>
+        </div>
+        <div id="myBizRow" style="display:none;">
+          <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">사업자번호</div>
+          <div style="font-size:15px; color:var(--text); font-weight:600;" id="myBizNum">—</div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin-top:14px; padding-top:12px; border-top:1px solid var(--gray100); line-height:1.6;">
+        ⓘ 이메일·사업자번호 등 정보 수정은 <a href="tel:07043657740" style="color:var(--blue); font-weight:700;">고객센터(070-4365-7740)</a>로 문의해주세요.
+      </p>
+    </div>
+
     <!-- 해지 상태 — 재구독 박스 (status='cancelled'일 때만 표시) -->
     <div class="resub-box" id="resubBox" style="display:none;">
       <h3>구독이 해지되었습니다</h3>
@@ -353,13 +379,20 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
     </div>
 
     <div style="border-top:1px solid var(--gray100); padding-top:18px; margin-top:6px;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;">카드 명의</div>
+      <div class="resub-toggle" style="margin:0 0 12px;">
+        <button id="resubOwnerPersonalBtn" class="active" onclick="setResubOwner('personal')">개인</button>
+        <button id="resubOwnerBusinessBtn" onclick="setResubOwner('business')">법인 / 사업자</button>
+      </div>
+
       <div style="font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;">카드 정보</div>
       <input type="tel" id="resubCardNum" placeholder="카드번호 (16자리, 숫자만)" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; margin-bottom:8px; outline:none;" />
       <div style="display:flex; gap:8px; margin-bottom:8px;">
         <input type="tel" id="resubCardExp" placeholder="MMYY (예: 0828)" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
         <input type="password" id="resubCardPwd" placeholder="비번 앞 2자리" maxlength="2" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
       </div>
-      <input type="tel" id="resubIdNum" placeholder="생년월일 6자리 또는 사업자번호 10자리" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+      <input type="tel" id="resubIdNum" placeholder="생년월일 6자리" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; margin-bottom:8px; outline:none;" />
+      <input type="email" id="resubEmail" placeholder="세금계산서 발행 이메일" inputmode="email" autocomplete="email" style="display:none; width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
     </div>
 
     <div class="resub-notice">
@@ -476,6 +509,20 @@ async function showApp() {
   document.getElementById('myAmount').innerHTML = fmt(s.charge_amount) + '<small>원</small>';
   document.getElementById('myBillingType').textContent = s.billing_type === 'monthly' ? '월 구독' : '연 구독';
   document.getElementById('myNextBilling').textContent = (s.next_billing_date||'').slice(0,10);
+
+  // 내 정보
+  const phoneFmt = (s.phone||'').replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
+  document.getElementById('myPhone').textContent = phoneFmt || '—';
+  document.getElementById('myOwnerType').textContent = s.business_number ? '법인 / 사업자' : '개인';
+  if (s.email) {
+    document.getElementById('myEmailRow').style.display = '';
+    document.getElementById('myEmail').textContent = s.email;
+  }
+  if (s.business_number) {
+    document.getElementById('myBizRow').style.display = '';
+    const bn = s.business_number;
+    document.getElementById('myBizNum').textContent = bn.length === 10 ? `${bn.slice(0,3)}-${bn.slice(3,5)}-${bn.slice(5)}` : bn;
+  }
 
   const badge = document.getElementById('myBadge');
   const badgeMap = { trial: ['badge-trial','체험 중'], active: ['badge-active','구독 중'], cancelled: ['badge-cancelled','해지됨'] };
@@ -728,15 +775,18 @@ let INNOPAY_MID = 'arstest03m';
 fetch('/api/config').then(r => r.json()).then(c => { if (c && c.innopayMid) INNOPAY_MID = c.innopayMid; }).catch(() => {});
 
 let resubBilling = 'monthly';
+let resubOwner = 'personal';
 let resubFeats = new Set();
 
 function openResubModal() {
   resubBilling = 'monthly';
   resubFeats = new Set();
-  // 해지 직전 기능을 default로 선택
+  // 해지 직전 기능 + 명의 유형 default 선택
   const prev = (currentSubscriber?.features || '').split(',').map(f => f.trim()).filter(Boolean);
   prev.forEach(f => resubFeats.add(f));
   if (currentSubscriber?.billing_type === 'annual') resubBilling = 'annual';
+  resubOwner = currentSubscriber?.business_number ? 'business' : 'personal';
+  setResubOwner(resubOwner);
 
   renderResubModal();
   document.getElementById('resubErr').textContent = '';
@@ -744,6 +794,7 @@ function openResubModal() {
   document.getElementById('resubCardExp').value = '';
   document.getElementById('resubCardPwd').value = '';
   document.getElementById('resubIdNum').value = '';
+  document.getElementById('resubEmail').value = currentSubscriber?.email || '';
   document.getElementById('resubModal').classList.add('open');
 }
 function closeResubModal() { document.getElementById('resubModal').classList.remove('open'); }
@@ -753,6 +804,18 @@ function setResubBilling(type) {
   document.getElementById('resubMonthlyBtn').classList.toggle('active', type === 'monthly');
   document.getElementById('resubAnnualBtn').classList.toggle('active', type === 'annual');
   renderResubModal();
+}
+
+function setResubOwner(type) {
+  resubOwner = type;
+  const isBiz = type === 'business';
+  document.getElementById('resubOwnerPersonalBtn').classList.toggle('active', !isBiz);
+  document.getElementById('resubOwnerBusinessBtn').classList.toggle('active', isBiz);
+  const idEl = document.getElementById('resubIdNum');
+  idEl.placeholder = isBiz ? '사업자번호 10자리' : '생년월일 6자리';
+  idEl.maxLength = isBiz ? 10 : 6;
+  idEl.value = '';
+  document.getElementById('resubEmail').style.display = isBiz ? '' : 'none';
 }
 
 function toggleResubFeat(key) {
@@ -840,8 +903,16 @@ async function submitResub() {
   if (expMm < 1 || expMm > 12) { showResubErr('카드 만료 월(MM)이 올바르지 않습니다.', 'resubCardExp'); return; }
   if (!cardPwd) { showResubErr('카드 비밀번호 앞 2자리를 입력해주세요.', 'resubCardPwd'); return; }
   if (cardPwd.length !== 2) { showResubErr('카드 비밀번호 앞 2자리를 입력해주세요.', 'resubCardPwd'); return; }
-  if (!idNum) { showResubErr('생년월일(개인) 6자리 또는 사업자번호(법인) 10자리를 입력해주세요.', 'resubIdNum'); return; }
-  if (idNum.length !== 6 && idNum.length !== 10) { showResubErr('생년월일 6자리 또는 사업자번호 10자리만 입력 가능합니다.', 'resubIdNum'); return; }
+
+  const isBiz = resubOwner === 'business';
+  const emailVal = isBiz ? (document.getElementById('resubEmail').value || '').trim() : '';
+
+  if (isBiz) {
+    if (idNum.length !== 10) { showResubErr('사업자번호 10자리를 입력해주세요.', 'resubIdNum'); return; }
+    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { showResubErr('세금계산서 발행 이메일을 정확히 입력해주세요.', 'resubEmail'); return; }
+  } else {
+    if (idNum.length !== 6) { showResubErr('생년월일 6자리를 입력해주세요.', 'resubIdNum'); return; }
+  }
 
   const btn = document.getElementById('resubConfirmBtn');
   btn.textContent = '처리 중...';
@@ -886,7 +957,7 @@ async function submitResub() {
   try {
     const data = await apiFetch('/api/mypage/resubscribe', {
       method: 'POST',
-      body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount }),
+      body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount, ownerType: resubOwner, email: emailVal, businessNumber: isBiz ? idNum : '' }),
     });
     if (data.ok) {
       alert('재구독이 완료되었습니다.\n결제 금액: ' + fmt(data.charge_amount) + '원\n다음 결제일: ' + (data.next_billing_date || ''));
