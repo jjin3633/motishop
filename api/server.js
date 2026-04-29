@@ -160,13 +160,14 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
 
 app.post('/api/subscribe', subscribeLimiter, (req, res) => {
   const { company, name, phone, email, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
-  if (!company || !name || !phone || !email || !features || !billingType || !billKey || !amount)
+  if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
-    return res.status(400).json({ ok: false, msg: '이메일 형식이 올바르지 않습니다.' });
-  }
-  const cleanEmail = String(email).trim().slice(0, 200);
+  // 사업자번호 입력 시 이메일 필수 (세금계산서 발행용)
   const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
+  if (cleanBizNum && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email)))) {
+    return res.status(400).json({ ok: false, msg: '사업자 회원은 세금계산서 발행 이메일이 필수입니다.' });
+  }
+  const cleanEmail = email ? String(email).trim().slice(0, 200) : null;
 
   const cleanPhone = String(phone).replace(/[^0-9]/g, '');
   const trialStart = kstDateOnly();

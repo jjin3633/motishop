@@ -799,8 +799,8 @@
     }
     .feat-select-item.selected .feat-select-check { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; }
     .feat-select-item.selected .feat-select-check::after { content: '✓'; font-size: 18px; color: white; font-weight: 800; }
-    .feat-select-name { font-size: 20px; color: rgba(255,255,255,.8); font-weight: 600; }
-    .feat-select-price { font-size: 20px; color: var(--cyan); font-weight: 700; }
+    .feat-select-name { font-size: 18px; color: rgba(255,255,255,.8); font-weight: 600; }
+    .feat-select-price { font-size: 18px; color: var(--cyan); font-weight: 700; }
     .price-summary { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: rgba(0,212,255,.07); border: 1px solid rgba(0,212,255,.2); display: flex; justify-content: space-between; align-items: center; }
     .price-summary-label { font-size: 18px; color: rgba(255,255,255,.5); }
     .price-summary-amount { font-size: 24px; font-weight: 900; color: white; }
@@ -822,8 +822,8 @@
     }
     .terms-item.checked .terms-check { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; }
     .terms-item.checked .terms-check::after { content: '✓'; font-size: 18px; color: white; font-weight: 800; }
-    .terms-text { font-size: 20px; color: rgba(255,255,255,.6); line-height: 1.6; }
-    .terms-text strong { color: white; display: block; margin-bottom: 2px; font-size: 20px; }
+    .terms-text { font-size: 18px; color: rgba(255,255,255,.6); line-height: 1.6; }
+    .terms-text strong { color: white; display: block; margin-bottom: 2px; font-size: 18px; }
     .terms-notice {
       padding: 12px 16px; border-radius: 10px;
       background: rgba(245,200,66,.08); border: 1px solid rgba(245,200,66,.25);
@@ -1026,7 +1026,7 @@
       cursor: pointer; margin-bottom: 14px; transition: all .2s; user-select: none;
     }
     .terms-all.checked { background: rgba(0,212,255,.12); border-color: var(--cyan); }
-    .terms-all span { font-size: 20px; font-weight: 700; color: white; }
+    .terms-all span { font-size: 18px; font-weight: 700; color: white; }
     .terms-check.checked-inner { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; }
     .terms-check.checked-inner::after { content: '✓'; font-size: 18px; color: white; font-weight: 800; }
     .terms-body {
@@ -1684,14 +1684,12 @@
           <div class="form-row"><label>원장님 성함 *</label><input id="f-name" type="text" placeholder="김모티" /></div>
           <div class="form-row"><label>연락처 *</label><input id="f-phone" type="tel" placeholder="010-0000-0000" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9\-]/g,'')" /></div>
         </div>
-        <div class="form-row"><label>이메일 * <span style="color:rgba(255,255,255,.4); font-weight:400; font-size:13px;">— 영수증·중요 안내 발송용</span></label><input id="f-email" type="email" placeholder="contact@yourcenter.com" inputmode="email" autocomplete="email" /></div>
         <div class="form-btn-row"><button class="form-btn-next" onclick="goStep(2)">계속하기</button></div>
       </div>
 
       <!-- STEP 2 -->
       <div class="form-step" id="fstep2">
         <div class="form-step-title">체험할 기능을 선택하세요</div>
-        <div class="form-step-sub">복수 선택 가능 · 체험 후 필요한 것만 남기세요</div>
         <div class="billing-toggle">
           <button class="billing-btn active" id="btn-monthly" onclick="setBilling('monthly')">월 구독</button>
           <button class="billing-btn" id="btn-annual" onclick="setBilling('annual')">연 구독 <span style="font-size:18px;color:var(--gold);">최대 25% 할인</span></button>
@@ -1929,6 +1927,21 @@
         <div id="card-form-area">
           <div class="form-step-title">카드 정보를 입력해주세요</div>
           <div class="card-secure-note">🔒 카드 정보는 암호화 전송되며 서버에 저장되지 않습니다</div>
+
+          <div class="form-row">
+            <label>카드 명의 구분 *</label>
+            <div style="display:flex; gap:10px;">
+              <label style="flex:1; display:flex; align-items:center; gap:8px; padding:14px 18px; border:1.5px solid rgba(255,255,255,.12); border-radius:10px; cursor:pointer; background:rgba(26,107,255,.08);" id="ownerType-personal-wrap">
+                <input type="radio" name="owner-type" value="personal" id="ownerType-personal" checked onchange="onOwnerTypeChange()" style="accent-color:var(--blue);" />
+                <span>개인</span>
+              </label>
+              <label style="flex:1; display:flex; align-items:center; gap:8px; padding:14px 18px; border:1.5px solid rgba(255,255,255,.12); border-radius:10px; cursor:pointer;" id="ownerType-business-wrap">
+                <input type="radio" name="owner-type" value="business" id="ownerType-business" onchange="onOwnerTypeChange()" style="accent-color:var(--blue);" />
+                <span>법인 / 사업자</span>
+              </label>
+            </div>
+          </div>
+
           <div class="form-row">
             <label>카드번호 *</label>
             <input id="f-cardnum" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNum(this)" />
@@ -1944,8 +1957,12 @@
             </div>
           </div>
           <div class="form-row">
-            <label>생년월일 6자리 · 법인 사업자번호 10자리 *</label>
+            <label id="f-idnum-label">생년월일 6자리 *</label>
             <input id="f-idnum" type="text" inputmode="numeric" placeholder="예) 901231" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+          </div>
+          <div class="form-row" id="f-email-wrap" style="display:none;">
+            <label>세금계산서 발행 이메일 *</label>
+            <input id="f-email" type="email" inputmode="email" autocomplete="email" placeholder="contact@yourcompany.com" />
           </div>
           <div class="form-btn-row">
             <button class="form-btn-back" onclick="goStep(3)">이전</button>
@@ -2134,9 +2151,7 @@
         const c = document.getElementById('f-company').value.trim();
         const nm = document.getElementById('f-name').value.trim();
         const ph = document.getElementById('f-phone').value.trim();
-        const em = document.getElementById('f-email').value.trim();
-        if (!c || !nm || !ph || !em) { alert('업체명, 원장님 성함, 연락처, 이메일을 모두 입력해주세요.'); return; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { alert('이메일 형식이 올바르지 않습니다.'); return; }
+        if (!c || !nm || !ph) { alert('업체명, 원장님 성함, 연락처를 모두 입력해주세요.'); return; }
       }
       if (currentStep === 2) {
         if (!document.querySelectorAll('.feat-select-item.selected').length) {
@@ -2226,6 +2241,16 @@
     syncAllTermsCheck();
   }
 
+  function onOwnerTypeChange() {
+    const isBiz = document.getElementById('ownerType-business').checked;
+    document.getElementById('f-email-wrap').style.display = isBiz ? '' : 'none';
+    document.getElementById('f-idnum-label').textContent = isBiz ? '사업자번호 10자리 *' : '생년월일 6자리 *';
+    document.getElementById('f-idnum').placeholder = isBiz ? '예) 1234567890' : '예) 901231';
+    document.getElementById('f-idnum').maxLength = isBiz ? 10 : 6;
+    document.getElementById('ownerType-personal-wrap').style.background = isBiz ? '' : 'rgba(26,107,255,.08)';
+    document.getElementById('ownerType-business-wrap').style.background = isBiz ? 'rgba(26,107,255,.08)' : '';
+  }
+
   function formatCardNum(el) {
     let v = el.value.replace(/\D/g, '').slice(0, 16);
     el.value = v.replace(/(.{4})/g, '$1 ').trim();
@@ -2244,10 +2269,18 @@
     const cardPwd = document.getElementById('f-cardpwd').value;
     const idNum   = document.getElementById('f-idnum').value;
 
+    const isBiz = document.getElementById('ownerType-business').checked;
+    const emailVal = isBiz ? (document.getElementById('f-email').value || '').trim() : '';
+
     if (cardNum.length !== 16) { alert('카드번호 16자리를 입력해주세요.'); return; }
     if (cardExpRaw.length !== 4) { alert('유효기간을 MM/YY 형식으로 입력해주세요.'); return; }
     if (cardPwd.length !== 2) { alert('비밀번호 앞 2자리를 입력해주세요.'); return; }
-    if (idNum.length < 6) { alert('생년월일(6자리) 또는 사업자번호(10자리)를 입력해주세요.'); return; }
+    if (isBiz) {
+      if (idNum.length !== 10) { alert('사업자번호 10자리를 입력해주세요.'); return; }
+      if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { alert('세금계산서 발행을 위한 이메일을 정확히 입력해주세요.'); return; }
+    } else {
+      if (idNum.length !== 6) { alert('생년월일 6자리를 입력해주세요.'); return; }
+    }
 
     btn.textContent = '등록 중...';
     btn.disabled = true;
@@ -2259,10 +2292,9 @@
     const company = document.getElementById('f-company').value.trim();
     const name    = document.getElementById('f-name').value.trim();
     const phone   = document.getElementById('f-phone').value.trim().replace(/[^0-9]/g, '');
-    const email   = document.getElementById('f-email').value.trim();
+    const email   = isBiz ? emailVal : '';  // 개인 = 이메일 미수집, 법인 = 필수
     const feats   = [...document.querySelectorAll('.feat-select-item.selected')].map(i => i.dataset.name).join(', ');
-    // idNum이 10자리면 사업자번호, 6자리면 생년월일 — 사업자번호만 DB 저장
-    const businessNumber = (idNum && idNum.length === 10) ? idNum : '';
+    const businessNumber = isBiz ? idNum : '';  // 사업자번호는 법인일 때만
 
     const pad = n => String(n).padStart(2, '0');
     const now = new Date();
