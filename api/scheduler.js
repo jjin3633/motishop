@@ -83,26 +83,11 @@ async function chargeSubscriber(sub) {
 }
 
 /**
- * 사전 안내 발송 (방통위 자동결제 가이드라인: 결제 7일 전·1일 전 의무)
- * SMS 발송 (솔라피) + 가입자 row의 notified_7d/notified_1d 플래그 set
+ * 사전 안내 — 사용자 정책으로 SMS 미발송 (카드사 자체 알림으로 대체)
+ * 함수 자체는 호환성 위해 유지 (DB 플래그 set X)
  */
-function markPreNotification(sub, daysLeft) {
-  if (daysLeft === 7 && !sub.notified_7d) {
-    console.log(`[사전안내 7일전] ${sub.company} / 다음 결제일: ${sub.next_billing_date}`);
-    db.prepare(`UPDATE subscribers SET notified_7d = 1 WHERE id = ?`).run(sub.id);
-    const text = `[Moti Shop] ${sub.company}님, ${sub.next_billing_date}에 ${sub.charge_amount.toLocaleString()}원이 자동 결제됩니다.\n해지·변경은 마이페이지에서: https://shop.motiphysio.com/mypage`;
-    sendSMS({ to: sub.phone, text }).then(r => {
-      if (!r.ok) notifySlack(`⚠️ 사전안내(7일) SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
-    }).catch(e => console.error('[SMS 7일전 실패]', e.message));
-  }
-  if (daysLeft === 1 && !sub.notified_1d) {
-    console.log(`[사전안내 1일전] ${sub.company} / 내일 결제: ${sub.next_billing_date}`);
-    db.prepare(`UPDATE subscribers SET notified_1d = 1 WHERE id = ?`).run(sub.id);
-    const text = `[Moti Shop] ${sub.company}님, 내일(${sub.next_billing_date}) ${sub.charge_amount.toLocaleString()}원이 자동 결제됩니다.\n해지는 마이페이지에서: https://shop.motiphysio.com/mypage`;
-    sendSMS({ to: sub.phone, text }).then(r => {
-      if (!r.ok) notifySlack(`⚠️ 사전안내(1일) SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
-    }).catch(e => console.error('[SMS 1일전 실패]', e.message));
-  }
+function markPreNotification(_sub, _daysLeft) {
+  return;
 }
 
 function runBillingPass() {
@@ -117,8 +102,8 @@ function runBillingPass() {
   for (const sub of targets) {
     const daysLeft = daysFromToday(sub.next_billing_date);
 
-    // 사전 안내
-    if (daysLeft === 7 || daysLeft === 1) markPreNotification(sub, daysLeft);
+    // 사전 안내 (1일 전만)
+    if (daysLeft === 1) markPreNotification(sub, daysLeft);
 
     // 결제일 도래
     if (daysLeft <= 0) dueCount++;
