@@ -159,9 +159,14 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
 }
 
 app.post('/api/subscribe', subscribeLimiter, (req, res) => {
-  const { company, name, phone, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
-  if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
+  const { company, name, phone, email, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
+  if (!company || !name || !phone || !email || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
+    return res.status(400).json({ ok: false, msg: '이메일 형식이 올바르지 않습니다.' });
+  }
+  const cleanEmail = String(email).trim().slice(0, 200);
+  const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
 
   const cleanPhone = String(phone).replace(/[^0-9]/g, '');
   const trialStart = kstDateOnly();
@@ -182,10 +187,10 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
         .run(existing.id, existing.features, features, existing.billing_type, billingType, existing.charge_amount, chargeAmount);
 
       db.prepare(`UPDATE subscribers SET
-        company=?, name=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
+        company=?, name=?, email=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
         trial_start=?, next_billing_date=?, status='trial', billkey_deleted=0, notified_7d=0, notified_1d=0
         WHERE id=?`)
-        .run(company, name, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
+        .run(company, name, cleanEmail, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
 
       saveTermsConsent(existing.id, termsAgreed, req);
       console.log(`[재가입 ✓] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
@@ -199,9 +204,9 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
     const r = db.prepare(`
       INSERT INTO subscribers
-        (company, name, phone, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(company, name, cleanPhone, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+        (company, name, phone, email, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(company, name, cleanPhone, cleanEmail, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
     // ⚠️ tempPw는 임시로 응답 페이로드 + 서버 로그에 남김 (SMS 미연동 상태)
     // SMS 연동 후 제거 예정 — 운영 시 사용자가 비밀번호를 받을 수단이 SMS 외 없어짐
@@ -235,7 +240,7 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
 app.get('/api/subscribers/:id', adminAuth, (req, res) => {
   const id = parseInt(req.params.id);
   const sub = db.prepare(`
-    SELECT id, company, name, phone, features, billing_type, charge_amount,
+    SELECT id, company, name, phone, email, business_number, features, billing_type, charge_amount,
            trial_start, next_billing_date, status, created_at,
            billkey_deleted, notified_7d, notified_1d
     FROM subscribers WHERE id = ?
@@ -429,7 +434,7 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
 
 app.get('/api/mypage/me', mypageAuth, (req, res) => {
   const sub = db.prepare(`
-    SELECT id, company, name, phone, features, billing_type, charge_amount,
+    SELECT id, company, name, phone, email, business_number, features, billing_type, charge_amount,
            trial_start, next_billing_date, status, created_at
     FROM subscribers WHERE id=?
   `).get(req.subscriberId);

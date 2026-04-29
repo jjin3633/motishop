@@ -524,6 +524,14 @@ function renderDetail(d) {
     </div>
 
     <div class="detail-section">
+      <h4>연락처</h4>
+      <div class="detail-grid">
+        <div class="detail-row"><span class="lbl">이메일</span><span class="val">${s.email ? `<a href="mailto:${s.email}" style="color:var(--blue);">${s.email}</a>` : '<span style="color:var(--text-muted)">미입력</span>'}</span></div>
+        <div class="detail-row"><span class="lbl">사업자번호</span><span class="val">${s.business_number || '<span style="color:var(--text-muted)">개인 회원 (미입력)</span>'}</span></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
       <h4>구독 정보</h4>
       <div class="detail-grid">
         <div class="detail-row"><span class="lbl">타입</span><span class="val">${billingTypeMap[s.billing_type]||s.billing_type}</span></div>

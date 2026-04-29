@@ -48,6 +48,8 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_7d INTEGER DEFAULT 0`
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_1d INTEGER DEFAULT 0`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN billkey_deleted INTEGER DEFAULT 0`); } catch(e) {}
 try { db.exec(`ALTER TABLE billing_logs ADD COLUMN trans_seq TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN email TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN business_number TEXT`); } catch(e) {}
 
 // 변경 이력 테이블 (기능/구독유형 변경 추적)
 db.exec(`
