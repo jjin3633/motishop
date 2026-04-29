@@ -50,6 +50,7 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN billkey_deleted INTEGER DEFAUL
 try { db.exec(`ALTER TABLE billing_logs ADD COLUMN trans_seq TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN email TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN business_number TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN cancelled_at TEXT`); } catch(e) {}
 
 // 변경 이력 테이블 (기능/구독유형 변경 추적)
 db.exec(`

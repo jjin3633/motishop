@@ -174,6 +174,44 @@ function scheduleHealthCheck() {
   console.log('헬스체크 자가 모니터 시작 (5분 간격)');
 }
 
+// 자동 탈퇴 — 해지 후 30일 경과한 가입자의 개인정보 완전 삭제
+// 매일 새벽 3시 KST 실행. 약관(개인정보 보유 기간 30일) + 개인정보보호법 22조(파기) 준수
+function scheduleAutoDelete() {
+  cron.schedule('0 3 * * *', () => {
+    try {
+      // 30일 = 30 * 24 * 60 * 60 * 1000 = 2592000000ms
+      // SQLite datetime 비교: cancelled_at < datetime('now', '+9 hours', '-30 days')
+      const targets = db.prepare(`
+        SELECT id, company, name FROM subscribers
+        WHERE status = 'cancelled'
+          AND cancelled_at IS NOT NULL
+          AND cancelled_at < datetime('now', '+9 hours', '-30 days')
+      `).all();
+
+      if (!targets.length) return;
+
+      const tx = db.transaction((rows) => {
+        const tables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds', 'payment_notis'];
+        for (const r of rows) {
+          for (const t of tables) {
+            try { db.prepare(`DELETE FROM ${t} WHERE subscriber_id=?`).run(r.id); } catch (e) { /* 일부 테이블에 컬럼 없을 수 있음 */ }
+          }
+          db.prepare(`DELETE FROM subscribers WHERE id=?`).run(r.id);
+        }
+      });
+      tx(targets);
+
+      const summary = targets.map(t => `${t.company}(id=${t.id})`).join(', ');
+      console.log(`[자동탈퇴] ${targets.length}건 완전 삭제: ${summary}`);
+      notifySlack(`🗑️ 자동 탈퇴 완료: 해지 후 30일 경과 ${targets.length}건 완전 삭제\n${summary}`);
+    } catch (e) {
+      console.error('[자동탈퇴 오류]', e);
+      notifySlack(`🔴 자동탈퇴 cron 예외: ${e.message}`);
+    }
+  }, { timezone: 'Asia/Seoul' });
+  console.log('자동 탈퇴 cron 시작 (매일 03:00 KST · 해지 후 30일 경과 가입자 완전 삭제)');
+}
+
 function scheduleBilling() {
   // 매일 KST 10:00 실행
   cron.schedule('0 10 * * *', async () => {
@@ -188,4 +226,4 @@ function scheduleBilling() {
   console.log('결제 스케줄러 시작 (매일 10:00 KST · 사전안내 7일/1일 전 · 재시도 2회)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, chargeSubscriber, processDueBillings };
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, chargeSubscriber, processDueBillings };

@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling, scheduleHealthCheck } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 
 // PII 마스킹 헬퍼 — 로그/Slack용 (전화 010-****-1234, 이름 양*진)
@@ -189,7 +189,7 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
       db.prepare(`UPDATE subscribers SET
         company=?, name=?, email=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
-        trial_start=?, next_billing_date=?, status='trial', billkey_deleted=0, notified_7d=0, notified_1d=0
+        trial_start=?, next_billing_date=?, status='trial', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL
         WHERE id=?`)
         .run(company, name, cleanEmail, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
 
@@ -242,7 +242,7 @@ app.get('/api/subscribers/:id', adminAuth, (req, res) => {
   const id = parseInt(req.params.id);
   const sub = db.prepare(`
     SELECT id, company, name, phone, email, business_number, features, billing_type, charge_amount,
-           trial_start, next_billing_date, status, created_at,
+           trial_start, next_billing_date, status, created_at, cancelled_at,
            billkey_deleted, notified_7d, notified_1d
     FROM subscribers WHERE id = ?
   `).get(id);
@@ -327,7 +327,7 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(id);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
 
-  db.prepare(`UPDATE subscribers SET status = 'cancelled' WHERE id = ?`).run(id);
+  db.prepare(`UPDATE subscribers SET status = 'cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id = ?`).run(id);
   notifySlack(`👋 해지(관리자): ${sub.company} (id=${id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
 
   // 빌키 삭제 (InnoPay) — 실패해도 해지는 유지
@@ -501,7 +501,7 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
 
 app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(req.subscriberId);
-  db.prepare(`UPDATE subscribers SET status='cancelled' WHERE id=?`).run(req.subscriberId);
+  db.prepare(`UPDATE subscribers SET status='cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id=?`).run(req.subscriberId);
   db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(req.subscriberId);
   if (sub) notifySlack(`👋 해지(셀프): ${sub.company} (id=${sub.id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
 
@@ -591,7 +591,7 @@ app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
   // 가입자 정보 갱신 (재구독 시 명의 변경 가능)
   db.prepare(`UPDATE subscribers SET
     features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?, email=?, business_number=?,
-    next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0
+    next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL
     WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextEmail, nextBiz, nextBilling, req.subscriberId);
 
   console.log(`[재구독 ✓] ${sub.company} / ${featStr} / ${chargeAmount}원 / 다음: ${nextBilling}`);
@@ -726,6 +726,7 @@ app.post('/api/deploy/webhook', (req, res) => {
 
 scheduleBilling();
 scheduleHealthCheck();
+scheduleAutoDelete();
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);

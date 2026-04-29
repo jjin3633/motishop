@@ -541,6 +541,7 @@ function renderDetail(d) {
         <div class="detail-row"><span class="lbl">체험 시작</span><span class="val">${s.trial_start||'-'}</span></div>
         <div class="detail-row"><span class="lbl">다음 결제일</span><span class="val">${s.next_billing_date||'-'}${dDaysLabel}</span></div>
         <div class="detail-row"><span class="lbl">빌키 상태</span><span class="val">${s.billkey_deleted ? '삭제됨' : '활성'}</span></div>
+        ${s.cancelled_at ? `<div class="detail-row full"><span class="lbl">해지일시 / 자동탈퇴 예정</span><span class="val">${(s.cancelled_at||'').slice(0,16)} → <strong style="color:var(--red);">${new Date(new Date(s.cancelled_at).getTime() + 30*24*60*60*1000).toISOString().slice(0,10)} 자동 삭제 예정</strong></span></div>` : ''}
       </div>
     </div>
 
