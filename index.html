@@ -731,8 +731,8 @@
     .trial-form .section-inner { max-width: 600px; }
 
     /* 스텝 인디케이터 */
-    .step-indicator { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 48px; }
-    .si-item { display: flex; align-items: center; gap: 0; }
+    .step-indicator { display: flex; align-items: flex-start; justify-content: center; gap: 0; margin-bottom: 48px; }
+    .si-item { display: flex; align-items: flex-start; gap: 0; }
     .si-dot {
       width: 40px; height: 40px; border-radius: 50%;
       background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.18);
@@ -742,7 +742,8 @@
     }
     .si-label { font-size: 18px; color: rgba(255,255,255,.35); margin-top: 8px; text-align: center; letter-spacing: 0.03em; font-weight: 500; white-space: nowrap; }
     .si-item-wrap { display: flex; flex-direction: column; align-items: center; }
-    .si-line { width: 56px; height: 2px; background: rgba(255,255,255,.12); margin: 0 6px; margin-bottom: 22px; transition: background .3s; }
+    /* si-line: dot 세로 중앙(20px)과 정렬 — height 2px이므로 margin-top: 19px */
+    .si-line { width: 56px; height: 2px; background: rgba(255,255,255,.12); margin: 19px 6px 0; transition: background .3s; }
     .si-dot.active { background: linear-gradient(135deg, var(--blue), var(--cyan)); border-color: transparent; color: white; box-shadow: 0 0 16px rgba(26,107,255,.5); }
     .si-dot.done { background: rgba(0,212,255,.15); border-color: var(--cyan); color: var(--cyan); }
     .si-label.active { color: white; }
