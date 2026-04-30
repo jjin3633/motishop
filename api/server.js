@@ -380,6 +380,9 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
 
   if (result.ok) {
     notifySlack(`💸 환불 처리: ${sub.company} (id=${id}) / ${refundAmount.toLocaleString()}원 — ${refundReason}`);
+    // 회원에게 환불 통보 SMS
+    const refundText = `[Moti Shop] ${sub.company}님, ${refundAmount.toLocaleString()}원 환불 처리되었어요.\n카드사 정책에 따라 영업일 기준 3~7일 후 입금됩니다.\n문의: 070-4365-7740`;
+    sendSMS({ to: sub.phone, text: refundText }).catch(e => console.error('[환불 SMS 실패]', e.message));
     return res.json({ ok: true, resultMsg: result.resultMsg });
   }
   notifySlack(`🔴 환불 실패: ${sub.company} (id=${id}) — ${result.resultCode} ${result.resultMsg}`);
