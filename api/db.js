@@ -134,4 +134,14 @@ try { db.exec(`CREATE INDEX IF NOT EXISTS idx_log_subscriber ON billing_logs(sub
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_log_moid ON billing_logs(moid)`); } catch(e) {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_session_token ON sessions(token)`); } catch(e) {}
 
+// 데이터 마이그레이션 — 안면 기능 명칭 통일 (2026-04-30)
+// LIKE 매칭 안 되면 0건 처리 → idempotent (다음 재시작 시 NoOp)
+try {
+  const r = db.prepare(
+    `UPDATE subscribers SET features = REPLACE(features, '안면 여백/탄력', '안면 비대칭·여백·탄력')
+     WHERE features LIKE '%안면 여백/탄력%'`
+  ).run();
+  if (r.changes > 0) console.log(`[migration] 안면 기능 명칭 통일: ${r.changes}건 업데이트`);
+} catch (e) { console.error('[migration 안면키] 실패:', e.message); }
+
 module.exports = db;
