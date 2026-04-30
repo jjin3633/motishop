@@ -2641,7 +2641,15 @@
     document.body.style.left = '';
     document.body.style.right = '';
     document.body.style.overflow = '';
-    if (_featModalScrollY) window.scrollTo(0, _featModalScrollY);
+    // html의 scroll-behavior: smooth 일시 해제 → 원래 위치로 즉시(점프) 복귀
+    if (_featModalScrollY) {
+      const html = document.documentElement;
+      const prevBehavior = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
+      window.scrollTo(0, _featModalScrollY);
+      // 다음 프레임에서 원복 (스크롤 적용 후)
+      requestAnimationFrame(() => { html.style.scrollBehavior = prevBehavior; });
+    }
     _featModalScrollY = 0;
     _featImages = [];
     _featIdx = 0;
