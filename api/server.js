@@ -249,7 +249,7 @@ app.get('/api/subscribers/:id', adminAuth, (req, res) => {
   const sub = db.prepare(`
     SELECT id, company, name, phone, email, business_number, features, billing_type, charge_amount,
            trial_start, next_billing_date, status, created_at, cancelled_at,
-           billkey_deleted, notified_7d, notified_1d
+           billkey_deleted, notified_7d, notified_1d, failed_count, last_failed_at
     FROM subscribers WHERE id = ?
   `).get(id);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });

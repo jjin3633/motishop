@@ -61,24 +61,41 @@ async function chargeSubscriber(sub) {
 
   if (result.ok) {
     const next = addPeriod(sub.next_billing_date, sub.billing_type);
-    db.prepare(`UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0 WHERE id = ?`)
+    db.prepare(`UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0, failed_count = 0, last_failed_at = NULL WHERE id = ?`)
       .run(next, sub.id);
     console.log(`[✓ 결제성공] ${sub.company} / ${sub.charge_amount.toLocaleString()}원 → 다음: ${next}`);
   } else {
-    console.error(`[✗ 결제실패] ${sub.company} / ${result.resultCode} ${result.resultMsg}`);
-    notifySlack(`🔴 결제실패: ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원\n사유: ${result.resultCode} ${result.resultMsg}`);
+    // 실패 카운트 증가
+    const newCount = (sub.failed_count || 0) + 1;
+    db.prepare(`UPDATE subscribers SET failed_count = ?, last_failed_at = datetime('now', '+9 hours') WHERE id = ?`).run(newCount, sub.id);
 
-    // B. 결제실패 임계치 — 최근 1시간 내 3건 이상 실패 시 추가 알림
-    try {
-      const recent = db.prepare(`
-        SELECT COUNT(*) AS n FROM billing_logs
-        WHERE result_code NOT IN ('0000', '00')
-          AND billed_at > datetime('now', '+9 hours', '-1 hour')
-      `).get();
-      if (recent && recent.n >= 3) {
-        notifySlack(`⚠️ 결제실패 임계치 초과: 최근 1시간 내 ${recent.n}건 실패 — 시스템 점검 권장`);
+    console.error(`[✗ 결제실패 ${newCount}회 연속] ${sub.company} / ${result.resultCode} ${result.resultMsg}`);
+    notifySlack(`🔴 결제실패 (${newCount}회 연속): ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원\n사유: ${result.resultCode} ${result.resultMsg}`);
+
+    // 티빙 정책: 3일간 매일 재시도 + SMS, 3회째 실패 시 자동 해지
+    if (newCount >= 3) {
+      const { deleteBillKey } = require('./innopay');
+      db.prepare(`UPDATE subscribers SET status='cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id = ?`).run(sub.id);
+      if (sub.bill_key && !sub.billkey_deleted) {
+        try {
+          const r = await deleteBillKey({ billKey: sub.bill_key, userId: sub.phone });
+          if (r.ok) db.prepare(`UPDATE subscribers SET billkey_deleted = 1 WHERE id = ?`).run(sub.id);
+        } catch (e) { /* ignore */ }
       }
-    } catch (e) { /* ignore */ }
+      // 회원에게 자동 해지 통보 SMS
+      const cancelText = `[Moti Shop] ${sub.company}님, 카드 결제가 3일 연속 실패하여 자동 해지되었습니다.\n카드 정보 갱신 후 마이페이지에서 다시 구독하실 수 있습니다.\nhttps://shop.motiphysio.com/mypage`;
+      sendSMS({ to: sub.phone, text: cancelText }).catch(e => console.error('[자동해지 SMS 실패]', e.message));
+      notifySlack(`⛔ 자동 해지: ${sub.company} (id=${sub.id}) — 3일 연속 결제 실패로 자동 해지`);
+      console.log(`[자동해지] ${sub.company} / 3회 실패`);
+      return;
+    }
+
+    // 1~2회 실패: 회원에게 카드 갱신 요청 SMS
+    const dayLeft = 3 - newCount;  // 남은 재시도 일수
+    const failText = newCount === 1
+      ? `[Moti Shop] ${sub.company}님, 오늘 ${sub.charge_amount.toLocaleString()}원 자동 결제가 실패했습니다.\n카드 한도·유효기간을 확인해주세요. 내일 다시 시도합니다.\nhttps://shop.motiphysio.com/mypage`
+      : `[Moti Shop] ${sub.company}님, 자동 결제가 ${newCount}회 연속 실패했습니다.\n${dayLeft}일 안에 카드를 갱신하지 않으면 자동 해지됩니다.\nhttps://shop.motiphysio.com/mypage`;
+    sendSMS({ to: sub.phone, text: failText }).catch(e => console.error('[결제실패 SMS 실패]', e.message));
   }
 }
 
