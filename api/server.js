@@ -213,7 +213,7 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
     console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
 
     // 임시 비밀번호 SMS 발송 (솔라피)
-    const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영합니다.\n마이페이지 임시 비밀번호: ${tempPw}\n로그인 후 변경해주세요.\nhttps://shop.motiphysio.com/mypage`;
+    const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영해요.\n마이페이지 로그인 정보 안내드립니다.\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n로그인 후 비밀번호 변경 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
     sendSMS({ to: cleanPhone, text: smsText }).then(r => {
       if (!r.ok) notifySlack(`⚠️ 임시비번 SMS 실패: ${company} (${maskPhone(cleanPhone)}) — ${r.resultCode} ${r.resultMsg}`);
     }).catch(e => console.error('[SMS 발송 실패]', e.message));
@@ -436,7 +436,7 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
   console.log(`[비번재발급] subscriber_id=${id} / ${sub.company}`);
 
   // SMS 발송
-  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 마이페이지 임시 비밀번호가 재발급되었습니다.\n새 임시 비밀번호: ${tempPw}\n로그인 후 변경해주세요.\nhttps://shop.motiphysio.com/mypage`;
+  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 마이페이지 임시 비밀번호가 재발급되었어요.\n- 새 임시 비밀번호: ${tempPw}\n로그인 후 비밀번호 변경 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
   sendSMS({ to: sub.phone, text: smsText }).then(r => {
     if (!r.ok) notifySlack(`⚠️ 비번재발급 SMS 실패: ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
   }).catch(e => console.error('[SMS 발송 실패]', e.message));
