@@ -4,6 +4,17 @@ api/*.log
 api/*.db
 api/*.db-journal
 
+# Secrets — 절대 commit 금지
+.env
+.env.*
+!.env.example
+api/.env
+api/.env.*
+!api/.env.example
+*.pem
+*.key
+secrets.*
+
 # OS
 .DS_Store
 Thumbs.db
