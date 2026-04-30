@@ -269,9 +269,12 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
           <div style="font-size:15px; color:var(--text); font-weight:600;" id="myBizNum">—</div>
         </div>
       </div>
-      <p style="font-size:12px; color:var(--text-muted); margin-top:14px; padding-top:12px; border-top:1px solid var(--gray100); line-height:1.6;">
-        ⓘ 사업자번호 등 정보 수정은 <a href="tel:07043657740" style="color:var(--blue); font-weight:700;">고객센터(070-4365-7740)</a>로 문의해주세요.
-      </p>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--gray100); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <p style="font-size:12px; color:var(--text-muted); line-height:1.6; margin:0; flex:1; min-width:200px;">
+          ⓘ 사업자번호 등 정보 수정은 <a href="tel:07043657740" style="color:var(--blue); font-weight:700;">고객센터(070-4365-7740)</a>로 문의해주세요.
+        </p>
+        <button id="updateCardBtn" onclick="openUpdateCardModal()" style="display:none; padding:10px 18px; border:1px solid var(--blue); background:white; color:var(--blue); border-radius:9px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">카드 정보 갱신</button>
+      </div>
     </div>
 
     <!-- 해지 상태 — 재구독 박스 (status='cancelled'일 때만 표시) -->
@@ -408,6 +411,36 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
   </div>
 </div>
 
+<!-- 카드 정보 갱신 모달 (구독 유지, 카드만 교체) -->
+<div class="modal-overlay" id="updateCardModal" onclick="if(event.target===this)closeUpdateCardModal()">
+  <div class="modal resub-modal-box">
+    <button class="modal-close" onclick="closeUpdateCardModal()" aria-label="닫기">×</button>
+    <h3>카드 정보 갱신</h3>
+    <p style="font-size:13px;color:var(--text-sub);margin-bottom:14px;">새 카드를 등록하면 다음 결제일부터 새 카드로 자동 결제됩니다.<br>구독 정보·결제일은 그대로 유지되며 즉시 결제는 발생하지 않습니다.</p>
+
+    <div style="border-top:1px solid var(--gray100); padding-top:18px;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;">새 카드 정보</div>
+      <input type="tel" id="ucCardNum" placeholder="카드번호 (16자리, 숫자만)" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; margin-bottom:8px; outline:none;" />
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <input type="tel" id="ucCardExp" placeholder="MMYY (예: 0828)" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+        <input type="password" id="ucCardPwd" placeholder="비번 앞 2자리" maxlength="2" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+      </div>
+      <input type="tel" id="ucIdNum" placeholder="생년월일 6자리 (개인) / 사업자번호 10자리 (법인)" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+    </div>
+
+    <div class="resub-notice">
+      ⓘ 카드 등록 시 <strong>즉시 결제는 발생하지 않습니다</strong>.<br>
+      ⓘ 다음 결제일부터 새 카드로 자동 결제됩니다.
+    </div>
+
+    <div class="modal-err" id="ucErr"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeUpdateCardModal()">취소</button>
+      <button class="modal-confirm" id="ucConfirmBtn" onclick="submitUpdateCard()">카드 갱신</button>
+    </div>
+  </div>
+</div>
+
 <!-- 기능 변경 확인 모달 (추가/해지) -->
 <div class="modal-overlay" id="featChangeModal">
   <div class="modal">
@@ -527,13 +560,25 @@ async function showApp() {
   if (s.status === 'cancelled') {
     document.getElementById('cancelBtn').style.display = 'none';
     document.getElementById('resubBox').style.display = 'block';
+    document.getElementById('updateCardBtn').style.display = 'none';
   } else {
     document.getElementById('resubBox').style.display = 'none';
+    document.getElementById('updateCardBtn').style.display = '';
   }
 
   currentSubscriber = s;
   renderFeatList();
   renderBillingSwitch();
+
+  // URL ?action=update-card → 카드 갱신 모달 자동 오픈 (결제 실패 SMS 링크용)
+  if (s.status !== 'cancelled') {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'update-card') {
+      setTimeout(() => openUpdateCardModal(), 200);
+      // URL 정리 (새로고침 시 다시 열리지 않도록)
+      history.replaceState({}, '', location.pathname);
+    }
+  }
 
   // 결제 내역
   const logList = document.getElementById('logList');
@@ -961,6 +1006,114 @@ async function submitResub() {
   } catch (e) {
     errEl.textContent = '서버 오류가 발생했습니다. 담당자에게 문의해주세요.';
     btn.textContent = '카드 등록'; btn.disabled = false;
+  }
+}
+
+// ── 카드 정보 갱신 모달 ──
+function openUpdateCardModal() {
+  document.getElementById('ucErr').classList.remove('show');
+  document.getElementById('ucErr').textContent = '';
+  ['ucCardNum', 'ucCardExp', 'ucCardPwd', 'ucIdNum'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('input-invalid');
+  });
+  // 사업자 회원이면 placeholder 변경 + maxLength 10
+  const isBiz = !!currentSubscriber?.business_number;
+  const idEl = document.getElementById('ucIdNum');
+  idEl.placeholder = isBiz ? '사업자번호 10자리' : '생년월일 6자리';
+  idEl.maxLength = isBiz ? 10 : 6;
+  document.getElementById('updateCardModal').classList.add('open');
+}
+function closeUpdateCardModal() { document.getElementById('updateCardModal').classList.remove('open'); }
+
+function showUcErr(msg, focusId) {
+  const errEl = document.getElementById('ucErr');
+  errEl.textContent = msg;
+  errEl.classList.add('show');
+  document.querySelectorAll('#updateCardModal .input-invalid').forEach(el => el.classList.remove('input-invalid'));
+  if (focusId) {
+    const el = document.getElementById(focusId);
+    el?.classList.add('input-invalid');
+    el?.focus();
+  }
+}
+
+// 입력 시 에러 초기화
+document.querySelectorAll('#updateCardModal input').forEach(inp => {
+  inp.addEventListener('input', () => {
+    inp.classList.remove('input-invalid');
+    document.getElementById('ucErr').classList.remove('show');
+  });
+});
+
+async function submitUpdateCard() {
+  const cardNum = document.getElementById('ucCardNum').value.trim();
+  const cardExp = document.getElementById('ucCardExp').value.trim();
+  const cardPwd = document.getElementById('ucCardPwd').value.trim();
+  const idNum   = document.getElementById('ucIdNum').value.trim();
+  const isBiz   = !!currentSubscriber?.business_number;
+
+  if (cardNum.length !== 16) { showUcErr('카드번호 16자리를 입력해주세요.', 'ucCardNum'); return; }
+  if (cardExp.length !== 4) { showUcErr('유효기간 MMYY 4자리를 입력해주세요.', 'ucCardExp'); return; }
+  const expMm = parseInt(cardExp.slice(0, 2), 10);
+  if (expMm < 1 || expMm > 12) { showUcErr('카드 만료 월(MM)이 올바르지 않습니다.', 'ucCardExp'); return; }
+  if (cardPwd.length !== 2) { showUcErr('카드 비밀번호 앞 2자리를 입력해주세요.', 'ucCardPwd'); return; }
+  if (isBiz && idNum.length !== 10) { showUcErr('사업자번호 10자리를 입력해주세요.', 'ucIdNum'); return; }
+  if (!isBiz && idNum.length !== 6) { showUcErr('생년월일 6자리를 입력해주세요.', 'ucIdNum'); return; }
+
+  const btn = document.getElementById('ucConfirmBtn');
+  btn.textContent = '처리 중...';
+  btn.disabled = true;
+
+  const mm = cardExp.slice(0, 2);
+  const yy = cardExp.slice(2, 4);
+  const cardExpire = yy + mm;
+
+  const pad = n => String(n).padStart(2, '0');
+  const now = new Date();
+  const moid = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + Math.floor(1000 + Math.random() * 9000);
+  const phone = (currentSubscriber?.phone || '').toString();
+  const buyerName = currentSubscriber?.name || '';
+
+  // 1) InnoPay 새 빌키 발급
+  let billKey = '';
+  try {
+    const res = await fetch('https://api.innopay.co.kr/api/regAutoCardBill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ mid: INNOPAY_MID, moid, buyerName, cardNum, cardExpire, cardPwd, idNum, userId: phone, arsUseYn: 'N' }),
+    });
+    const data = await res.json();
+    if (data.resultCode !== '0000') {
+      showUcErr('카드 등록 실패: ' + (data.resultMsg || '카드 정보를 확인해주세요.'), 'ucCardNum');
+      btn.textContent = '카드 갱신'; btn.disabled = false;
+      return;
+    }
+    billKey = data.billKey || '';
+  } catch (e) {
+    showUcErr('카드 등록 중 네트워크 오류가 발생했습니다.');
+    btn.textContent = '카드 갱신'; btn.disabled = false;
+    return;
+  }
+
+  // 2) 서버에 카드 갱신 요청 (즉시 결제 X)
+  try {
+    const data = await apiFetch('/api/mypage/update-card', {
+      method: 'POST',
+      body: JSON.stringify({ billKey, moid }),
+    });
+    if (data.ok) {
+      alert('카드 정보가 갱신되었습니다.\n다음 결제일: ' + (data.next_billing_date || ''));
+      closeUpdateCardModal();
+      location.reload();
+    } else {
+      showUcErr(data.msg || '갱신 처리 중 오류가 발생했습니다.');
+      btn.textContent = '카드 갱신'; btn.disabled = false;
+    }
+  } catch (e) {
+    showUcErr('서버 오류가 발생했습니다. 담당자에게 문의해주세요.');
+    btn.textContent = '카드 갱신'; btn.disabled = false;
   }
 }
 

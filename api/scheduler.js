@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const db = require('./db');
 const cfg = require('./config');
 const { chargeWithRetry, notifySlack } = require('./innopay');
-const { sendSMS } = require('./sms');
+const { sendSMS, getBalance } = require('./sms');
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -83,7 +83,7 @@ async function chargeSubscriber(sub) {
         } catch (e) { /* ignore */ }
       }
       // 회원에게 자동 해지 통보 SMS
-      const cancelText = `[Moti Shop] ${sub.company}님, 카드 결제 3일 연속 실패로 자동 해지되었어요.\n카드 정보 갱신 후 마이페이지에서 언제든 다시 구독하실 수 있습니다.\nhttps://shop.motiphysio.com/mypage`;
+      const cancelText = `[Moti Shop] ${sub.company}님, 카드 결제 3일 연속 실패로 자동 해지되었어요.\n카드 정보 갱신 후 마이페이지에서 언제든 다시 구독하실 수 있습니다.\nhttps://shop.motiphysio.com/mypage?action=update-card`;
       sendSMS({ to: sub.phone, text: cancelText }).catch(e => console.error('[자동해지 SMS 실패]', e.message));
       notifySlack(`⛔ 자동 해지: ${sub.company} (id=${sub.id}) — 3일 연속 결제 실패로 자동 해지`);
       console.log(`[자동해지] ${sub.company} / 3회 실패`);
@@ -92,8 +92,8 @@ async function chargeSubscriber(sub) {
 
     // 1~2회 실패: 회원에게 카드 갱신 요청 SMS
     const failText = newCount === 1
-      ? `[Moti Shop] ${sub.company}님, 오늘 ${sub.charge_amount.toLocaleString()}원 자동 결제가 실패했어요.\n카드 한도·유효기간 확인 부탁드려요. 내일 다시 시도 예정입니다.\nhttps://shop.motiphysio.com/mypage`
-      : `[Moti Shop] ${sub.company}님, 자동 결제가 2회 연속 실패했어요.\n내일이 마지막 재시도이며, 또 실패하면 자동 해지됩니다.\n카드 정보 갱신 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
+      ? `[Moti Shop] ${sub.company}님, 오늘 ${sub.charge_amount.toLocaleString()}원 자동 결제가 실패했어요.\n카드 한도·유효기간 확인 부탁드려요. 내일 다시 시도 예정입니다.\nhttps://shop.motiphysio.com/mypage?action=update-card`
+      : `[Moti Shop] ${sub.company}님, 자동 결제가 2회 연속 실패했어요.\n내일이 마지막 재시도이며, 또 실패하면 자동 해지됩니다.\n카드 정보 갱신 부탁드려요.\nhttps://shop.motiphysio.com/mypage?action=update-card`;
     sendSMS({ to: sub.phone, text: failText }).catch(e => console.error('[결제실패 SMS 실패]', e.message));
   }
 }
@@ -230,4 +230,34 @@ function scheduleBilling() {
   console.log('결제 스케줄러 시작 (매일 10:00 KST · 사전안내 7일/1일 전 · 재시도 2회)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, chargeSubscriber, processDueBillings };
+// 솔라피 잔액 모니터 — 매일 09:00 KST · 5만원 미만이면 Slack
+// 영업 시작 전 잔액 확인 → 충전 시간 확보 (SMS 발송 실패 방지)
+function scheduleSolapiBalance() {
+  const THRESHOLD = 50000;
+  let lastAlertedAt = null;  // 같은 날 중복 알림 방지
+
+  cron.schedule('0 9 * * *', async () => {
+    try {
+      const r = await getBalance();
+      if (!r.ok) {
+        notifySlack(`⚠️ 솔라피 잔액 조회 실패: ${r.resultMsg || '알 수 없음'}`);
+        return;
+      }
+      const total = r.total;
+      console.log(`[솔라피 잔액] 현금 ${r.balance.toLocaleString()}원 / 포인트 ${r.point.toLocaleString()}원 / 합계 ${total.toLocaleString()}원`);
+      if (total < THRESHOLD) {
+        const today = kstDateOnly();
+        if (lastAlertedAt !== today) {
+          notifySlack(`💰 솔라피 잔액 부족: 합계 ${total.toLocaleString()}원 (현금 ${r.balance.toLocaleString()} / 포인트 ${r.point.toLocaleString()}) — 5만원 미만\nhttps://console.solapi.com/cash/charge`);
+          lastAlertedAt = today;
+        }
+      }
+    } catch (e) {
+      console.error('[솔라피 잔액 cron 오류]', e.message);
+      notifySlack(`🔴 솔라피 잔액 cron 예외: ${e.message}`);
+    }
+  }, { timezone: 'Asia/Seoul' });
+  console.log('솔라피 잔액 모니터 시작 (매일 09:00 KST · 5만원 미만 시 Slack)');
+}
+
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, chargeSubscriber, processDueBillings };

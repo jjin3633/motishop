@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 const { sendSMS } = require('./sms');
 
@@ -596,6 +596,43 @@ app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
   res.json({ ok: true, charge_amount: chargeAmount, next_billing_date: nextBilling });
 });
 
+// 카드 정보 갱신 — 결제 실패·카드 변경 시 사용 (해지·재구독 불필요)
+// 흐름: 클라이언트가 새 카드로 InnoPay 빌키 발급 → 서버에 새 billKey 전송 → 기존 빌키 삭제 + DB 갱신
+app.post('/api/mypage/update-card', mypageAuth, async (req, res) => {
+  const { billKey, moid } = req.body;
+  if (!billKey) return res.status(400).json({ ok: false, msg: '빌키 누락' });
+
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+  if (sub.status === 'cancelled') {
+    return res.status(400).json({ ok: false, msg: '해지된 구독입니다. 다시 구독하기를 이용해주세요.' });
+  }
+
+  const oldBillKey = sub.bill_key;
+  const newMoid = moid || (kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000));
+
+  // 새 빌키로 갱신 + 결제 실패 카운트 초기화
+  db.prepare(`UPDATE subscribers SET
+    bill_key=?, moid=?, billkey_deleted=0, failed_count=0, last_failed_at=NULL
+    WHERE id=?`).run(billKey, newMoid, req.subscriberId);
+
+  // 기존 빌키 삭제 (best-effort, 실패해도 무시)
+  if (oldBillKey && oldBillKey !== billKey) {
+    deleteBillKey({ billKey: oldBillKey, userId: sub.phone })
+      .then(r => console.log(`[빌키 삭제 ${r.ok ? '✓' : '✗'}] old=${String(oldBillKey).slice(0, 8)}... ${r.resultCode || ''}`))
+      .catch(e => console.error('[빌키 삭제 오류]', e.message));
+  }
+
+  console.log(`[카드 갱신] ${sub.company} (id=${sub.id}) / 다음 결제일: ${sub.next_billing_date}`);
+  notifySlack(`💳 카드 정보 갱신: ${sub.company} (id=${sub.id}) / 다음 결제일: ${sub.next_billing_date}`);
+
+  // 회원에게 갱신 완료 SMS
+  const smsText = `[Moti Shop] ${sub.company}님, 카드 정보가 정상적으로 갱신되었어요.\n다음 결제일: ${sub.next_billing_date}\nhttps://shop.motiphysio.com/mypage`;
+  sendSMS({ to: sub.phone, text: smsText }).catch(e => console.error('[카드갱신 SMS 실패]', e.message));
+
+  res.json({ ok: true, next_billing_date: sub.next_billing_date });
+});
+
 // 기능 추가/해지
 app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
   const { features } = req.body;
@@ -721,9 +758,52 @@ app.post('/api/deploy/webhook', (req, res) => {
   res.json({ ok: true, deploying: true, commit: headCommit });
 });
 
+// 5xx 에러 핸들러 — 처리되지 않은 예외를 Slack으로 보고
+// 같은 에러가 5분 내 반복되면 알림 1번만 (스팸 방지)
+const _errorAlertCache = new Map();  // key: errSig → lastNotifiedAt
+const ERR_DEDUP_MS = 5 * 60 * 1000;
+
+app.use((err, req, res, _next) => {
+  const status = err.status || 500;
+  const stack = (err.stack || err.message || String(err)).slice(0, 800);
+  console.error(`[5xx] ${req.method} ${req.path} →`, stack);
+
+  if (status >= 500) {
+    const sig = `${req.method} ${req.path} ${(err.message || '').slice(0, 100)}`;
+    const now = Date.now();
+    const last = _errorAlertCache.get(sig) || 0;
+    if (now - last > ERR_DEDUP_MS) {
+      _errorAlertCache.set(sig, now);
+      // 캐시 크기 제한 (메모리 누수 방지)
+      if (_errorAlertCache.size > 200) {
+        const oldest = [..._errorAlertCache.entries()].sort((a, b) => a[1] - b[1])[0];
+        if (oldest) _errorAlertCache.delete(oldest[0]);
+      }
+      notifySlack(`🚨 5xx 에러: ${req.method} ${req.path}\n\`\`\`${stack}\`\`\``);
+    }
+  }
+
+  if (!res.headersSent) {
+    res.status(status).json({ ok: false, msg: status >= 500 ? '서버 오류' : (err.message || 'Bad Request') });
+  }
+});
+
+// 처리되지 않은 Promise rejection도 Slack
+process.on('unhandledRejection', (reason) => {
+  const msg = (reason?.stack || reason?.message || String(reason)).slice(0, 800);
+  console.error('[unhandledRejection]', msg);
+  notifySlack(`🚨 unhandledRejection:\n\`\`\`${msg}\`\`\``);
+});
+process.on('uncaughtException', (err) => {
+  const msg = (err?.stack || err?.message || String(err)).slice(0, 800);
+  console.error('[uncaughtException]', msg);
+  notifySlack(`🚨 uncaughtException:\n\`\`\`${msg}\`\`\``);
+});
+
 scheduleBilling();
 scheduleHealthCheck();
 scheduleAutoDelete();
+scheduleSolapiBalance();
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);

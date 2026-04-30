@@ -74,4 +74,27 @@ async function sendSMS({ to, text, from }) {
   }
 }
 
-module.exports = { sendSMS };
+/**
+ * 솔라피 잔액 조회
+ * GET https://api.solapi.com/cash/v1/balance
+ * 응답: { balance, point, ... }  (단위: 원)
+ */
+async function getBalance() {
+  if (!cfg.SOLAPI_API_KEY || !cfg.SOLAPI_API_SECRET) {
+    return { ok: false, resultMsg: 'SOLAPI 키 미설정' };
+  }
+  try {
+    const { data } = await axios.get('https://api.solapi.com/cash/v1/balance', {
+      headers: { 'Authorization': buildAuthHeader() },
+      timeout: 10000,
+    });
+    const balance = Number(data?.balance ?? 0);
+    const point = Number(data?.point ?? 0);
+    return { ok: true, balance, point, total: balance + point, raw: data };
+  } catch (e) {
+    const detail = e.response?.data ? JSON.stringify(e.response.data).slice(0, 300) : e.message;
+    return { ok: false, resultMsg: detail };
+  }
+}
+
+module.exports = { sendSMS, getBalance };
