@@ -264,17 +264,13 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
           <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">회원 유형</div>
           <div style="font-size:15px; color:var(--text); font-weight:600;" id="myOwnerType">—</div>
         </div>
-        <div id="myEmailRow" style="display:none;">
-          <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">이메일 (세금계산서 발행)</div>
-          <div style="font-size:15px; color:var(--text); font-weight:600;" id="myEmail">—</div>
-        </div>
         <div id="myBizRow" style="display:none;">
           <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">사업자번호</div>
           <div style="font-size:15px; color:var(--text); font-weight:600;" id="myBizNum">—</div>
         </div>
       </div>
       <p style="font-size:12px; color:var(--text-muted); margin-top:14px; padding-top:12px; border-top:1px solid var(--gray100); line-height:1.6;">
-        ⓘ 이메일·사업자번호 등 정보 수정은 <a href="tel:07043657740" style="color:var(--blue); font-weight:700;">고객센터(070-4365-7740)</a>로 문의해주세요.
+        ⓘ 사업자번호 등 정보 수정은 <a href="tel:07043657740" style="color:var(--blue); font-weight:700;">고객센터(070-4365-7740)</a>로 문의해주세요.
       </p>
     </div>
 
@@ -394,8 +390,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; ba
         <input type="tel" id="resubCardExp" placeholder="MMYY (예: 0828)" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
         <input type="password" id="resubCardPwd" placeholder="비번 앞 2자리" maxlength="2" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="flex:1; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
       </div>
-      <input type="tel" id="resubIdNum" placeholder="생년월일 6자리" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; margin-bottom:8px; outline:none;" />
-      <input type="email" id="resubEmail" placeholder="세금계산서 발행 이메일" inputmode="email" autocomplete="email" style="display:none; width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
+      <input type="tel" id="resubIdNum" placeholder="생년월일 6자리" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:11px 14px; border:1px solid var(--gray100); border-radius:9px; font-family:inherit; font-size:14px; outline:none;" />
     </div>
 
     <div class="resub-notice">
@@ -517,10 +512,6 @@ async function showApp() {
   const phoneFmt = (s.phone||'').replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
   document.getElementById('myPhone').textContent = phoneFmt || '—';
   document.getElementById('myOwnerType').textContent = s.business_number ? '법인 / 사업자' : '개인';
-  if (s.email) {
-    document.getElementById('myEmailRow').style.display = '';
-    document.getElementById('myEmail').textContent = s.email;
-  }
   if (s.business_number) {
     document.getElementById('myBizRow').style.display = '';
     const bn = s.business_number;
@@ -797,7 +788,6 @@ function openResubModal() {
   document.getElementById('resubCardExp').value = '';
   document.getElementById('resubCardPwd').value = '';
   document.getElementById('resubIdNum').value = '';
-  document.getElementById('resubEmail').value = currentSubscriber?.email || '';
   document.getElementById('resubModal').classList.add('open');
 }
 function closeResubModal() { document.getElementById('resubModal').classList.remove('open'); }
@@ -818,7 +808,6 @@ function setResubOwner(type) {
   idEl.placeholder = isBiz ? '사업자번호 10자리' : '생년월일 6자리';
   idEl.maxLength = isBiz ? 10 : 6;
   idEl.value = '';
-  document.getElementById('resubEmail').style.display = isBiz ? '' : 'none';
 }
 
 function toggleResubFeat(key) {
@@ -908,11 +897,9 @@ async function submitResub() {
   if (cardPwd.length !== 2) { showResubErr('카드 비밀번호 앞 2자리를 입력해주세요.', 'resubCardPwd'); return; }
 
   const isBiz = resubOwner === 'business';
-  const emailVal = isBiz ? (document.getElementById('resubEmail').value || '').trim() : '';
 
   if (isBiz) {
     if (idNum.length !== 10) { showResubErr('사업자번호 10자리를 입력해주세요.', 'resubIdNum'); return; }
-    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { showResubErr('세금계산서 발행 이메일을 정확히 입력해주세요.', 'resubEmail'); return; }
   } else {
     if (idNum.length !== 6) { showResubErr('생년월일 6자리를 입력해주세요.', 'resubIdNum'); return; }
   }
@@ -960,7 +947,7 @@ async function submitResub() {
   try {
     const data = await apiFetch('/api/mypage/resubscribe', {
       method: 'POST',
-      body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount, ownerType: resubOwner, email: emailVal, businessNumber: isBiz ? idNum : '' }),
+      body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount, ownerType: resubOwner, businessNumber: isBiz ? idNum : '' }),
     });
     if (data.ok) {
       alert('재구독이 완료되었습니다.\n결제 금액: ' + fmt(data.charge_amount) + '원\n다음 결제일: ' + (data.next_billing_date || ''));

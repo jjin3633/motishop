@@ -160,15 +160,10 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
 }
 
 app.post('/api/subscribe', subscribeLimiter, (req, res) => {
-  const { company, name, phone, email, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
+  const { company, name, phone, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
-  // 사업자번호 입력 시 이메일 필수 (세금계산서 발행용)
   const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
-  if (cleanBizNum && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email)))) {
-    return res.status(400).json({ ok: false, msg: '사업자 회원은 세금계산서 발행 이메일이 필수입니다.' });
-  }
-  const cleanEmail = email ? String(email).trim().slice(0, 200) : null;
 
   const cleanPhone = String(phone).replace(/[^0-9]/g, '');
   const trialStart = kstDateOnly();
@@ -189,10 +184,10 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
         .run(existing.id, existing.features, features, existing.billing_type, billingType, existing.charge_amount, chargeAmount);
 
       db.prepare(`UPDATE subscribers SET
-        company=?, name=?, email=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
+        company=?, name=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
         trial_start=?, next_billing_date=?, status='trial', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL
         WHERE id=?`)
-        .run(company, name, cleanEmail, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
+        .run(company, name, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
 
       saveTermsConsent(existing.id, termsAgreed, req);
       console.log(`[재가입 ✓] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
@@ -206,9 +201,9 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
     const r = db.prepare(`
       INSERT INTO subscribers
-        (company, name, phone, email, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(company, name, cleanPhone, cleanEmail, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+        (company, name, phone, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
     console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
 
@@ -247,7 +242,7 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
 app.get('/api/subscribers/:id', adminAuth, (req, res) => {
   const id = parseInt(req.params.id);
   const sub = db.prepare(`
-    SELECT id, company, name, phone, email, business_number, features, billing_type, charge_amount,
+    SELECT id, company, name, phone, business_number, features, billing_type, charge_amount,
            trial_start, next_billing_date, status, created_at, cancelled_at,
            billkey_deleted, notified_7d, notified_1d, failed_count, last_failed_at
     FROM subscribers WHERE id = ?
@@ -389,40 +384,29 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
   res.status(502).json({ ok: false, msg: '환불 실패', resultCode: result.resultCode, resultMsg: result.resultMsg });
 });
 
-// 관리자 — 회원 정보 수정 (이메일, 사업자번호, 회원 유형 전환)
+// 관리자 — 회원 정보 수정 (사업자번호, 회원 유형 전환)
 app.post('/api/admin/update-info', adminAuth, (req, res) => {
-  const { id, email, businessNumber, ownerType } = req.body;
+  const { id, businessNumber, ownerType } = req.body;
   if (!id || !ownerType) return res.status(400).json({ ok: false, msg: '필수값 누락 (id, ownerType)' });
   if (!['personal', 'business'].includes(ownerType)) return res.status(400).json({ ok: false, msg: 'ownerType은 personal 또는 business' });
 
-  const sub = db.prepare(`SELECT id, email, business_number FROM subscribers WHERE id=?`).get(id);
+  const sub = db.prepare(`SELECT id, business_number FROM subscribers WHERE id=?`).get(id);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
 
-  let cleanEmail = null;
   let cleanBiz = null;
 
   if (ownerType === 'business') {
     if (!businessNumber || !/^\d{10}$/.test(String(businessNumber))) {
       return res.status(400).json({ ok: false, msg: '사업자번호는 10자리 숫자여야 합니다.' });
     }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
-      return res.status(400).json({ ok: false, msg: '법인 회원은 세금계산서 발행 이메일이 필수입니다.' });
-    }
-    cleanEmail = String(email).trim().slice(0, 200);
     cleanBiz = String(businessNumber);
-  } else {
-    // 개인: 이메일은 입력했으면 저장, 사업자번호는 NULL
-    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
-      cleanEmail = String(email).trim().slice(0, 200);
-    }
-    cleanBiz = null;
   }
 
-  db.prepare(`UPDATE subscribers SET email=?, business_number=? WHERE id=?`)
-    .run(cleanEmail, cleanBiz, id);
+  db.prepare(`UPDATE subscribers SET business_number=? WHERE id=?`)
+    .run(cleanBiz, id);
 
-  console.log(`[정보수정] id=${id} / ${ownerType} / email=${cleanEmail||'-'} / biz=${cleanBiz||'-'}`);
-  res.json({ ok: true, email: cleanEmail, business_number: cleanBiz, ownerType });
+  console.log(`[정보수정] id=${id} / ${ownerType} / biz=${cleanBiz||'-'}`);
+  res.json({ ok: true, business_number: cleanBiz, ownerType });
 });
 
 // 관리자 — 임시 비밀번호 재발급 (시스템이 생성, 관리자는 받아서 고객에게 전달)
@@ -490,7 +474,7 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
 
 app.get('/api/mypage/me', mypageAuth, (req, res) => {
   const sub = db.prepare(`
-    SELECT id, company, name, phone, email, business_number, features, billing_type, charge_amount,
+    SELECT id, company, name, phone, business_number, features, billing_type, charge_amount,
            trial_start, next_billing_date, status, created_at
     FROM subscribers WHERE id=?
   `).get(req.subscriberId);
@@ -542,7 +526,7 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
 // 마이페이지 재구독 — 해지된 계정이 카드 재등록 후 호출
 // 정책: 무료 체험 없이 즉시 결제 (정기 결제 사이클 신규 시작)
 app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
-  const { features, billingType, billKey, moid, amount, ownerType, email, businessNumber } = req.body;
+  const { features, billingType, billKey, moid, amount, ownerType, businessNumber } = req.body;
   if (!features || !Array.isArray(features) || features.length === 0 || !billingType || !billKey || !amount) {
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
   }
@@ -550,20 +534,14 @@ app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
 
   // 명의 변경 처리 (재구독 시 가능)
-  let nextEmail = sub.email;
   let nextBiz = sub.business_number;
   if (ownerType === 'business') {
     if (!businessNumber || !/^\d{10}$/.test(String(businessNumber))) {
       return res.status(400).json({ ok: false, msg: '법인은 사업자번호 10자리 필수' });
     }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
-      return res.status(400).json({ ok: false, msg: '법인은 세금계산서 발행 이메일 필수' });
-    }
-    nextEmail = String(email).trim().slice(0, 200);
     nextBiz = String(businessNumber);
   } else if (ownerType === 'personal') {
-    nextBiz = null;  // 개인 전환 시 사업자번호 NULL
-    // email은 기존 값 유지 (개인이지만 이메일 받고 싶은 경우)
+    nextBiz = null;
   }
 
   const prices = FEATURE_PRICES[billingType] || FEATURE_PRICES.monthly;
@@ -609,9 +587,9 @@ app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
 
   // 가입자 정보 갱신 (재구독 시 명의 변경 가능)
   db.prepare(`UPDATE subscribers SET
-    features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?, email=?, business_number=?,
+    features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?, business_number=?,
     next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL
-    WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextEmail, nextBiz, nextBilling, req.subscriberId);
+    WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextBiz, nextBilling, req.subscriberId);
 
   console.log(`[재구독 ✓] ${sub.company} / ${featStr} / ${chargeAmount}원 / 다음: ${nextBilling}`);
   notifySlack(`🔁 재구독: ${sub.company} (id=${sub.id}) / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);

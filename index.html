@@ -1969,10 +1969,6 @@
             <label id="f-idnum-label">생년월일 6자리 *</label>
             <input id="f-idnum" type="text" inputmode="numeric" placeholder="예) 901231" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
           </div>
-          <div class="form-row" id="f-email-wrap" style="display:none;">
-            <label>세금계산서 발행 이메일 *</label>
-            <input id="f-email" type="email" inputmode="email" autocomplete="email" placeholder="contact@yourcompany.com" />
-          </div>
           <div class="form-btn-row">
             <button class="form-btn-back" onclick="goStep(3)">이전</button>
             <button class="form-btn-next" id="btn-pay" onclick="submitCard()">카드 등록하기</button>
@@ -2256,7 +2252,6 @@
     const isBiz = type === 'business';
     document.getElementById('owner-personal').classList.toggle('active', !isBiz);
     document.getElementById('owner-business').classList.toggle('active', isBiz);
-    document.getElementById('f-email-wrap').style.display = isBiz ? '' : 'none';
     document.getElementById('f-idnum-label').textContent = isBiz ? '사업자번호 10자리 *' : '생년월일 6자리 *';
     const idEl = document.getElementById('f-idnum');
     idEl.placeholder = isBiz ? '예) 1234567890' : '예) 901231';
@@ -2283,14 +2278,12 @@
     const idNum   = document.getElementById('f-idnum').value;
 
     const isBiz = ownerType === 'business';
-    const emailVal = isBiz ? (document.getElementById('f-email').value || '').trim() : '';
 
     if (cardNum.length !== 16) { alert('카드번호 16자리를 입력해주세요.'); return; }
     if (cardExpRaw.length !== 4) { alert('유효기간을 MM/YY 형식으로 입력해주세요.'); return; }
     if (cardPwd.length !== 2) { alert('비밀번호 앞 2자리를 입력해주세요.'); return; }
     if (isBiz) {
       if (idNum.length !== 10) { alert('사업자번호 10자리를 입력해주세요.'); return; }
-      if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { alert('세금계산서 발행을 위한 이메일을 정확히 입력해주세요.'); return; }
     } else {
       if (idNum.length !== 6) { alert('생년월일 6자리를 입력해주세요.'); return; }
     }
@@ -2305,9 +2298,8 @@
     const company = document.getElementById('f-company').value.trim();
     const name    = document.getElementById('f-name').value.trim();
     const phone   = document.getElementById('f-phone').value.trim().replace(/[^0-9]/g, '');
-    const email   = isBiz ? emailVal : '';  // 개인 = 이메일 미수집, 법인 = 필수
     const feats   = [...document.querySelectorAll('.feat-select-item.selected')].map(i => i.dataset.name).join(', ');
-    const businessNumber = isBiz ? idNum : '';  // 사업자번호는 법인일 때만
+    const businessNumber = isBiz ? idNum : '';
 
     const pad = n => String(n).padStart(2, '0');
     const now = new Date();
@@ -2335,7 +2327,7 @@
         fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company, name, phone, email, businessNumber, features: feats, billingType, billKey, moid, amount, termsAgreed })
+          body: JSON.stringify({ company, name, phone, businessNumber, features: feats, billingType, billKey, moid, amount, termsAgreed })
         }).catch(e => console.error('subscribe API 오류:', e));
 
         document.getElementById('card-form-area').style.display = 'none';
