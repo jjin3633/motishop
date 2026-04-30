@@ -23,14 +23,23 @@ function maskName(n) {
   if (s.length === 2) return s[0] + '*';
   return s[0] + '*'.repeat(s.length - 2) + s.slice(-1);
 }
+function maskBiz(b) {
+  if (!b) return '';
+  const s = String(b).replace(/[^0-9]/g, '');
+  if (s.length !== 10) return '*'.repeat(s.length);
+  return s.slice(0, 3) + '-**-*****';
+}
 
 const app = express();
 app.set('trust proxy', 1);  // nginx 뒤 → req.ip가 실제 클라이언트 IP
 
 // 보안 헤더 — webhook은 contentSecurityPolicy 영향 안 받음 (JSON 응답)
+// HSTS: 1년 + includeSubDomains + preload (HTTPS 강제, MITM 방어)
+// nginx에서 80→443 redirect 별도 필요 (운영 시 확인)
 app.use(helmet({
-  contentSecurityPolicy: false,  // mypage/admin HTML이 inline script/style 사용 — 별도 CSP 정의 필요 시 활성화
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
 
 // 본문 파싱 — webhook 서명 검증 위해 rawBody 캡처
@@ -38,6 +47,9 @@ app.use(express.json({
   verify: (req, _res, buf) => { req.rawBody = buf; },
 }));
 
+// CORS — CORS_ORIGIN 외 도메인 차단
+// CSRF: 모든 인증이 커스텀 헤더(x-session-token / x-admin-pw) 기반 + CORS preflight 필수
+//   → 외부 도메인 form/img submit으론 헤더 자동 첨부 안 됨 → CSRF 자연 보호
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', cfg.CORS_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
@@ -60,6 +72,14 @@ const subscribeLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, msg: '가입 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+});
+// 결제 발생·카드 등록 액션 — 가입과 동급 보호 (재구독·카드갱신 abuse 방지)
+const paymentActionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, msg: '요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.' },
 });
 
 // ── 기능 가격표 ──
@@ -405,7 +425,7 @@ app.post('/api/admin/update-info', adminAuth, (req, res) => {
   db.prepare(`UPDATE subscribers SET business_number=? WHERE id=?`)
     .run(cleanBiz, id);
 
-  console.log(`[정보수정] id=${id} / ${ownerType} / biz=${cleanBiz||'-'}`);
+  console.log(`[정보수정] id=${id} / ${ownerType} / biz=${cleanBiz ? maskBiz(cleanBiz) : '-'}`);
   res.json({ ok: true, business_number: cleanBiz, ownerType });
 });
 
@@ -466,7 +486,7 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
 
   // 해지 상태도 로그인 허용 — 마이페이지에서 이력 확인 + 재구독 가능
   const token = genToken();
-  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();  // B2B: 30일 (의사가 매주 안 봐도 OK)
   db.prepare(`INSERT INTO sessions (subscriber_id, token, expires_at) VALUES (?, ?, ?)`).run(sub.id, token, expires);
 
   res.json({ ok: true, token });
@@ -525,7 +545,7 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
 
 // 마이페이지 재구독 — 해지된 계정이 카드 재등록 후 호출
 // 정책: 무료 체험 없이 즉시 결제 (정기 결제 사이클 신규 시작)
-app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
+app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req, res) => {
   const { features, billingType, billKey, moid, amount, ownerType, businessNumber } = req.body;
   if (!features || !Array.isArray(features) || features.length === 0 || !billingType || !billKey || !amount) {
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
@@ -598,7 +618,7 @@ app.post('/api/mypage/resubscribe', mypageAuth, async (req, res) => {
 
 // 카드 정보 갱신 — 결제 실패·카드 변경 시 사용 (해지·재구독 불필요)
 // 흐름: 클라이언트가 새 카드로 InnoPay 빌키 발급 → 서버에 새 billKey 전송 → 기존 빌키 삭제 + DB 갱신
-app.post('/api/mypage/update-card', mypageAuth, async (req, res) => {
+app.post('/api/mypage/update-card', paymentActionLimiter, mypageAuth, async (req, res) => {
   const { billKey, moid } = req.body;
   if (!billKey) return res.status(400).json({ ok: false, msg: '빌키 누락' });
 
