@@ -4,6 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>마이페이지 — Moti Shop</title>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GM9BE8D39V"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GM9BE8D39V');
+</script>
+
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
 <style>
@@ -497,6 +507,11 @@ async function apiFetch(path, options = {}) {
   return res.json();
 }
 
+// GA4 이벤트 헬퍼 (gtag 미로드돼도 안전하게)
+function track(name, params) {
+  try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {}
+}
+
 async function login() {
   const phone = document.getElementById('loginPhone').value.trim();
   const pw    = document.getElementById('loginPw').value;
@@ -514,8 +529,10 @@ async function login() {
   if (data.ok) {
     sessionToken = data.token;
     sessionStorage.setItem('moti_token', sessionToken);
+    track('mypage_login');
     showApp();
   } else {
+    track('mypage_login_failed', { reason: (data.msg || '').slice(0, 50) });
     err.textContent = data.msg;
     err.style.display = 'block';
   }
@@ -680,6 +697,7 @@ function closeBillingModal() { document.getElementById('billingModal').classList
 
 async function changeBillingType() {
   const s = currentSubscriber;
+  const fromType = s.billing_type;
   const targetType = s.billing_type !== 'annual' ? 'annual' : 'monthly';
   const data = await apiFetch('/api/mypage/change-billing-type', {
     method: 'POST', body: JSON.stringify({ billingType: targetType })
@@ -689,6 +707,7 @@ async function changeBillingType() {
     currentSubscriber.charge_amount = data.charge_amount;
     document.getElementById('myAmount').innerHTML = fmt(data.charge_amount) + '<small>원</small>';
     document.getElementById('myBillingType').textContent = data.billing_type === 'monthly' ? '월 구독' : '연 구독';
+    track('billing_type_changed', { from: fromType, to: data.billing_type, new_amount: data.charge_amount });
     renderBillingSwitch();
     renderFeatList();
     closeBillingModal();
@@ -758,6 +777,8 @@ async function addFeat(featKey) {
 }
 
 async function updateFeatures(features) {
+  const beforeFeats = currentSubscriber.features;
+  const beforeAmt = currentSubscriber.charge_amount;
   const data = await apiFetch('/api/mypage/update-features', {
     method: 'POST', body: JSON.stringify({ features })
   });
@@ -765,6 +786,13 @@ async function updateFeatures(features) {
     currentSubscriber.features = data.features;
     currentSubscriber.charge_amount = data.charge_amount;
     document.getElementById('myAmount').innerHTML = fmt(data.charge_amount) + '<small>원</small>';
+    track('features_changed', {
+      features_before: beforeFeats,
+      features_after: data.features,
+      amount_before: beforeAmt,
+      amount_after: data.charge_amount,
+      direction: data.charge_amount > beforeAmt ? 'upgrade' : (data.charge_amount < beforeAmt ? 'downgrade' : 'swap'),
+    });
     renderFeatList();
   } else {
     alert(data.msg || '오류가 발생했습니다.');
@@ -799,8 +827,16 @@ async function changePassword() {
 function openCancelModal() { document.getElementById('cancelModal').classList.add('open'); }
 function closeCancelModal() { document.getElementById('cancelModal').classList.remove('open'); }
 async function cancelSubscription() {
+  const s = currentSubscriber;
   const data = await apiFetch('/api/mypage/cancel', { method: 'POST' });
   if (data.ok) {
+    track('subscription_cancelled', {
+      billing_type: s?.billing_type,
+      monthly_amount: s?.charge_amount,
+      features: s?.features,
+      currency: 'KRW',
+      value: -(s?.charge_amount || 0),  // 음수 value = 이탈 가치
+    });
     alert('구독이 해지되었습니다. 마이페이지에서 언제든 다시 구독하실 수 있습니다.');
     closeCancelModal();
     location.reload();
@@ -995,15 +1031,24 @@ async function submitResub() {
       body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount, ownerType: resubOwner, businessNumber: isBiz ? idNum : '' }),
     });
     if (data.ok) {
+      track('resubscribed', {
+        amount: data.charge_amount,
+        billing_type: resubBilling,
+        features: features.join(', '),
+        currency: 'KRW',
+        value: data.charge_amount,
+      });
       alert('재구독이 완료되었습니다.\n결제 금액: ' + fmt(data.charge_amount) + '원\n다음 결제일: ' + (data.next_billing_date || ''));
       closeResubModal();
       location.reload();
       return;
     } else {
+      track('resubscribe_failed', { reason: (data.msg || '').slice(0, 100), result_code: data.resultCode || '' });
       errEl.textContent = data.msg || '재구독 처리 중 오류가 발생했습니다.';
       btn.textContent = '카드 등록'; btn.disabled = false;
     }
   } catch (e) {
+    track('resubscribe_failed', { reason: 'NETWORK_ERROR' });
     errEl.textContent = '서버 오류가 발생했습니다. 담당자에게 문의해주세요.';
     btn.textContent = '카드 등록'; btn.disabled = false;
   }
@@ -1104,14 +1149,17 @@ async function submitUpdateCard() {
       body: JSON.stringify({ billKey, moid }),
     });
     if (data.ok) {
+      track('card_updated');
       alert('카드 정보가 갱신되었습니다.\n다음 결제일: ' + (data.next_billing_date || ''));
       closeUpdateCardModal();
       location.reload();
     } else {
+      track('card_update_failed', { reason: (data.msg || '').slice(0, 100) });
       showUcErr(data.msg || '갱신 처리 중 오류가 발생했습니다.');
       btn.textContent = '카드 갱신'; btn.disabled = false;
     }
   } catch (e) {
+    track('card_update_failed', { reason: 'NETWORK_ERROR' });
     showUcErr('서버 오류가 발생했습니다. 담당자에게 문의해주세요.');
     btn.textContent = '카드 갱신'; btn.disabled = false;
   }

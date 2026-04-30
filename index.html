@@ -2150,6 +2150,11 @@
   let currentStep = 1;
   let billingType = 'monthly';
 
+  // GA4 이벤트 발송 헬퍼 (gtag 미로드돼도 안전하게)
+  function track(name, params) {
+    try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {}
+  }
+
   function goStep(n) {
     if (n > currentStep) {
       if (currentStep === 1) {
@@ -2157,15 +2162,21 @@
         const nm = document.getElementById('f-name').value.trim();
         const ph = document.getElementById('f-phone').value.trim();
         if (!c || !nm || !ph) { alert('업체명, 원장님 성함, 연락처를 모두 입력해주세요.'); return; }
+        track('signup_start');
       }
       if (currentStep === 2) {
         if (!document.querySelectorAll('.feat-select-item.selected').length) {
           alert('체험할 기능을 하나 이상 선택해주세요.'); return;
         }
+        const feats = [...document.querySelectorAll('.feat-select-item.selected')].map(i => i.dataset.name);
+        const amount = [...document.querySelectorAll('.feat-select-item.selected')]
+          .reduce((s, i) => s + parseInt(i.dataset[billingType]), 0);
+        track('signup_step2_complete', { features: feats.join('|'), billing_type: billingType, monthly_amount: amount });
       }
       if (currentStep === 3) {
         const allOk = [...document.querySelectorAll('.terms-item')].every(t => t.classList.contains('checked'));
         if (!allOk) { alert('모든 약관에 동의해주세요.'); return; }
+        track('signup_step3_terms_agreed');
       }
     }
     document.getElementById('fstep' + currentStep).classList.remove('active');
@@ -2307,6 +2318,11 @@
 
     const payload = { mid: INNOPAY_MID, moid, buyerName: name, cardNum, cardExpire, cardPwd, idNum, userId: phone, arsUseYn: 'N' };
 
+    const monthlyAmt = [...document.querySelectorAll('.feat-select-item.selected')]
+      .reduce((s, i) => s + parseInt(i.dataset[billingType]), 0);
+    const totalAmt = billingType === 'annual' ? monthlyAmt * 12 : monthlyAmt;
+    track('signup_card_attempted', { amount: totalAmt, billing_type: billingType, owner_type: ownerType });
+
     try {
       const res  = await fetch('https://api.innopay.co.kr/api/regAutoCardBill', {
         method: 'POST',
@@ -2317,8 +2333,7 @@
 
       if (data.resultCode === '0000') {
         const billKey = data.billKey || '';
-        const amount = [...document.querySelectorAll('.feat-select-item.selected')]
-          .reduce((s, i) => s + parseInt(i.dataset[billingType]), 0);
+        const amount = monthlyAmt;
 
         // 약관 동의 키 수집 (DB에 동의 시점·약관 키별로 기록 — 법적 증거)
         const termsAgreed = ['모티샵서비스이용약관', '전자금융거래기본약관', '자동결제이용약관', '개인정보수집이용', '개인정보제3자제공'];
@@ -2330,15 +2345,27 @@
           body: JSON.stringify({ company, name, phone, businessNumber, features: feats, billingType, billKey, moid, amount, termsAgreed })
         }).catch(e => console.error('subscribe API 오류:', e));
 
+        // GA4 전환 이벤트 — 가입 완료
+        track('signup_complete', {
+          amount: totalAmt,
+          billing_type: billingType,
+          owner_type: ownerType,
+          features: feats,
+          currency: 'KRW',
+          value: totalAmt,  // GA4 전환 가치 (수익 분석용)
+        });
+
         document.getElementById('card-form-area').style.display = 'none';
         document.getElementById('card-success-area').style.display = 'block';
       } else {
+        track('signup_card_failed', { result_code: data.resultCode || 'UNKNOWN', result_msg: (data.resultMsg || '').slice(0, 100) });
         alert('카드 등록 실패: ' + (data.resultMsg || '입력 정보를 다시 확인해주세요.') + '\n문의: 070-4365-7740');
         btn.textContent = '카드 등록하기';
         btn.disabled = false;
       }
     } catch (err) {
       console.error(err);
+      track('signup_card_failed', { result_code: 'NETWORK_ERROR', result_msg: (err.message || '').slice(0, 100) });
       alert('네트워크 오류가 발생했습니다.\n문의: 070-4365-7740');
       btn.textContent = '카드 등록하기';
       btn.disabled = false;
