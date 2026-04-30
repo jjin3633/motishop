@@ -567,18 +567,52 @@
       background: rgba(6,16,30,.55); backdrop-filter: blur(24px) saturate(1.4);
       align-items: center; justify-content: center;
       padding: 24px;
-      overscroll-behavior: contain; touch-action: none;
+      overscroll-behavior: contain;
     }
     .feat-modal.open { display: flex; }
     .feat-modal-wrap {
       position: relative; display: inline-flex;
     }
     .feat-modal-box {
-      max-width: 90vw; max-height: 88vh;
       border-radius: 16px; overflow: hidden;
       box-shadow: 0 32px 80px rgba(0,0,0,.6);
     }
-    .feat-modal-img { display: block; max-width: 92vw; max-height: 90vh; width: auto; height: auto; border-radius: 16px; }
+    /* Carousel track — 가로 native scroll-snap (Instagram 스토리식) */
+    .feat-modal-track {
+      display: flex;
+      width: min(92vw, 1280px);
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .feat-modal-track::-webkit-scrollbar { display: none; width: 0; height: 0; }
+    .feat-modal-cell {
+      flex: 0 0 100%;
+      width: 100%;
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+    .feat-modal-cell img {
+      display: block;
+      max-width: 100%;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      border-radius: 16px;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
     .feat-modal-close {
       position: absolute; top: -14px; right: -14px;
       width: 36px; height: 36px; border-radius: 50%;
@@ -2060,7 +2094,7 @@
     <button class="feat-modal-nav prev" id="featModalPrev" onclick="featModalNav(-1); event.stopPropagation();" aria-label="이전 이미지">‹</button>
     <button class="feat-modal-nav next" id="featModalNext" onclick="featModalNav(1); event.stopPropagation();" aria-label="다음 이미지">›</button>
     <div class="feat-modal-box">
-      <img class="feat-modal-img" id="featModalImg" src="" alt="기능 예시 이미지" />
+      <div class="feat-modal-track" id="featModalTrack"></div>
     </div>
     <div class="feat-modal-dots" id="featModalDots"></div>
   </div>
@@ -2490,6 +2524,7 @@
   let _featImages = [];
   let _featIdx = 0;
   let _featModalScrollY = 0;  // 모달 닫힐 때 복귀할 스크롤 위치
+  let _featScrollDebounce = null;
 
   function openFeatModal(featKey) {
     // 하위 호환: 직접 URL 문자열 또는 배열도 받음
@@ -2499,7 +2534,7 @@
 
     if (!_featImages.length) return;
     _featIdx = 0;
-    renderFeatModal();
+    buildFeatTrack();
     document.getElementById('featModal').classList.add('open');
 
     // 모바일·iOS Safari에서도 확실히 외부 스크롤·터치 막기 (position:fixed 패턴)
@@ -2509,11 +2544,26 @@
     document.body.style.left = '0';
     document.body.style.right = '0';
     document.body.style.overflow = 'hidden';
+
+    // 모달 표시 후 트랙 초기 위치(0)로 즉시 이동 (animation 없이)
+    requestAnimationFrame(() => {
+      const track = document.getElementById('featModalTrack');
+      if (track) {
+        const prevBehavior = track.style.scrollBehavior;
+        track.style.scrollBehavior = 'auto';
+        track.scrollLeft = 0;
+        track.style.scrollBehavior = prevBehavior;
+      }
+    });
   }
 
-  function renderFeatModal() {
+  // 트랙에 모든 이미지 셀 생성 + dot/화살표 갱신
+  function buildFeatTrack() {
     const total = _featImages.length;
-    document.getElementById('featModalImg').src = _featImages[_featIdx];
+    const track = document.getElementById('featModalTrack');
+    track.innerHTML = _featImages.map((src, i) =>
+      `<div class="feat-modal-cell"><img src="${src}" alt="기능 예시 ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" /></div>`
+    ).join('');
 
     const prevBtn = document.getElementById('featModalPrev');
     const nextBtn = document.getElementById('featModalNext');
@@ -2534,17 +2584,54 @@
     }
   }
 
+  // dot active 표시만 갱신 (스크롤 sync 시 사용 — 트랙 재생성 X)
+  function updateFeatDotsActive() {
+    const dots = document.querySelectorAll('#featModalDots .feat-modal-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === _featIdx));
+  }
+
+  // 트랙 가로 스크롤 → _featIdx 동기화 (debounce)
+  function setupFeatTrackScrollSync() {
+    const track = document.getElementById('featModalTrack');
+    if (!track) return;
+    track.addEventListener('scroll', () => {
+      if (_featImages.length <= 1) return;
+      clearTimeout(_featScrollDebounce);
+      _featScrollDebounce = setTimeout(() => {
+        const cellWidth = track.clientWidth;
+        if (!cellWidth) return;
+        const newIdx = Math.round(track.scrollLeft / cellWidth);
+        if (newIdx !== _featIdx && newIdx >= 0 && newIdx < _featImages.length) {
+          _featIdx = newIdx;
+          updateFeatDotsActive();
+        }
+      }, 60);
+    }, { passive: true });
+  }
+  setupFeatTrackScrollSync();
+
+  // 데스크탑 화살표 / dot 탭 → 부드럽게 슬라이드 (smooth scroll)
   function featModalNav(delta) {
     const total = _featImages.length;
     if (total <= 1) return;
-    _featIdx = (_featIdx + delta + total) % total;
-    renderFeatModal();
+    const newIdx = Math.max(0, Math.min(total - 1, _featIdx + delta));
+    if (newIdx === _featIdx) return;
+    _featIdx = newIdx;
+    scrollFeatTrackTo(_featIdx);
+    updateFeatDotsActive();
   }
 
   function featModalGo(idx) {
     if (idx < 0 || idx >= _featImages.length) return;
     _featIdx = idx;
-    renderFeatModal();
+    scrollFeatTrackTo(_featIdx);
+    updateFeatDotsActive();
+  }
+
+  function scrollFeatTrackTo(idx) {
+    const track = document.getElementById('featModalTrack');
+    if (!track) return;
+    track.scrollTo({ left: idx * track.clientWidth, behavior: 'smooth' });
   }
 
   function closeFeatModal() {
@@ -2559,6 +2646,8 @@
     _featModalScrollY = 0;
     _featImages = [];
     _featIdx = 0;
+    const track = document.getElementById('featModalTrack');
+    if (track) track.innerHTML = '';
   }
   function closeFeatModalOverlay(e) {
     if (e.target === document.getElementById('featModal')) closeFeatModal();
@@ -2570,26 +2659,6 @@
     else if (e.key === 'ArrowLeft') featModalNav(-1);
     else if (e.key === 'ArrowRight') featModalNav(1);
   });
-
-  // 모바일 swipe 지원
-  (function setupFeatModalSwipe() {
-    const modal = document.getElementById('featModal');
-    if (!modal) return;
-    let startX = 0, startY = 0, tracking = false;
-    modal.addEventListener('touchstart', e => {
-      if (_featImages.length <= 1) return;
-      const t = e.touches[0]; startX = t.clientX; startY = t.clientY; tracking = true;
-    }, { passive: true });
-    modal.addEventListener('touchend', e => {
-      if (!tracking) return; tracking = false;
-      const t = e.changedTouches[0];
-      const dx = t.clientX - startX, dy = t.clientY - startY;
-      // 가로 swipe만 (세로 스크롤 의도와 충돌 방지)
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-        featModalNav(dx > 0 ? -1 : 1);
-      }
-    }, { passive: true });
-  })();
 
   // Scroll reveal — 아래에서 위로 (translateY only)
   const observer = new IntersectionObserver((entries) => {
