@@ -567,6 +567,7 @@
       background: rgba(6,16,30,.55); backdrop-filter: blur(24px) saturate(1.4);
       align-items: center; justify-content: center;
       padding: 24px;
+      overscroll-behavior: contain; touch-action: none;
     }
     .feat-modal.open { display: flex; }
     .feat-modal-wrap {
@@ -2486,6 +2487,7 @@
 
   let _featImages = [];
   let _featIdx = 0;
+  let _featModalScrollY = 0;  // 모달 닫힐 때 복귀할 스크롤 위치
 
   function openFeatModal(featKey) {
     // 하위 호환: 직접 URL 문자열 또는 배열도 받음
@@ -2497,6 +2499,13 @@
     _featIdx = 0;
     renderFeatModal();
     document.getElementById('featModal').classList.add('open');
+
+    // 모바일·iOS Safari에서도 확실히 외부 스크롤·터치 막기 (position:fixed 패턴)
+    _featModalScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_featModalScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
     document.body.style.overflow = 'hidden';
   }
 
@@ -2538,7 +2547,14 @@
 
   function closeFeatModal() {
     document.getElementById('featModal').classList.remove('open');
+    // body 스크롤 락 해제 + 원래 스크롤 위치 복원
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
     document.body.style.overflow = '';
+    if (_featModalScrollY) window.scrollTo(0, _featModalScrollY);
+    _featModalScrollY = 0;
     _featImages = [];
     _featIdx = 0;
   }
