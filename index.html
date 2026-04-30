@@ -584,10 +584,48 @@
       background: #1a1a2e; border: 1.5px solid rgba(255,255,255,.25);
       cursor: pointer; color: white; font-size: 20px;
       display: flex; align-items: center; justify-content: center;
-      z-index: 1; transition: background .2s, transform .15s;
+      z-index: 2; transition: background .2s, transform .15s;
       line-height: 1;
     }
     .feat-modal-close:hover { background: rgba(255,255,255,.2); transform: scale(1.1); }
+    /* Carousel — 이미지 2개 이상일 때만 표시 */
+    .feat-modal-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(26,26,46,.85); border: 1.5px solid rgba(255,255,255,.2);
+      cursor: pointer; color: white; font-size: 24px;
+      display: none; align-items: center; justify-content: center;
+      z-index: 2; transition: background .2s, transform .15s;
+      backdrop-filter: blur(8px);
+      line-height: 1; padding: 0;
+    }
+    .feat-modal-nav:hover { background: rgba(0,212,255,.4); transform: translateY(-50%) scale(1.08); }
+    .feat-modal-nav.show { display: flex; }
+    .feat-modal-nav.prev { left: -68px; }
+    .feat-modal-nav.next { right: -68px; }
+    .feat-modal-dots {
+      position: absolute; bottom: -36px; left: 0; right: 0;
+      display: none; justify-content: center; gap: 8px; z-index: 2;
+    }
+    .feat-modal-dots.show { display: flex; }
+    .feat-modal-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.3); border: none; cursor: pointer;
+      padding: 0; transition: background .2s, transform .2s;
+    }
+    .feat-modal-dot.active { background: var(--cyan); transform: scale(1.4); }
+    .feat-modal-dot:hover:not(.active) { background: rgba(255,255,255,.55); }
+    .feat-modal-counter {
+      position: absolute; top: -36px; left: 0;
+      color: rgba(255,255,255,.6); font-size: 13px; font-weight: 600;
+      letter-spacing: 0.04em; display: none;
+    }
+    .feat-modal-counter.show { display: block; }
+    @media (max-width: 768px) {
+      .feat-modal-nav.prev { left: 8px; }
+      .feat-modal-nav.next { right: 8px; }
+      .feat-modal-nav { width: 40px; height: 40px; font-size: 20px; background: rgba(26,26,46,.92); }
+    }
     .feat-card { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
     .feat-card:hover { background: rgba(255,255,255,.055); border-color: rgba(0,212,255,.4); transform: translateY(-4px); box-shadow: 0 0 0 1px rgba(0,212,255,.2), 0 20px 56px rgba(0,0,0,.4); }
     /* badge + h3 positioned inside feat-thumb */
@@ -1282,7 +1320,7 @@
   <div class="section-inner">
     <h2 class="section-title">기기는 그대로<br>기능만 더하면 됩니다.</h2>
     <div class="features-grid">
-      <div class="feat-card" onclick="openFeatModal('assets/features/moire.jpg')">
+      <div class="feat-card" onclick="openFeatModal('moire')">
         <div class="feat-thumb">
           <img src="assets/features/moire.jpg" alt="모아레 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1291,7 +1329,7 @@
         </div>
         <p>수치로 어려운 불균형,<br>등고선 이미지 한 장으로 1분 상담.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('assets/features/nerve.png')">
+      <div class="feat-card" onclick="openFeatModal('nerve')">
         <div class="feat-thumb">
           <img src="assets/features/nerve.png" alt="3D 신경·림프·장기 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1300,7 +1338,7 @@
         </div>
         <p>체형만 보던 눈이 내부 구조까지.<br>다른 센터엔 없는 이야기를 이미지로.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('assets/features/spinedetail.png')">
+      <div class="feat-card" onclick="openFeatModal('spine')">
         <div class="feat-thumb">
           <img src="assets/features/spinedetail.png" alt="척추 세부 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1309,7 +1347,7 @@
         </div>
         <p>경추·흉추·요추, 마디별로 쪼갭니다.<br>기기는 그대로, 분석 깊이만 프로로.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('assets/features/lossheight.png')">
+      <div class="feat-card" onclick="openFeatModal('lossheight')">
         <div class="feat-thumb">
           <img src="assets/features/lossheight.png" alt="손실키 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1318,7 +1356,7 @@
         </div>
         <p>"자세가 안 좋으면 키가 줄어요"<br>이제 말 대신 숫자로 보여주세요.</p>
       </div>
-      <div class="feat-card" onclick="openFeatModal('assets/features/face.png')">
+      <div class="feat-card" onclick="openFeatModal('face')">
         <div class="feat-thumb">
           <img src="assets/features/face.png" alt="안면 여백·탄력 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -2021,10 +2059,14 @@
 <!-- ── FEATURE MODAL ── -->
 <div class="feat-modal" id="featModal" onclick="closeFeatModalOverlay(event)">
   <div class="feat-modal-wrap">
-    <button class="feat-modal-close" onclick="closeFeatModal()">✕</button>
+    <span class="feat-modal-counter" id="featModalCounter"></span>
+    <button class="feat-modal-close" onclick="closeFeatModal()" aria-label="닫기">✕</button>
+    <button class="feat-modal-nav prev" id="featModalPrev" onclick="featModalNav(-1); event.stopPropagation();" aria-label="이전 이미지">‹</button>
+    <button class="feat-modal-nav next" id="featModalNext" onclick="featModalNav(1); event.stopPropagation();" aria-label="다음 이미지">›</button>
     <div class="feat-modal-box">
       <img class="feat-modal-img" id="featModalImg" src="" alt="기능 예시 이미지" />
     </div>
+    <div class="feat-modal-dots" id="featModalDots"></div>
   </div>
 </div>
 
@@ -2426,20 +2468,107 @@
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFooterTerms(); });
 
-  // Feature card modal
-  function openFeatModal(src) {
-    document.getElementById('featModalImg').src = src;
+  // Feature card modal — 기능별 이미지 매핑 (이미지 추가 시 여기만 수정)
+  const FEAT_IMAGES = {
+    moire:      ['assets/features/moire.jpg'],
+    nerve:      ['assets/features/nerve.png'],
+    spine:      ['assets/features/spinedetail.png'],
+    lossheight: ['assets/features/lossheight.png'],
+    face:       ['assets/features/face.png'],
+  };
+
+  let _featImages = [];
+  let _featIdx = 0;
+
+  function openFeatModal(featKey) {
+    // 하위 호환: 직접 URL 문자열 또는 배열도 받음
+    if (Array.isArray(featKey)) _featImages = featKey;
+    else if (typeof featKey === 'string' && featKey.includes('/')) _featImages = [featKey];
+    else _featImages = FEAT_IMAGES[featKey] || [];
+
+    if (!_featImages.length) return;
+    _featIdx = 0;
+    renderFeatModal();
     document.getElementById('featModal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
+
+  function renderFeatModal() {
+    const total = _featImages.length;
+    document.getElementById('featModalImg').src = _featImages[_featIdx];
+
+    const counter = document.getElementById('featModalCounter');
+    const prevBtn = document.getElementById('featModalPrev');
+    const nextBtn = document.getElementById('featModalNext');
+    const dotsWrap = document.getElementById('featModalDots');
+
+    if (total > 1) {
+      counter.textContent = `${_featIdx + 1} / ${total}`;
+      counter.classList.add('show');
+      prevBtn.classList.add('show');
+      nextBtn.classList.add('show');
+      dotsWrap.innerHTML = _featImages.map((_, i) =>
+        `<button class="feat-modal-dot ${i === _featIdx ? 'active' : ''}" onclick="featModalGo(${i}); event.stopPropagation();" aria-label="${i + 1}번 이미지"></button>`
+      ).join('');
+      dotsWrap.classList.add('show');
+    } else {
+      counter.classList.remove('show');
+      prevBtn.classList.remove('show');
+      nextBtn.classList.remove('show');
+      dotsWrap.classList.remove('show');
+      dotsWrap.innerHTML = '';
+    }
+  }
+
+  function featModalNav(delta) {
+    const total = _featImages.length;
+    if (total <= 1) return;
+    _featIdx = (_featIdx + delta + total) % total;
+    renderFeatModal();
+  }
+
+  function featModalGo(idx) {
+    if (idx < 0 || idx >= _featImages.length) return;
+    _featIdx = idx;
+    renderFeatModal();
+  }
+
   function closeFeatModal() {
     document.getElementById('featModal').classList.remove('open');
     document.body.style.overflow = '';
+    _featImages = [];
+    _featIdx = 0;
   }
   function closeFeatModalOverlay(e) {
     if (e.target === document.getElementById('featModal')) closeFeatModal();
   }
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFeatModal(); });
+  document.addEventListener('keydown', e => {
+    const isOpen = document.getElementById('featModal').classList.contains('open');
+    if (!isOpen) return;
+    if (e.key === 'Escape') closeFeatModal();
+    else if (e.key === 'ArrowLeft') featModalNav(-1);
+    else if (e.key === 'ArrowRight') featModalNav(1);
+  });
+
+  // 모바일 swipe 지원
+  (function setupFeatModalSwipe() {
+    const modal = document.getElementById('featModal');
+    if (!modal) return;
+    let startX = 0, startY = 0, tracking = false;
+    modal.addEventListener('touchstart', e => {
+      if (_featImages.length <= 1) return;
+      const t = e.touches[0]; startX = t.clientX; startY = t.clientY; tracking = true;
+    }, { passive: true });
+    modal.addEventListener('touchend', e => {
+      if (!tracking) return; tracking = false;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX, dy = t.clientY - startY;
+      // 가로 swipe만 (세로 스크롤 의도와 충돌 방지)
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        featModalNav(dx > 0 ? -1 : 1);
+      }
+    }, { passive: true });
+  })();
 
   // Scroll reveal — 아래에서 위로 (translateY only)
   const observer = new IntersectionObserver((entries) => {
