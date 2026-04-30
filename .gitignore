@@ -18,3 +18,13 @@ desktop.ini
 보행분석.html
 보행분석_files/
 신용카드자동결제샘플_빌키즉시등록포함/
+InnopayPgNoti_Sample_v6/
+통합취소요청샘플.html
+
+# 내부 문서 — 절대 commit 금지 (변호사·마케팅·전략·내부 문건)
+변호사_*.md
+변호사*검토*.md
+승진*.md
+*마케*.md
+*전략*.md
+*내부*.md
