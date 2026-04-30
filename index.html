@@ -615,12 +615,6 @@
     }
     .feat-modal-dot.active { background: var(--cyan); transform: scale(1.4); }
     .feat-modal-dot:hover:not(.active) { background: rgba(255,255,255,.55); }
-    .feat-modal-counter {
-      position: absolute; top: -36px; left: 0;
-      color: rgba(255,255,255,.6); font-size: 13px; font-weight: 600;
-      letter-spacing: 0.04em; display: none;
-    }
-    .feat-modal-counter.show { display: block; }
     @media (max-width: 768px) {
       .feat-modal-nav.prev { left: 8px; }
       .feat-modal-nav.next { right: 8px; }
@@ -2059,7 +2053,6 @@
 <!-- ── FEATURE MODAL ── -->
 <div class="feat-modal" id="featModal" onclick="closeFeatModalOverlay(event)">
   <div class="feat-modal-wrap">
-    <span class="feat-modal-counter" id="featModalCounter"></span>
     <button class="feat-modal-close" onclick="closeFeatModal()" aria-label="닫기">✕</button>
     <button class="feat-modal-nav prev" id="featModalPrev" onclick="featModalNav(-1); event.stopPropagation();" aria-label="이전 이미지">‹</button>
     <button class="feat-modal-nav next" id="featModalNext" onclick="featModalNav(1); event.stopPropagation();" aria-label="다음 이미지">›</button>
@@ -2511,14 +2504,11 @@
     const total = _featImages.length;
     document.getElementById('featModalImg').src = _featImages[_featIdx];
 
-    const counter = document.getElementById('featModalCounter');
     const prevBtn = document.getElementById('featModalPrev');
     const nextBtn = document.getElementById('featModalNext');
     const dotsWrap = document.getElementById('featModalDots');
 
     if (total > 1) {
-      counter.textContent = `${_featIdx + 1} / ${total}`;
-      counter.classList.add('show');
       prevBtn.classList.add('show');
       nextBtn.classList.add('show');
       dotsWrap.innerHTML = _featImages.map((_, i) =>
@@ -2526,7 +2516,6 @@
       ).join('');
       dotsWrap.classList.add('show');
     } else {
-      counter.classList.remove('show');
       prevBtn.classList.remove('show');
       nextBtn.classList.remove('show');
       dotsWrap.classList.remove('show');
