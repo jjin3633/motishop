@@ -800,10 +800,19 @@ process.on('uncaughtException', (err) => {
   notifySlack(`🚨 uncaughtException:\n\`\`\`${msg}\`\`\``);
 });
 
-scheduleBilling();
-scheduleHealthCheck();
-scheduleAutoDelete();
-scheduleSolapiBalance();
+// 배포 race(rsync 도중 systemd auto-restart)로 scheduler.js가 옛 버전이면
+// 함수가 undefined일 수 있음 — typeof 가드로 크래시 대신 경고만 남김
+const _safeStart = (name, fn) => {
+  if (typeof fn === 'function') fn();
+  else {
+    console.warn(`[startup] ${name} 미정의 — 스킵 (다음 재시작 시 정상화 예정)`);
+    notifySlack(`⚠️ 시작 시점에 ${name} 미정의 (배포 race 추정). 다음 재시작에서 정상화됩니다.`);
+  }
+};
+_safeStart('scheduleBilling', scheduleBilling);
+_safeStart('scheduleHealthCheck', scheduleHealthCheck);
+_safeStart('scheduleAutoDelete', scheduleAutoDelete);
+_safeStart('scheduleSolapiBalance', scheduleSolapiBalance);
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);

@@ -65,6 +65,8 @@ sudo rsync -a \
   --exclude='backup/' \
   --exclude='node_modules/' \
   "$REPO_DIR/api/" "$APP_DIR/"
+# 디스크 캐시 강제 flush — systemd가 race로 일찍 restart해도 mixed state 방지
+sync
 # rsync -a는 source 권한·소유자(root) 보존 → SQLite write/journal 위해 ec2-user로 통일
 sudo chown -R ec2-user:ec2-user "$APP_DIR"
 
