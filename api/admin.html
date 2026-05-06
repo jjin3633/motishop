@@ -496,11 +496,41 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
+// 모달 body scroll lock 헬퍼 — iOS Safari 호환 (position:fixed 패턴)
+let _modalLockCount = 0;
+let _modalLockY = 0;
+function lockBody() {
+  _modalLockCount++;
+  if (_modalLockCount === 1) {
+    _modalLockY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_modalLockY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+  }
+}
+function unlockBody() {
+  _modalLockCount = Math.max(0, _modalLockCount - 1);
+  if (_modalLockCount === 0) {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.overflow = '';
+    const html = document.documentElement;
+    const prev = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+    window.scrollTo(0, _modalLockY);
+    requestAnimationFrame(() => { html.style.scrollBehavior = prev; });
+  }
+}
+
 // ── 가입자 상세 모달 ──
 async function openDetail(id) {
   const m = document.getElementById('detailModal');
   m.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBody();
   document.getElementById('detailContent').innerHTML = '<div class="detail-empty">불러오는 중...</div>';
   try {
     const d = await apiFetch('/api/subscribers/' + id);
@@ -512,7 +542,7 @@ async function openDetail(id) {
 }
 function closeDetail() {
   document.getElementById('detailModal').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBody();
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 

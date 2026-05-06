@@ -497,6 +497,36 @@ const FEATURE_PRICES = {
   annual:  Object.fromEntries(ALL_FEATURES.map(f => [f.key, f.annual])),
 };
 
+// 모달 body scroll lock 헬퍼 — 여러 모달 중첩 시 reference count로 안전하게
+let _modalLockCount = 0;
+let _modalLockY = 0;
+function lockBody() {
+  _modalLockCount++;
+  if (_modalLockCount === 1) {
+    _modalLockY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_modalLockY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+  }
+}
+function unlockBody() {
+  _modalLockCount = Math.max(0, _modalLockCount - 1);
+  if (_modalLockCount === 0) {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.overflow = '';
+    const html = document.documentElement;
+    const prev = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+    window.scrollTo(0, _modalLockY);
+    requestAnimationFrame(() => { html.style.scrollBehavior = prev; });
+  }
+}
+
 async function apiFetch(path, options = {}) {
   const res = await fetch(path, {
     ...options,
@@ -743,8 +773,9 @@ function openBillingModal() {
   document.getElementById('billingModalDesc').textContent =
     `현재 월 ${fmt(s.charge_amount)}원 → 전환 후 월 ${fmt(targetAmount)}원으로 변경됩니다.\n다음 결제일부터 적용됩니다.`;
   document.getElementById('billingModal').classList.add('open');
+  lockBody();
 }
-function closeBillingModal() { document.getElementById('billingModal').classList.remove('open'); }
+function closeBillingModal() { document.getElementById('billingModal').classList.remove('open'); unlockBody(); }
 
 async function changeBillingType() {
   const s = currentSubscriber;
@@ -796,9 +827,11 @@ function openFeatChange(action, featKey, newFeatures) {
 
   pendingFeatures = newFeatures;
   document.getElementById('featChangeModal').classList.add('open');
+  lockBody();
 }
 function closeFeatChange() {
   document.getElementById('featChangeModal').classList.remove('open');
+  unlockBody();
   pendingFeatures = null;
 }
 async function confirmFeatChange() {
@@ -850,9 +883,10 @@ async function updateFeatures(features) {
 }
 
 // 비밀번호 변경
-function openPwModal() { document.getElementById('pwModal').classList.add('open'); }
+function openPwModal() { document.getElementById('pwModal').classList.add('open'); lockBody(); }
 function closePwModal() {
   document.getElementById('pwModal').classList.remove('open');
+  unlockBody();
   ['currentPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('pwErr').style.display = 'none';
 }
@@ -874,8 +908,8 @@ async function changePassword() {
 }
 
 // 해지
-function openCancelModal() { document.getElementById('cancelModal').classList.add('open'); }
-function closeCancelModal() { document.getElementById('cancelModal').classList.remove('open'); }
+function openCancelModal() { document.getElementById('cancelModal').classList.add('open'); lockBody(); }
+function closeCancelModal() { document.getElementById('cancelModal').classList.remove('open'); unlockBody(); }
 async function cancelSubscription() {
   const s = currentSubscriber;
   const data = await apiFetch('/api/mypage/cancel', { method: 'POST' });
@@ -920,8 +954,9 @@ function openResubModal() {
   document.getElementById('resubCardPwd').value = '';
   document.getElementById('resubIdNum').value = '';
   document.getElementById('resubModal').classList.add('open');
+  lockBody();
 }
-function closeResubModal() { document.getElementById('resubModal').classList.remove('open'); }
+function closeResubModal() { document.getElementById('resubModal').classList.remove('open'); unlockBody(); }
 
 function setResubBilling(type) {
   resubBilling = type;
@@ -1119,8 +1154,9 @@ function openUpdateCardModal() {
   idEl.placeholder = isBiz ? '사업자번호 10자리' : '생년월일 6자리';
   idEl.maxLength = isBiz ? 10 : 6;
   document.getElementById('updateCardModal').classList.add('open');
+  lockBody();
 }
-function closeUpdateCardModal() { document.getElementById('updateCardModal').classList.remove('open'); }
+function closeUpdateCardModal() { document.getElementById('updateCardModal').classList.remove('open'); unlockBody(); }
 
 function showUcErr(msg, focusId) {
   const errEl = document.getElementById('ucErr');

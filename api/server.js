@@ -390,14 +390,29 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
   const log = db.prepare(`SELECT * FROM billing_logs WHERE id = ? AND subscriber_id = ?`).get(billingLogId, id);
   if (!log) return res.status(404).json({ ok: false, msg: '결제 로그 없음' });
-  if (log.result_code !== '0000') return res.status(400).json({ ok: false, msg: '성공한 결제만 환불 가능' });
+  if (!['0000','00'].includes(log.result_code)) return res.status(400).json({ ok: false, msg: '성공한 결제만 환불 가능' });
 
-  const refundAmount = Number(amount) || log.amount;
+  // 이미 환불된 금액 합계 (InnoPay 성공코드 '2001' 만 카운트)
+  const alreadyRefunded = db.prepare(
+    `SELECT COALESCE(SUM(amount), 0) as v FROM refunds WHERE moid = ? AND subscriber_id = ? AND result_code = '2001'`
+  ).get(log.moid, id).v || 0;
+  const remaining = Number(log.amount) - Number(alreadyRefunded);
+  if (remaining <= 0) {
+    return res.status(400).json({ ok: false, msg: '이미 전액 환불 완료된 결제입니다.' });
+  }
+
+  // amount 가드 — 미지정·0·NaN·음수면 전액(잔여), 잔여 초과 시 차단
+  let refundAmount = Number(amount);
+  if (!Number.isFinite(refundAmount) || refundAmount <= 0) refundAmount = remaining;
+  if (refundAmount > remaining) {
+    return res.status(400).json({ ok: false, msg: `환불 가능 잔여액 초과 (잔여 ${remaining.toLocaleString()}원)` });
+  }
+
   const refundReason = reason || '관리자 환불 처리';
 
   // InnoPay 통합취소 API 호출 (cancelApi)
   const { refundBillKey } = require('./innopay');
-  const isPartial = Number(refundAmount) < Number(log.amount);
+  const isPartial = refundAmount < Number(log.amount);
   const result = await refundBillKey({
     tid: log.trans_seq || '',
     amount: refundAmount,
@@ -405,15 +420,15 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     partial: isPartial,
   });
 
-  db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-    .run(id, log.moid, refundAmount, refundReason, result.resultCode || 'ERR', result.resultMsg || '', 'admin');
-
+  // 성공한 환불만 refunds 테이블에 기록 (실패는 노이즈 방지)
   if (result.ok) {
+    db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(id, log.moid, refundAmount, refundReason, result.resultCode, result.resultMsg || '', 'admin');
     notifySlack(`💸 환불 처리: ${sub.company} (id=${id}) / ${refundAmount.toLocaleString()}원 — ${refundReason}`);
     // 회원에게 환불 통보 SMS
     const refundText = `[Moti Shop] ${sub.company}님, ${refundAmount.toLocaleString()}원 환불 처리되었어요.\n카드사 정책에 따라 영업일 기준 3~7일 후 입금됩니다.\n문의: 070-4365-7740`;
     sendSMS({ to: sub.phone, text: refundText, subject: '[Moti Shop] 환불 처리 완료' }).catch(e => console.error('[환불 SMS 실패]', e.message));
-    return res.json({ ok: true, resultMsg: result.resultMsg });
+    return res.json({ ok: true, resultMsg: result.resultMsg, refundedAmount: refundAmount, totalRefunded: alreadyRefunded + refundAmount });
   }
   notifySlack(`🔴 환불 실패: ${sub.company} (id=${id}) — ${result.resultCode} ${result.resultMsg}`);
   res.status(502).json({ ok: false, msg: '환불 실패', resultCode: result.resultCode, resultMsg: result.resultMsg });
