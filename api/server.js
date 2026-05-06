@@ -553,7 +553,13 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
 
     // 회원에게 해지 확인 SMS (분쟁 방지 + 안심)
     const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
-    sendSMS({ to: sub.phone, text: cancelText }).catch(e => console.error('[해지 SMS 실패]', e.message));
+    sendSMS({ to: sub.phone, text: cancelText }).then(r => {
+      console.log(`[해지 SMS] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
+      if (!r.ok) notifySlack(`⚠️ 해지 SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
+    }).catch(e => {
+      console.error('[해지 SMS 예외]', e.message);
+      notifySlack(`🔴 해지 SMS 예외: ${sub.company} (id=${sub.id}) — ${e.message}`);
+    });
   }
 
   // 빌키 삭제 (InnoPay)
@@ -644,7 +650,13 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
 
   // 회원에게 재구독 완료 SMS
   const resubText = `[Moti Shop] ${sub.company}님, 다시 구독해주셔서 감사해요.\n\n- 결제 금액: ${chargeAmount.toLocaleString()}원\n- 다음 결제일: ${nextBilling}\n\n마이페이지에서 구독 정보를 확인하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
-  sendSMS({ to: sub.phone, text: resubText }).catch(e => console.error('[재구독 SMS 실패]', e.message));
+  sendSMS({ to: sub.phone, text: resubText }).then(r => {
+    console.log(`[재구독 SMS] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
+    if (!r.ok) notifySlack(`⚠️ 재구독 SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
+  }).catch(e => {
+    console.error('[재구독 SMS 예외]', e.message);
+    notifySlack(`🔴 재구독 SMS 예외: ${sub.company} (id=${sub.id}) — ${e.message}`);
+  });
 
   res.json({ ok: true, charge_amount: chargeAmount, next_billing_date: nextBilling });
 });
