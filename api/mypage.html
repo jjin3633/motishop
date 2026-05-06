@@ -565,7 +565,7 @@ function renderStatusPeriod(s) {
     `;
   } else if (s.status === 'active') {
     el.innerHTML = `
-      <div class="period-headline">현재 결제 기간</div>
+      <div class="period-headline">현재 구독 기간</div>
       <div class="period-main">${periodStart} ~ <span class="accent">${nextDate}</span></div>
       <div class="period-sub">${nextDate}에 <span class="period-amount">${amount}</span> 자동 결제 예정 · ${cycleLabel} 구독</div>
     `;
@@ -638,21 +638,20 @@ async function showApp() {
     logList.innerHTML = data.billingLogs.map(l => {
       const isOk = l.result_code==='0000' || l.result_code==='00';
       const refunded = Number(l.refunded_amount) || 0;
-      const fullyRefunded = refunded >= l.amount;
+      const fullyRefunded = refunded >= l.amount && refunded > 0;
       const partial = refunded > 0 && !fullyRefunded;
-      const refundLine = refunded > 0
-        ? `<div style="font-size:11px;color:#ef4444;margin-top:2px;">↩ ${fmt(refunded)}원 환불됨${l.last_refunded_at ? ' · ' + l.last_refunded_at.slice(0,10) : ''}</div>`
-        : '';
       const badgeClass = !isOk ? 'badge-fail' : fullyRefunded ? 'badge-cancelled' : 'badge-ok';
-      const badgeText = !isOk ? '실패' : fullyRefunded ? '환불 완료' : partial ? '부분 환불' : '성공';
+      const refundDate = l.last_refunded_at ? l.last_refunded_at.slice(0,10) : '';
+      const badgeText = !isOk ? '실패'
+        : fullyRefunded ? `환불 완료${refundDate ? ' · ' + refundDate : ''}`
+        : partial ? `부분 환불 ${fmt(refunded)}원`
+        : '성공';
+      const amountStyle = fullyRefunded ? 'text-decoration:line-through;color:var(--text-muted);' : '';
       return `
       <div class="log-row">
-        <div>
-          <div class="log-date">${(l.billed_at||'').slice(0,10)}</div>
-          ${refundLine}
-        </div>
+        <div class="log-date">${(l.billed_at||'').slice(0,10)}</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="log-amount" style="${fullyRefunded ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${fmt(l.amount)}원</span>
+          <span class="log-amount" style="${amountStyle}">${fmt(l.amount)}원</span>
           <span class="${badgeClass}">${badgeText}</span>
         </div>
       </div>`;
