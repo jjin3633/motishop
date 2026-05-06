@@ -916,11 +916,8 @@ function renderDetail(d) {
             <div class="detail-related-row" style="cursor:default;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
                 <div style="flex:1;min-width:0;">
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                    <span style="font-size:13px;font-weight:700;color:var(--text);">${esc(m.operator_name) || '미상'}</span>
-                    <span style="font-size:11px;color:var(--text-muted);">${(m.created_at||'').slice(0,16)}</span>
-                  </div>
                   <div style="font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap;word-break:break-word;">${esc(m.content)}</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">${(m.created_at||'').slice(0,16)} · ${esc(m.operator_name) || '미상'}</div>
                 </div>
                 <button onclick="deleteMemo(${m.id}, ${s.id})" title="메모 삭제"
                   style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px 8px;font-size:12px;border-radius:6px;white-space:nowrap;">
