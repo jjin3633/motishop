@@ -905,6 +905,7 @@ function renderDetail(d) {
 
     <div class="detail-actions">
       <button class="btn-cancel" style="border-color:rgba(100,116,139,.3);background:rgba(100,116,139,.06);color:#475569;" onclick='openEditInfo(${JSON.stringify({id:s.id, business_number:s.business_number||"", company:s.company})})'>회원 정보 수정</button>
+      ${s.status !== 'cancelled' ? `<button class="btn-cancel" style="border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.08);color:#16a34a;" onclick="notifyActivated(${s.id},'${escName}')">기능 활성화 SMS</button>` : ''}
       ${s.status !== 'cancelled' ? `<button class="btn-cancel" onclick="cancelSubFromDetail(${s.id})">해지</button>` : ''}
       <button class="btn-cancel" style="border-color:rgba(26,107,255,.3);background:rgba(26,107,255,.06);color:var(--blue2);" onclick="resetPw(${s.id},'${escName}')">임시비번 재발급</button>
     </div>
@@ -1244,6 +1245,24 @@ function filterLogs() {
 }
 
 setInterval(loadAll, 300000);
+
+// ── 기능 활성화 안내 SMS ──
+// 운영자가 서버에서 셀프 활성화 처리 완료 후 회원에게 통보용 (명시적 클릭 시에만 발송)
+async function notifyActivated(id, name) {
+  if (!confirm(`${name} 원장님께 '구독 기능 활성화 완료' SMS를 발송하시겠습니까?\n프로그램 재부팅 안내 포함됩니다.`)) return;
+  try {
+    const res = await fetch('/api/admin/notify-activated', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-pw': ADMIN_PW },
+      body: JSON.stringify({ id }),
+    });
+    const r = await res.json();
+    if (r.ok) alert('기능 활성화 SMS 발송 완료');
+    else alert('SMS 발송 실패: ' + (r.msg || ''));
+  } catch (e) {
+    alert('네트워크 오류: ' + e.message);
+  }
+}
 
 // ── 임시 비밀번호 재발급 ──
 async function resetPw(id, name) {

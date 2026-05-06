@@ -649,6 +649,29 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
   res.json({ ok: true, tempPassword: tempPw, smsSent: true });
 });
 
+// 관리자 — 기능 활성화 안내 SMS (서버에서 셀프 활성화 처리 후 회원에게 통보)
+// 사용자(운영자)가 어드민에서 명시적 클릭으로 발송. 자동 트리거 X.
+app.post('/api/admin/notify-activated', adminAuth, (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ ok: false, msg: '필수값 누락' });
+  const sub = db.prepare(`SELECT id, company, name, phone, features, status FROM subscribers WHERE id=?`).get(id);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+  if (sub.status === 'cancelled') return res.status(400).json({ ok: false, msg: '해지된 가입자에게는 발송하지 않습니다' });
+
+  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 신청하신 구독 기능이 정상 활성화되었어요.\n\n활성화된 기능: ${sub.features}\n\n새 기능을 사용하시려면 모티피지오 프로그램을 재부팅 부탁드려요.\n이용 문의: 070-4365-7740`;
+
+  sendSMS({ to: sub.phone, text: smsText, subject: '[Moti Shop] 구독 기능 활성화 완료' }).then(r => {
+    console.log(`[기능활성화 SMS] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
+    if (!r.ok) notifySlack(`⚠️ 기능활성화 SMS 실패: ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
+  }).catch(e => {
+    console.error('[기능활성화 SMS 예외]', e.message);
+    notifySlack(`🔴 기능활성화 SMS 예외: ${sub.company} (id=${id}) — ${e.message}`);
+  });
+
+  notifySlack(`✅ 기능 활성화 안내 SMS 발송: ${sub.company} (id=${id}, ${maskName(sub.name)}) — ${sub.features}`);
+  res.json({ ok: true, smsSent: true });
+});
+
 // ── 마이페이지 ──
 app.get('/mypage', (req, res) => res.sendFile(path.join(__dirname, 'mypage.html')));
 
