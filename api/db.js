@@ -144,4 +144,34 @@ try {
   if (r.changes > 0) console.log(`[migration] 안면 기능 명칭 통일: ${r.changes}건 업데이트`);
 } catch (e) { console.error('[migration 안면키] 실패:', e.message); }
 
+// 테스트 가입자 정리 (2026-05-06) — 사용자 지정
+// 종속 테이블(billing_logs / sessions / 등)까지 cascade 삭제. 0건이면 NoOp (idempotent)
+try {
+  const TEST_COMPANIES = [
+    '모티 필라테스 강남점',
+    '바디밸런스 체형교정센터',
+    '필라테스 하우스 홍대',
+    '코어핏 재활센터',
+  ];
+  const placeholders = TEST_COMPANIES.map(() => '?').join(',');
+  const targets = db.prepare(
+    `SELECT id, company FROM subscribers WHERE company IN (${placeholders})`
+  ).all(...TEST_COMPANIES);
+
+  if (targets.length > 0) {
+    const childTables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds', 'payment_notis'];
+    const tx = db.transaction((rows) => {
+      for (const r of rows) {
+        for (const t of childTables) {
+          try { db.prepare(`DELETE FROM ${t} WHERE subscriber_id=?`).run(r.id); } catch (e) { /* 컬럼 없을 수 있음 */ }
+        }
+        db.prepare(`DELETE FROM subscribers WHERE id=?`).run(r.id);
+      }
+    });
+    tx(targets);
+    const summary = targets.map(t => `${t.company}(id=${t.id})`).join(', ');
+    console.log(`[migration] 테스트 가입자 ${targets.length}건 삭제: ${summary}`);
+  }
+} catch (e) { console.error('[migration 테스트가입자 삭제] 실패:', e.message); }
+
 module.exports = db;
