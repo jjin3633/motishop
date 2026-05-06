@@ -514,13 +514,20 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
 app.get('/api/mypage/me', mypageAuth, (req, res) => {
   const sub = db.prepare(`
     SELECT id, company, name, phone, business_number, features, billing_type, charge_amount,
-           trial_start, next_billing_date, status, created_at
+           trial_start, next_billing_date, status, created_at, cancelled_at
     FROM subscribers WHERE id=?
   `).get(req.subscriberId);
 
+  // 결제 내역 + 환불 정보 LEFT JOIN (InnoPay 환불 성공 코드 = '2001')
   const logs = db.prepare(`
-    SELECT amount, result_code, result_msg, billed_at
-    FROM billing_logs WHERE subscriber_id=? ORDER BY billed_at DESC LIMIT 10
+    SELECT l.id, l.moid, l.amount, l.result_code, l.result_msg, l.billed_at,
+           COALESCE(SUM(CASE WHEN r.result_code='2001' THEN r.amount ELSE 0 END), 0) as refunded_amount,
+           MAX(CASE WHEN r.result_code='2001' THEN r.refunded_at ELSE NULL END) as last_refunded_at
+    FROM billing_logs l
+    LEFT JOIN refunds r ON r.moid = l.moid
+    WHERE l.subscriber_id = ?
+    GROUP BY l.id
+    ORDER BY l.billed_at DESC LIMIT 10
   `).all(req.subscriberId);
 
   res.json({ ok: true, subscriber: sub, billingLogs: logs });

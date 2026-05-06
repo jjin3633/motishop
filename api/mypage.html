@@ -67,6 +67,14 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 .status-item .val { font-size: 18px; font-weight: 900; color: white; }
 .status-item .val small { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.4); margin-left: 2px; }
 .status-item .val.cyan { color: var(--cyan); }
+/* Netflix·Disney+ 패턴 — 상태별 사용 기간·결제 정보 */
+.status-period { position: relative; }
+.status-period .period-headline { font-size: 13px; color: rgba(255,255,255,.55); font-weight: 600; letter-spacing: .03em; margin-bottom: 8px; }
+.status-period .period-main { font-size: 22px; font-weight: 800; color: white; letter-spacing: -.01em; line-height: 1.4; }
+.status-period .period-main .accent { color: var(--cyan); }
+.status-period .period-main .danger { color: #fca5a5; }
+.status-period .period-sub { font-size: 13px; color: rgba(255,255,255,.5); margin-top: 10px; line-height: 1.6; }
+.status-period .period-amount { color: white; font-weight: 700; }
 /* "내 정보" 카드 — inline style="background:white"로 .status-card 톤 덮음. status-grid는 사용 안 함 */
 .status-card[style*="background:white"] { box-shadow: 0 1px 4px rgba(0,0,0,.04); border-color: var(--gray100); }
 .status-card[style*="background:white"]::before { display: none; }
@@ -246,20 +254,8 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
         </div>
         <span class="status-badge" id="myBadge">—</span>
       </div>
-      <div class="status-grid">
-        <div class="status-item">
-          <div class="lbl">다음 결제일</div>
-          <div class="val" id="myNextBilling">—</div>
-        </div>
-        <div class="status-item">
-          <div class="lbl">결제 금액</div>
-          <div class="val cyan" id="myAmount">—<small>원</small></div>
-        </div>
-        <div class="status-item">
-          <div class="lbl">구독 유형</div>
-          <div class="val" id="myBillingType">—</div>
-        </div>
-      </div>
+      <!-- 상태별 사용 기간·결제 정보 (Netflix·Disney+ 패턴) -->
+      <div class="status-period" id="statusPeriod"></div>
     </div>
 
     <!-- 내 정보 -->
@@ -543,6 +539,47 @@ function logout() {
   location.reload();
 }
 
+// Netflix·Disney+ 패턴 — 상태별 사용 기간·결제 정보
+function renderStatusPeriod(s) {
+  const el = document.getElementById('statusPeriod');
+  if (!el) return;
+  const cycle = s.billing_type === 'monthly' ? 1 : 12;
+  const cycleLabel = s.billing_type === 'monthly' ? '월' : '연';
+  const amount = fmt(s.charge_amount) + '원';
+
+  // 현재 결제 주기 시작일 (= 다음 결제일 - 결제 주기)
+  let periodStart = '';
+  if (s.next_billing_date) {
+    const d = new Date(s.next_billing_date + 'T00:00:00+09:00');
+    d.setMonth(d.getMonth() - cycle);
+    periodStart = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  const nextDate = (s.next_billing_date||'').slice(0,10);
+  const trialEnd = (s.next_billing_date||'').slice(0,10);  // trial 종료일 = 첫 결제일
+
+  if (s.status === 'trial') {
+    el.innerHTML = `
+      <div class="period-headline">무료 체험 중</div>
+      <div class="period-main"><span class="accent">${trialEnd}</span>까지 무료 사용</div>
+      <div class="period-sub">체험 종료 후 ${cycleLabel} <span class="period-amount">${amount}</span> 자동 결제 시작 · ${cycleLabel} 구독</div>
+    `;
+  } else if (s.status === 'active') {
+    el.innerHTML = `
+      <div class="period-headline">현재 결제 기간</div>
+      <div class="period-main">${periodStart} ~ <span class="accent">${nextDate}</span></div>
+      <div class="period-sub">${nextDate}에 <span class="period-amount">${amount}</span> 자동 결제 예정 · ${cycleLabel} 구독</div>
+    `;
+  } else if (s.status === 'cancelled') {
+    el.innerHTML = `
+      <div class="period-headline">해지 완료</div>
+      <div class="period-main"><span class="accent">${nextDate}</span>까지 사용 가능</div>
+      <div class="period-sub">이후 자동 결제는 발생하지 않아요. 마이페이지에서 언제든 다시 구독 가능합니다.</div>
+    `;
+  } else {
+    el.innerHTML = `<div class="period-main">상태: ${s.status}</div>`;
+  }
+}
+
 async function showApp() {
   const data = await apiFetch('/api/mypage/me');
   if (!data.ok) { logout(); return; }
@@ -554,9 +591,7 @@ async function showApp() {
   document.getElementById('navUser').textContent = s.company;
   document.getElementById('myCompany').textContent = s.company;
   document.getElementById('myName').textContent = s.name + ' 원장님';
-  document.getElementById('myAmount').innerHTML = fmt(s.charge_amount) + '<small>원</small>';
-  document.getElementById('myBillingType').textContent = s.billing_type === 'monthly' ? '월 구독' : '연 구독';
-  document.getElementById('myNextBilling').textContent = (s.next_billing_date||'').slice(0,10);
+  renderStatusPeriod(s);
 
   // 내 정보
   const phoneFmt = (s.phone||'').replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
@@ -600,16 +635,28 @@ async function showApp() {
   // 결제 내역
   const logList = document.getElementById('logList');
   if (data.billingLogs.length) {
-    logList.innerHTML = data.billingLogs.map(l => `
+    logList.innerHTML = data.billingLogs.map(l => {
+      const isOk = l.result_code==='0000' || l.result_code==='00';
+      const refunded = Number(l.refunded_amount) || 0;
+      const fullyRefunded = refunded >= l.amount;
+      const partial = refunded > 0 && !fullyRefunded;
+      const refundLine = refunded > 0
+        ? `<div style="font-size:11px;color:#ef4444;margin-top:2px;">↩ ${fmt(refunded)}원 환불됨${l.last_refunded_at ? ' · ' + l.last_refunded_at.slice(0,10) : ''}</div>`
+        : '';
+      const badgeClass = !isOk ? 'badge-fail' : fullyRefunded ? 'badge-cancelled' : 'badge-ok';
+      const badgeText = !isOk ? '실패' : fullyRefunded ? '환불 완료' : partial ? '부분 환불' : '성공';
+      return `
       <div class="log-row">
         <div>
           <div class="log-date">${(l.billed_at||'').slice(0,10)}</div>
+          ${refundLine}
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="log-amount">${fmt(l.amount)}원</span>
-          <span class="${(l.result_code==='0000'||l.result_code==='00')?'badge-ok':'badge-fail'}">${(l.result_code==='0000'||l.result_code==='00')?'성공':'실패'}</span>
+          <span class="log-amount" style="${fullyRefunded ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${fmt(l.amount)}원</span>
+          <span class="${badgeClass}">${badgeText}</span>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } else {
     logList.innerHTML = '<div class="feat-empty">아직 결제 내역이 없습니다</div>';
   }
@@ -705,8 +752,7 @@ async function changeBillingType() {
   if (data.ok) {
     currentSubscriber.billing_type = data.billing_type;
     currentSubscriber.charge_amount = data.charge_amount;
-    document.getElementById('myAmount').innerHTML = fmt(data.charge_amount) + '<small>원</small>';
-    document.getElementById('myBillingType').textContent = data.billing_type === 'monthly' ? '월 구독' : '연 구독';
+    renderStatusPeriod(currentSubscriber);
     track('billing_type_changed', { from: fromType, to: data.billing_type, new_amount: data.charge_amount });
     renderBillingSwitch();
     renderFeatList();
@@ -785,7 +831,7 @@ async function updateFeatures(features) {
   if (data.ok) {
     currentSubscriber.features = data.features;
     currentSubscriber.charge_amount = data.charge_amount;
-    document.getElementById('myAmount').innerHTML = fmt(data.charge_amount) + '<small>원</small>';
+    renderStatusPeriod(currentSubscriber);
     track('features_changed', {
       features_before: beforeFeats,
       features_after: data.features,
