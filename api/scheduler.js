@@ -83,7 +83,7 @@ async function chargeSubscriber(sub) {
         } catch (e) { /* ignore */ }
       }
       // 회원에게 자동 해지 통보 SMS
-      const cancelText = `[Moti Shop] ${sub.company}님, 카드 결제 3일 연속 실패로 자동 해지되었어요.\n카드 정보 갱신 후 마이페이지에서 언제든 다시 구독하실 수 있습니다.\nhttps://shop.motiphysio.com/mypage?action=update-card`;
+      const cancelText = `[Moti Shop] ${sub.company}님, 카드 결제 3일 연속 실패로 자동 해지되었어요.\n카드 정보 갱신 후 마이페이지에서 언제든 다시 구독 가능해요.\nhttps://shop.motiphysio.com/mypage?action=update-card`;
       sendSMS({ to: sub.phone, text: cancelText }).catch(e => console.error('[자동해지 SMS 실패]', e.message));
       notifySlack(`⛔ 자동 해지: ${sub.company} (id=${sub.id}) — 3일 연속 결제 실패로 자동 해지`);
       console.log(`[자동해지] ${sub.company} / 3회 실패`);
@@ -92,8 +92,8 @@ async function chargeSubscriber(sub) {
 
     // 1~2회 실패: 회원에게 카드 갱신 요청 SMS
     const failText = newCount === 1
-      ? `[Moti Shop] ${sub.company}님, 오늘 ${sub.charge_amount.toLocaleString()}원 자동 결제가 실패했어요.\n카드 한도·유효기간 확인 부탁드려요. 내일 다시 시도 예정입니다.\nhttps://shop.motiphysio.com/mypage?action=update-card`
-      : `[Moti Shop] ${sub.company}님, 자동 결제가 2회 연속 실패했어요.\n내일이 마지막 재시도이며, 또 실패하면 자동 해지됩니다.\n카드 정보 갱신 부탁드려요.\nhttps://shop.motiphysio.com/mypage?action=update-card`;
+      ? `[Moti Shop] ${sub.company}님, 오늘 ${sub.charge_amount.toLocaleString()}원 자동 결제가 실패했어요.\n카드 한도·유효기간 확인 부탁드려요. 내일 다시 시도 예정이에요.\nhttps://shop.motiphysio.com/mypage?action=update-card`
+      : `[Moti Shop] ${sub.company}님, 자동 결제가 2회 연속 실패했어요.\n내일이 마지막 재시도이며, 또 실패하면 자동 해지돼요.\n카드 정보 갱신 부탁드려요.\nhttps://shop.motiphysio.com/mypage?action=update-card`;
     sendSMS({ to: sub.phone, text: failText }).catch(e => console.error('[결제실패 SMS 실패]', e.message));
   }
 }

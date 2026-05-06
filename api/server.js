@@ -243,7 +243,7 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
     console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
 
     // 임시 비밀번호 SMS 발송 (솔라피)
-    const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영해요.\n\n마이페이지 로그인 정보 안내드립니다.\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호 변경 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
+    const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영해요.\n\n마이페이지 로그인 정보 안내드립니다.\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호를 변경하고, 마이페이지에서 구독 중인 기능을 확인해보세요!\nhttps://shop.motiphysio.com/mypage`;
     sendSMS({ to: cleanPhone, text: smsText }).then(r => {
       if (!r.ok) notifySlack(`⚠️ 임시비번 SMS 실패: ${company} (${maskPhone(cleanPhone)}) — ${r.resultCode} ${r.resultMsg}`);
     }).catch(e => console.error('[SMS 발송 실패]', e.message));
@@ -460,7 +460,7 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
   console.log(`[비번재발급] subscriber_id=${id} / ${sub.company}`);
 
   // SMS 발송
-  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 마이페이지 임시 비밀번호가 재발급되었어요.\n\n- 새 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호 변경 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
+  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 마이페이지 임시 비밀번호가 재발급되었어요.\n\n- 새 임시 비밀번호: ${tempPw}\n\n마이페이지에서 로그인 후 비밀번호 변경 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
   sendSMS({ to: sub.phone, text: smsText }).then(r => {
     if (!r.ok) notifySlack(`⚠️ 비번재발급 SMS 실패: ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
   }).catch(e => console.error('[SMS 발송 실패]', e.message));
@@ -548,7 +548,13 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(req.subscriberId);
   db.prepare(`UPDATE subscribers SET status='cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id=?`).run(req.subscriberId);
   db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(req.subscriberId);
-  if (sub) notifySlack(`👋 해지(셀프): ${sub.company} (id=${sub.id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
+  if (sub) {
+    notifySlack(`👋 해지(셀프): ${sub.company} (id=${sub.id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
+
+    // 회원에게 해지 확인 SMS (분쟁 방지 + 안심)
+    const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
+    sendSMS({ to: sub.phone, text: cancelText }).catch(e => console.error('[해지 SMS 실패]', e.message));
+  }
 
   // 빌키 삭제 (InnoPay)
   if (sub && sub.bill_key && !sub.billkey_deleted) {
@@ -635,6 +641,11 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
 
   console.log(`[재구독 ✓] ${sub.company} / ${featStr} / ${chargeAmount}원 / 다음: ${nextBilling}`);
   notifySlack(`🔁 재구독: ${sub.company} (id=${sub.id}) / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);
+
+  // 회원에게 재구독 완료 SMS
+  const resubText = `[Moti Shop] ${sub.company}님, 다시 구독해주셔서 감사해요.\n\n- 결제 금액: ${chargeAmount.toLocaleString()}원\n- 다음 결제일: ${nextBilling}\n\n마이페이지에서 구독 정보를 확인하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
+  sendSMS({ to: sub.phone, text: resubText }).catch(e => console.error('[재구독 SMS 실패]', e.message));
+
   res.json({ ok: true, charge_amount: chargeAmount, next_billing_date: nextBilling });
 });
 
