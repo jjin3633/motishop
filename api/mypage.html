@@ -607,7 +607,7 @@ async function showApp() {
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="log-amount">${fmt(l.amount)}원</span>
-          <span class="${l.result_code==='00'?'badge-ok':'badge-fail'}">${l.result_code==='00'?'성공':'실패'}</span>
+          <span class="${(l.result_code==='0000'||l.result_code==='00')?'badge-ok':'badge-fail'}">${(l.result_code==='0000'||l.result_code==='00')?'성공':'실패'}</span>
         </div>
       </div>`).join('');
   } else {
@@ -846,7 +846,7 @@ async function cancelSubscription() {
 }
 
 // ── 재구독 ──
-let INNOPAY_MID = 'arstest03m';
+let INNOPAY_MID = 'pgmotiph1m';  // /api/config 실패 시 fallback (운영 MID로 안전하게)
 fetch('/api/config').then(r => r.json()).then(c => { if (c && c.innopayMid) INNOPAY_MID = c.innopayMid; }).catch(() => {});
 
 let resubBilling = 'monthly';

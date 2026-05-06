@@ -183,14 +183,29 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
   const { company, name, phone, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
+  if (!['monthly', 'annual'].includes(billingType))
+    return res.status(400).json({ ok: false, msg: 'billingType은 monthly 또는 annual' });
   const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
+
+  // 보안: 클라이언트 amount 그대로 신뢰 X — 서버 가격표로 재계산 후 일치 검증
+  const featList = String(features).split(',').map(f => f.trim()).filter(Boolean);
+  const prices = FEATURE_PRICES[billingType];
+  const monthlyAmount = featList.includes('ALL IN ONE')
+    ? prices['ALL IN ONE']
+    : featList.reduce((s, f) => s + (prices[f] || 0), 0);
+  if (monthlyAmount <= 0) {
+    return res.status(400).json({ ok: false, msg: '유효하지 않은 기능 선택' });
+  }
+  if (Number(amount) !== monthlyAmount) {
+    return res.status(400).json({ ok: false, msg: '결제 금액 불일치 (서버 검증 실패)' });
+  }
 
   const cleanPhone = String(phone).replace(/[^0-9]/g, '');
   const trialStart = kstDateOnly();
   const firstBilling = new Date();
   firstBilling.setDate(firstBilling.getDate() + 30);
   const nextBillingDate = kstDateOnly(firstBilling);
-  const chargeAmount = billingType === 'annual' ? amount * 12 : amount;
+  const chargeAmount = billingType === 'annual' ? monthlyAmount * 12 : monthlyAmount;
 
   // 동일 phone 기존 가입자 검색 → 있으면 재활성화, 없으면 신규
   const existing = db.prepare(`SELECT * FROM subscribers WHERE phone = ? ORDER BY id DESC LIMIT 1`).get(cleanPhone);
@@ -305,28 +320,28 @@ app.get('/api/revenue', adminAuth, (req, res) => {
   const thisYear  = kstYear();
 
   const thisMonthTotal = db.prepare(
-    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00' AND strftime('%Y-%m',billed_at)=?`
+    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00') AND strftime('%Y-%m',billed_at)=?`
   ).get(thisMonth)?.v || 0;
   const thisYearTotal = db.prepare(
-    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00' AND strftime('%Y',billed_at)=?`
+    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00') AND strftime('%Y',billed_at)=?`
   ).get(thisYear)?.v || 0;
   const allTimeTotal = db.prepare(
-    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code='00'`
+    `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00')`
   ).get()?.v || 0;
 
   const yearly = db.prepare(`
     SELECT strftime('%Y', billed_at) as year, SUM(amount) as total, COUNT(*) as count
-    FROM billing_logs WHERE result_code='00' GROUP BY year ORDER BY year DESC
+    FROM billing_logs WHERE result_code IN ('0000','00') GROUP BY year ORDER BY year DESC
   `).all();
   const monthly = db.prepare(`
     SELECT strftime('%Y-%m', billed_at) as month, SUM(amount) as total, COUNT(*) as count
-    FROM billing_logs WHERE result_code='00' GROUP BY month ORDER BY month ASC
+    FROM billing_logs WHERE result_code IN ('0000','00') GROUP BY month ORDER BY month ASC
   `).all();
 
   const year = req.query.year || thisYear;
   const monthlyByYear = db.prepare(`
     SELECT strftime('%Y-%m', billed_at) as month, SUM(amount) as total, COUNT(*) as count
-    FROM billing_logs WHERE result_code='00' AND strftime('%Y', billed_at)=?
+    FROM billing_logs WHERE result_code IN ('0000','00') AND strftime('%Y', billed_at)=?
     GROUP BY month ORDER BY month ASC
   `).all(year);
 
@@ -440,6 +455,8 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
   const salt = genSalt();
   const hash = hashPw(tempPw, salt);
   db.prepare(`UPDATE subscribers SET pw_hash=?, pw_salt=? WHERE id=?`).run(hash, salt, id);
+  // 보안: 비번 재발급 시 기존 모든 세션 무효화 (이전 로그인 세션 사용 불가)
+  db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(id);
   console.log(`[비번재발급] subscriber_id=${id} / ${sub.company}`);
 
   // SMS 발송
@@ -478,11 +495,13 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
     LIMIT 1
   `).get(phone.replace(/[^0-9]/g, ''));
 
-  if (!sub) return res.status(401).json({ ok: false, msg: '등록되지 않은 전화번호입니다.' });
-  if (!sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 설정되지 않았습니다. 담당자에게 문의해주세요.' });
+  // 보안: 계정 enumeration 방지 — 전화번호/비번 어느쪽이 틀렸는지 노출 X
+  const AUTH_FAIL_MSG = '전화번호 또는 비밀번호가 올바르지 않습니다.';
+  if (!sub) return res.status(401).json({ ok: false, msg: AUTH_FAIL_MSG });
+  if (!sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 설정되지 않았습니다. 고객센터(070-4365-7740)로 문의해주세요.' });
 
   const hash = hashPw(password, sub.pw_salt);
-  if (hash !== sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 올바르지 않습니다.' });
+  if (hash !== sub.pw_hash) return res.status(401).json({ ok: false, msg: AUTH_FAIL_MSG });
 
   // 해지 상태도 로그인 허용 — 마이페이지에서 이력 확인 + 재구독 가능
   const token = genToken();
@@ -518,7 +537,10 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
 
   const salt = genSalt();
   const hash = hashPw(newPw, salt);
+  const newToken = req.headers['x-session-token'];
   db.prepare(`UPDATE subscribers SET pw_hash=?, pw_salt=? WHERE id=?`).run(hash, salt, req.subscriberId);
+  // 보안: 비밀번호 변경 시 현 세션 외 모든 세션 무효화 (다른 디바이스 강제 로그아웃)
+  db.prepare(`DELETE FROM sessions WHERE subscriber_id=? AND token != ?`).run(req.subscriberId, newToken);
   res.json({ ok: true });
 });
 

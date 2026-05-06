@@ -441,35 +441,46 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
 </div>
 
 <script>
-const ADMIN_PW = 'tmdwls12!@';
-let token = sessionStorage.getItem('admin_token');
+// 보안: 클라이언트에 비번 하드코딩 X — 입력값을 서버 검증 후 sessionStorage에 보관
+let ADMIN_PW = sessionStorage.getItem('admin_pw') || '';
 let allSubscribers = [];
 let revenueChart = null;
 let selectedYear = new Date().getFullYear().toString();
 
-function login() {
+async function login() {
   const pw = document.getElementById('pwInput').value;
-  if (pw === ADMIN_PW) {
-    token = btoa(pw + ':admin');
-    sessionStorage.setItem('admin_token', token);
-    document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadAll();
-  } else {
+  if (!pw) { document.getElementById('loginErr').style.display = 'block'; return; }
+  // 서버측 검증: 어드민 보호 엔드포인트 호출 → 200이면 통과
+  try {
+    const res = await fetch('/api/subscribers', { headers: { 'x-admin-pw': pw } });
+    if (res.ok) {
+      ADMIN_PW = pw;
+      sessionStorage.setItem('admin_pw', pw);
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadAll();
+    } else {
+      document.getElementById('loginErr').style.display = 'block';
+    }
+  } catch (e) {
     document.getElementById('loginErr').style.display = 'block';
   }
 }
 
-function logout() { sessionStorage.removeItem('admin_token'); location.reload(); }
+function logout() { sessionStorage.removeItem('admin_pw'); ADMIN_PW = ''; location.reload(); }
 
-if (token) {
-  try {
-    if (atob(token).split(':')[0] === ADMIN_PW) {
+// 자동 로그인 — sessionStorage에 비번 있으면 서버 검증 후 진입
+if (ADMIN_PW) {
+  fetch('/api/subscribers', { headers: { 'x-admin-pw': ADMIN_PW } }).then(res => {
+    if (res.ok) {
       document.getElementById('loginWrap').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       loadAll();
+    } else {
+      sessionStorage.removeItem('admin_pw');
+      ADMIN_PW = '';
     }
-  } catch(e) { sessionStorage.removeItem('admin_token'); }
+  }).catch(() => { sessionStorage.removeItem('admin_pw'); ADMIN_PW = ''; });
 }
 
 function switchTab(name, el) {
@@ -477,6 +488,12 @@ function switchTab(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
+}
+
+// XSS 방어: DB→innerHTML 노출 시 항상 escape
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
 // ── 가입자 상세 모달 ──
@@ -514,11 +531,11 @@ function renderDetail(d) {
 
   document.getElementById('detailContent').innerHTML = `
     <div class="detail-head">
-      <h3>${s.company}</h3>
+      <h3>${esc(s.company)}</h3>
       <div class="meta">
-        <span>${s.name}</span>
+        <span>${esc(s.name)}</span>
         <span>·</span>
-        <span>${s.phone}</span>
+        <span>${esc(s.phone)}</span>
         <span class="badge b-${s.status}" style="margin-left:auto;">${statusMap[s.status]||s.status}</span>
       </div>
     </div>
@@ -526,7 +543,7 @@ function renderDetail(d) {
     <div class="detail-section">
       <h4>회원 유형</h4>
       <div class="detail-grid">
-        <div class="detail-row"><span class="lbl">사업자번호</span><span class="val">${s.business_number ? (s.business_number.length === 10 ? `${s.business_number.slice(0,3)}-${s.business_number.slice(3,5)}-${s.business_number.slice(5)}` : s.business_number) : '<span style="color:var(--text-muted)">개인 회원 (미입력)</span>'}</span></div>
+        <div class="detail-row"><span class="lbl">사업자번호</span><span class="val">${s.business_number ? (s.business_number.length === 10 ? `${s.business_number.slice(0,3)}-${s.business_number.slice(3,5)}-${s.business_number.slice(5)}` : esc(s.business_number)) : '<span style="color:var(--text-muted)">개인 회원 (미입력)</span>'}</span></div>
       </div>
     </div>
 
@@ -535,7 +552,7 @@ function renderDetail(d) {
       <div class="detail-grid">
         <div class="detail-row"><span class="lbl">타입</span><span class="val">${billingTypeMap[s.billing_type]||s.billing_type}</span></div>
         <div class="detail-row"><span class="lbl">결제액</span><span class="val">${fmt(s.charge_amount)}원</span></div>
-        <div class="detail-row full"><span class="lbl">구독 기능</span><span class="val">${s.features||'-'}</span></div>
+        <div class="detail-row full"><span class="lbl">구독 기능</span><span class="val">${esc(s.features)||'-'}</span></div>
         <div class="detail-row"><span class="lbl">가입일</span><span class="val">${(s.created_at||'').slice(0,10)}</span></div>
         <div class="detail-row"><span class="lbl">체험 시작</span><span class="val">${s.trial_start||'-'}</span></div>
         <div class="detail-row"><span class="lbl">다음 결제일</span><span class="val">${s.next_billing_date||'-'}${dDaysLabel}</span></div>
@@ -580,8 +597,8 @@ function renderDetail(d) {
             if (c.change_type === 'features') {
               return `<div class="detail-related-row" style="cursor:default;">
                 <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${ts} · 기능 변경</div>
-                <div style="font-size:13px;color:var(--gray600);"><s>${c.before_features||'-'}</s></div>
-                <div style="font-size:13px;color:var(--text);font-weight:600;">→ ${c.after_features||'-'}</div>
+                <div style="font-size:13px;color:var(--gray600);"><s>${esc(c.before_features)||'-'}</s></div>
+                <div style="font-size:13px;color:var(--text);font-weight:600;">→ ${esc(c.after_features)||'-'}</div>
                 <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${fmt(c.before_amount)}원 → <strong style="color:var(--text);">${fmt(c.after_amount)}원</strong></div>
               </div>`;
             }
@@ -595,7 +612,7 @@ function renderDetail(d) {
             if (c.change_type === 'reactivate') {
               return `<div class="detail-related-row" style="cursor:default;border-left:3px solid var(--blue);">
                 <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${ts} · <strong style="color:var(--blue);">재가입</strong> (해지 후 다시 가입)</div>
-                ${c.before_features !== c.after_features ? `<div style="font-size:12px;color:var(--gray600);">기능: <s>${c.before_features||'-'}</s> → <strong style="color:var(--text);">${c.after_features||'-'}</strong></div>` : ''}
+                ${c.before_features !== c.after_features ? `<div style="font-size:12px;color:var(--gray600);">기능: <s>${esc(c.before_features)||'-'}</s> → <strong style="color:var(--text);">${esc(c.after_features)||'-'}</strong></div>` : ''}
                 ${c.before_billing_type !== c.after_billing_type ? `<div style="font-size:12px;color:var(--gray600);">유형: ${billingTypeMap[c.before_billing_type]||'-'} → <strong style="color:var(--text);">${billingTypeMap[c.after_billing_type]||'-'}</strong></div>` : ''}
                 <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${fmt(c.before_amount)}원 → <strong style="color:var(--text);">${fmt(c.after_amount)}원</strong></div>
               </div>`;
@@ -619,7 +636,7 @@ function renderDetail(d) {
                 <span class="badge b-${r.status}">${statusMap[r.status]||r.status}</span>
                 <span style="font-size:13px;font-weight:700;color:var(--text);">${billingTypeMap[r.billing_type]||r.billing_type} · ${fmt(r.charge_amount)}원</span>
               </div>
-              <div style="font-size:12px;color:var(--gray600);">${r.features||'-'}</div>
+              <div style="font-size:12px;color:var(--gray600);">${esc(r.features)||'-'}</div>
               <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${period}</div>
             </div>`;
           }).join('')}
@@ -771,10 +788,10 @@ function renderSubscribers(rows) {
     return `
     <tr class="tbl-row-clickable" onclick="openDetail(${r.id})">
       <td style="color:var(--gray400)">${idx + 1}</td>
-      <td><strong>${r.company}</strong>${reSub}</td>
-      <td>${r.name}</td>
-      <td>${r.phone}</td>
-      <td style="max-width:180px;font-size:12px;color:var(--gray600);line-height:1.6">${r.features}</td>
+      <td><strong>${esc(r.company)}</strong>${reSub}</td>
+      <td>${esc(r.name)}</td>
+      <td>${esc(r.phone)}</td>
+      <td style="max-width:180px;font-size:12px;color:var(--gray600);line-height:1.6">${esc(r.features)}</td>
       <td><span class="badge b-${r.billing_type}">${r.billing_type==='monthly'?'월구독':'연구독'}</span></td>
       <td class="fw700">${fmt(r.charge_amount)}원</td>
       <td><span class="badge b-${r.status}">${{trial:'체험중',active:'구독중',cancelled:'해지'}[r.status]||r.status}</span></td>
@@ -943,10 +960,11 @@ function filterLogs() {
   const result = document.getElementById('log-result').value;
   const month = document.getElementById('log-month').value;
 
+  const isOk = code => code === '0000' || code === '00';
   const filtered = allLogs.filter(r => {
     if (q && !`${r.company}${r.name}`.toLowerCase().includes(q)) return false;
-    if (result === 'ok' && r.result_code !== '00') return false;
-    if (result === 'fail' && r.result_code === '00') return false;
+    if (result === 'ok' && !isOk(r.result_code)) return false;
+    if (result === 'fail' && isOk(r.result_code)) return false;
     if (month && !(r.billed_at||'').startsWith(month)) return false;
     return true;
   });
@@ -957,11 +975,11 @@ function filterLogs() {
   tbody.innerHTML = filtered.map((r, idx) => `
     <tr>
       <td style="color:var(--gray400)">${idx + 1}</td>
-      <td>${r.company}</td>
-      <td>${r.name}</td>
+      <td>${esc(r.company)}</td>
+      <td>${esc(r.name)}</td>
       <td class="fw700">${fmt(r.amount)}원</td>
-      <td><span class="badge b-${r.result_code==='00'?'ok':'fail'}">${r.result_code==='00'?'성공':'실패'}</span></td>
-      <td style="color:var(--gray400);font-size:12px">${r.result_msg||'—'}</td>
+      <td><span class="badge b-${isOk(r.result_code)?'ok':'fail'}">${isOk(r.result_code)?'성공':'실패'}</span></td>
+      <td style="color:var(--gray400);font-size:12px">${esc(r.result_msg)||'—'}</td>
       <td style="color:var(--gray400)">${(r.billed_at||'').slice(0,16)}</td>
     </tr>`).join('');
 }
