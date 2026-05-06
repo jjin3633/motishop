@@ -230,10 +230,10 @@ function scheduleBilling() {
   console.log('결제 스케줄러 시작 (매일 10:00 KST · 사전안내 7일/1일 전 · 재시도 2회)');
 }
 
-// 솔라피 잔액 모니터 — 매일 09:00 KST · 5만원 미만이면 Slack
+// 솔라피 잔액 모니터 — 매일 09:00 KST · 1만원 미만이면 Slack
 // 영업 시작 전 잔액 확인 → 충전 시간 확보 (SMS 발송 실패 방지)
 function scheduleSolapiBalance() {
-  const THRESHOLD = 50000;
+  const THRESHOLD = 10000;
   let lastAlertedAt = null;  // 같은 날 중복 알림 방지
 
   cron.schedule('0 9 * * *', async () => {
@@ -248,7 +248,7 @@ function scheduleSolapiBalance() {
       if (total < THRESHOLD) {
         const today = kstDateOnly();
         if (lastAlertedAt !== today) {
-          notifySlack(`💰 솔라피 잔액 부족: 합계 ${total.toLocaleString()}원 (현금 ${r.balance.toLocaleString()} / 포인트 ${r.point.toLocaleString()}) — 5만원 미만\nhttps://console.solapi.com/cash/charge`);
+          notifySlack(`💰 솔라피 잔액 부족: 합계 ${total.toLocaleString()}원 (현금 ${r.balance.toLocaleString()} / 포인트 ${r.point.toLocaleString()}) — 1만원 미만\nhttps://console.solapi.com/cash/charge`);
           lastAlertedAt = today;
         }
       }
@@ -257,7 +257,7 @@ function scheduleSolapiBalance() {
       notifySlack(`🔴 솔라피 잔액 cron 예외: ${e.message}`);
     }
   }, { timezone: 'Asia/Seoul' });
-  console.log('솔라피 잔액 모니터 시작 (매일 09:00 KST · 5만원 미만 시 Slack)');
+  console.log('솔라피 잔액 모니터 시작 (매일 09:00 KST · 1만원 미만 시 Slack)');
 }
 
 module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, chargeSubscriber, processDueBillings };
