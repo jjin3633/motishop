@@ -272,4 +272,48 @@ function scheduleSolapiBalance() {
   console.log('솔라피 잔액 모니터 시작 (매일 09:00 KST · 1만원 미만 시 Slack)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, chargeSubscriber, processDueBillings };
+// DB 자동 백업 — 매일 03:30 KST · sqlite3 hot copy + gzip + 30일 retention
+// 디스크 사고 외 모든 앱 레벨 사고 (rm 실수, corruption, admin 잘못 등) 100% 커버
+function scheduleDbBackup() {
+  const fs = require('fs');
+  const path = require('path');
+  const { execSync } = require('child_process');
+  const BACKUP_DIR = path.join(__dirname, 'backups');
+  if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+  cron.schedule('30 3 * * *', async () => {
+    try {
+      const dateStr = kstDateOnly();
+      const backupFile = path.join(BACKUP_DIR, `motishop-${dateStr}.db`);
+
+      // SQLite hot copy (live DB 안전 — better-sqlite3 backup API)
+      await db.backup(backupFile);
+
+      // gzip 압축 (DB 파일 보통 작지만 retention 늘리려면 압축)
+      execSync(`gzip -f "${backupFile}"`);
+      const finalFile = backupFile + '.gz';
+
+      // 30일 retention — 오래된 백업 삭제
+      const files = fs.readdirSync(BACKUP_DIR).filter(f => f.startsWith('motishop-') && f.endsWith('.gz'));
+      const cutoffMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      let deleted = 0;
+      for (const f of files) {
+        const fp = path.join(BACKUP_DIR, f);
+        if (fs.statSync(fp).mtimeMs < cutoffMs) {
+          fs.unlinkSync(fp);
+          deleted++;
+        }
+      }
+
+      const sizeKB = Math.round(fs.statSync(finalFile).size / 1024);
+      console.log(`[DB 백업 ✓] ${path.basename(finalFile)} (${sizeKB}KB)${deleted > 0 ? ` · 만료 ${deleted}건 삭제` : ''}`);
+    } catch (e) {
+      console.error('[DB 백업 실패]', e.message);
+      notifySlack(`🔴 DB 백업 실패: ${e.message}`);
+    }
+  }, { timezone: 'Asia/Seoul' });
+
+  console.log('DB 백업 cron 시작 (매일 03:30 KST · 30일 retention · backups/ 디렉토리)');
+}
+
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, chargeSubscriber, processDueBillings };
