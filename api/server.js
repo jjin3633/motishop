@@ -187,12 +187,25 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
     return res.status(400).json({ ok: false, msg: 'billingType은 monthly 또는 annual' });
   const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
 
+  // 약관 동의 서버 검증 (정보통신망법·전자상거래법 — 분쟁 시 증거 보호)
+  const REQUIRED_TERMS = ['모티샵서비스이용약관', '전자금융거래기본약관', '자동결제이용약관', '개인정보수집이용', '개인정보제3자제공'];
+  if (!Array.isArray(termsAgreed) || REQUIRED_TERMS.some(k => !termsAgreed.includes(k))) {
+    notifySlack(`🔴 약관 동의 누락 가입 시도: ${company} (${maskPhone(String(phone).replace(/[^0-9]/g, ''))}) — 차단됨`);
+    return res.status(400).json({ ok: false, msg: '필수 약관 동의가 누락되었습니다.' });
+  }
+
   // 보안: 클라이언트 amount 그대로 신뢰 X — 서버 가격표로 재계산 후 일치 검증
   const featList = String(features).split(',').map(f => f.trim()).filter(Boolean);
   const prices = FEATURE_PRICES[billingType];
+  // 가격표 sync 검증 — 알 수 없는 키면 차단 (#15)
+  const unknownFeats = featList.filter(f => f !== 'ALL IN ONE' && !(f in prices));
+  if (unknownFeats.length > 0) {
+    notifySlack(`🔴 알 수 없는 기능 키(가입): ${unknownFeats.join(', ')} (${maskPhone(String(phone).replace(/[^0-9]/g, ''))})`);
+    return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
+  }
   const monthlyAmount = featList.includes('ALL IN ONE')
     ? prices['ALL IN ONE']
-    : featList.reduce((s, f) => s + (prices[f] || 0), 0);
+    : featList.reduce((s, f) => s + prices[f], 0);
   if (monthlyAmount <= 0) {
     return res.status(400).json({ ok: false, msg: '유효하지 않은 기능 선택' });
   }
@@ -234,11 +247,20 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
     const salt = genSalt();
     const hash = hashPw(tempPw, salt);
 
+    // INSERT OR IGNORE — 더블클릭 등 race로 동시 INSERT가 들어와도 phone UNIQUE 제약에 의해 한 건만 통과
     const r = db.prepare(`
-      INSERT INTO subscribers
+      INSERT OR IGNORE INTO subscribers
         (company, name, phone, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+
+    if (r.changes === 0) {
+      // 동시 race로 다른 요청이 먼저 INSERT 함 — 그 row 반환 (멱등 응답)
+      const dup = db.prepare(`SELECT id FROM subscribers WHERE phone = ?`).get(cleanPhone);
+      console.log(`[가입 race 차단] phone=${maskPhone(cleanPhone)} → 기존 id=${dup?.id} 반환`);
+      return res.json({ ok: true, trialStart, nextBillingDate, reactivated: false, subscriberId: dup?.id, raceBlocked: true });
+    }
+
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
     console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
 
@@ -401,6 +423,19 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     return res.status(400).json({ ok: false, msg: '이미 전액 환불 완료된 결제입니다.' });
   }
 
+  // PENDING 환불 차단 (#11) — 이전 환불 요청이 timeout/ERR로 응답 미확인 상태면 차단
+  // (실제 PG에서 환불됐을 가능성 있어서 운영자가 명시적으로 InnoPay 콘솔 확인 후 처리해야 함)
+  const pending = db.prepare(
+    `SELECT id, refunded_at, result_msg FROM refunds WHERE moid = ? AND subscriber_id = ? AND result_code = 'PENDING' ORDER BY id DESC LIMIT 1`
+  ).get(log.moid, id);
+  if (pending) {
+    return res.status(409).json({
+      ok: false,
+      msg: `이전 환불 요청 응답 미확인 상태입니다. InnoPay 콘솔에서 거래 상태(${(pending.refunded_at||'').slice(0,16)}) 확인 후 운영자에게 문의하세요.`,
+      pendingRefundId: pending.id,
+    });
+  }
+
   // amount 가드 — 미지정·0·NaN·음수면 전액(잔여), 잔여 초과 시 차단
   let refundAmount = Number(amount);
   if (!Number.isFinite(refundAmount) || refundAmount <= 0) refundAmount = remaining;
@@ -420,7 +455,6 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     partial: isPartial,
   });
 
-  // 성공한 환불만 refunds 테이블에 기록 (실패는 노이즈 방지)
   if (result.ok) {
     db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
       .run(id, log.moid, refundAmount, refundReason, result.resultCode, result.resultMsg || '', 'admin');
@@ -430,6 +464,21 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     sendSMS({ to: sub.phone, text: refundText, subject: '[Moti Shop] 환불 처리 완료' }).catch(e => console.error('[환불 SMS 실패]', e.message));
     return res.json({ ok: true, resultMsg: result.resultMsg, refundedAmount: refundAmount, totalRefunded: alreadyRefunded + refundAmount });
   }
+
+  // 환불 timeout/네트워크 오류 (#11) — PG 측 실제 상태 알 수 없음 → PENDING 보존, 같은 결제 추가 환불 시도 차단
+  const isUnknownState = !result.resultCode || result.resultCode === 'ERR' || String(result.resultCode).startsWith('HTTP_');
+  if (isUnknownState) {
+    db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(id, log.moid, refundAmount, refundReason, 'PENDING', `${result.resultCode || 'NO_CODE'}: ${result.resultMsg || 'timeout/network'}`, 'admin');
+    notifySlack(`⚠️ 환불 응답 미확인 (PENDING): ${sub.company} (id=${id}) / ${refundAmount.toLocaleString()}원 — InnoPay 콘솔 확인 필요. ${result.resultCode || ''} ${result.resultMsg || ''}`);
+    return res.status(202).json({
+      ok: false, pending: true,
+      msg: '환불 요청 응답을 받지 못했습니다. InnoPay 콘솔에서 실제 처리 여부 확인 후 운영자에게 문의해주세요.',
+      resultCode: result.resultCode, resultMsg: result.resultMsg,
+    });
+  }
+
+  // 명시적 실패 (PG가 reason 알려준 경우) — 재시도 가능
   notifySlack(`🔴 환불 실패: ${sub.company} (id=${id}) — ${result.resultCode} ${result.resultMsg}`);
   res.status(502).json({ ok: false, msg: '환불 실패', resultCode: result.resultCode, resultMsg: result.resultMsg });
 });
@@ -722,18 +771,31 @@ app.post('/api/mypage/update-card', paymentActionLimiter, mypageAuth, async (req
 
 // 기능 추가/해지
 app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
-  const { features } = req.body;
+  let { features } = req.body;
   if (!features || !Array.isArray(features) || features.length === 0)
     return res.status(400).json({ ok: false, msg: '기능을 하나 이상 선택해주세요.' });
 
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (sub.status === 'cancelled')
+    return res.status(403).json({ ok: false, msg: '해지된 계정은 변경할 수 없습니다.' });
   const prices = FEATURE_PRICES[sub.billing_type] || FEATURE_PRICES.monthly;
+
+  // 가격표 sync 검증 — features 키와 가격표 일치 안 하면 0원 결제 양산 위험 → 차단
+  const unknownFeats = features.filter(f => f !== 'ALL IN ONE' && !(f in prices));
+  if (unknownFeats.length > 0) {
+    notifySlack(`🔴 알 수 없는 기능 키: ${unknownFeats.join(', ')} (subscriber_id=${req.subscriberId}) — 가격표 동기화 점검 필요`);
+    return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
+  }
 
   let newAmount;
   if (features.includes('ALL IN ONE')) {
+    features = ['ALL IN ONE'];  // 다른 항목 강제 제거 (#17 일관성)
     newAmount = prices['ALL IN ONE'];
   } else {
-    newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+    newAmount = features.reduce((sum, f) => sum + prices[f], 0);
+  }
+  if (!Number.isFinite(newAmount) || newAmount <= 0) {
+    return res.status(400).json({ ok: false, msg: '결제액 계산 실패 — 운영자에게 문의해주세요.' });
   }
 
   const featStr = features.join(', ');

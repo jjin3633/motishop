@@ -127,8 +127,38 @@ db.exec(`
   );
 `);
 
-// 인덱스
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_phone ON subscribers(phone)`); } catch(e) {}
+// 인덱스 — phone은 race 방지 위해 UNIQUE
+// 중복 phone row가 이미 있으면 UNIQUE 인덱스 생성 실패 → 마이그레이션에서 정리 후 재시도
+try { db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sub_phone ON subscribers(phone)`); } catch (e) {
+  console.warn('[migration] phone UNIQUE 생성 실패 — 중복 phone 정리 후 재시도:', e.message);
+  // 중복 phone이 있으면 active 우선, 없으면 최신 id 보존, 나머지는 cancelled로 표시
+  try {
+    const dups = db.prepare(`
+      SELECT phone FROM subscribers GROUP BY phone HAVING COUNT(*) > 1
+    `).all();
+    for (const { phone } of dups) {
+      const rows = db.prepare(`
+        SELECT id, status FROM subscribers WHERE phone = ?
+        ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'cancelled' THEN 2 ELSE 3 END, id DESC
+      `).all(phone);
+      const keep = rows[0].id;
+      const drop = rows.slice(1).map(r => r.id);
+      // 중복 row의 종속 테이블도 정리
+      const tables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds'];
+      for (const id of drop) {
+        for (const t of tables) {
+          try { db.prepare(`DELETE FROM ${t} WHERE subscriber_id = ?`).run(id); } catch (_) {}
+        }
+        db.prepare(`DELETE FROM subscribers WHERE id = ?`).run(id);
+      }
+      console.log(`[migration] phone=${phone.slice(0,3)}-****-${phone.slice(-4)} 중복 정리: keep id=${keep}, removed ${drop.length}건`);
+    }
+    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sub_phone ON subscribers(phone)`);
+    console.log('[migration] phone UNIQUE 인덱스 재생성 성공');
+  } catch (e2) {
+    console.error('[migration] phone UNIQUE 마이그레이션 실패:', e2.message);
+  }
+}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_status_date ON subscribers(status, next_billing_date)`); } catch(e) {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_log_subscriber ON billing_logs(subscriber_id)`); } catch(e) {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_log_moid ON billing_logs(moid)`); } catch(e) {}

@@ -61,9 +61,18 @@ async function chargeSubscriber(sub) {
 
   if (result.ok) {
     const next = addPeriod(sub.next_billing_date, sub.billing_type);
-    db.prepare(`UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0, failed_count = 0, last_failed_at = NULL WHERE id = ?`)
-      .run(next, sub.id);
-    console.log(`[✓ 결제성공] ${sub.company} / ${sub.charge_amount.toLocaleString()}원 → 다음: ${next}`);
+    // 낙관적 잠금: 결제 진행 중 사용자가 해지했다면 cancelled 상태 유지 (active로 복귀 X)
+    const upd = db.prepare(`
+      UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0, failed_count = 0, last_failed_at = NULL
+      WHERE id = ? AND status IN ('trial','active')
+    `).run(next, sub.id);
+    if (upd.changes === 0) {
+      // 결제는 성공했는데 해지 race — 환불 필요할 수 있음, Slack 경보
+      console.warn(`[⚠ 결제성공-해지race] ${sub.company} (id=${sub.id}) — 결제 후 해지 발견. 환불 검토 필요`);
+      notifySlack(`⚠️ 결제·해지 race: ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원 결제 직전에 해지됨. 환불 검토 필요 (moid=${moid})`);
+    } else {
+      console.log(`[✓ 결제성공] ${sub.company} / ${sub.charge_amount.toLocaleString()}원 → 다음: ${next}`);
+    }
   } else {
     // 실패 카운트 증가
     const newCount = (sub.failed_count || 0) + 1;
