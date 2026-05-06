@@ -306,10 +306,17 @@ app.get('/api/subscribers/:id', adminAuth, (req, res) => {
   `).get(id);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
 
+  // 환불 정보 LEFT JOIN — '2001'=완료 환불 합산, 'PENDING'=응답 미확인 표시
   const billingLogs = db.prepare(`
-    SELECT id, moid, amount, result_code, result_msg, billed_at
-    FROM billing_logs WHERE subscriber_id = ?
-    ORDER BY billed_at DESC
+    SELECT l.id, l.moid, l.amount, l.result_code, l.result_msg, l.billed_at,
+           COALESCE(SUM(CASE WHEN r.result_code='2001' THEN r.amount ELSE 0 END), 0) AS refunded_amount,
+           MAX(CASE WHEN r.result_code='2001' THEN r.refunded_at ELSE NULL END) AS last_refunded_at,
+           SUM(CASE WHEN r.result_code='PENDING' THEN 1 ELSE 0 END) AS pending_refund_count
+    FROM billing_logs l
+    LEFT JOIN refunds r ON r.moid = l.moid AND r.subscriber_id = l.subscriber_id
+    WHERE l.subscriber_id = ?
+    GROUP BY l.id
+    ORDER BY l.billed_at DESC
   `).all(id);
 
   const stats = db.prepare(`

@@ -607,11 +607,32 @@ function renderDetail(d) {
         <div class="detail-log-list">
           ${logs.map(l => {
             const isOk = l.result_code === '0000' || l.result_code === '00';
-            const refundBtn = isOk ? `<button onclick="refundFromDetail(${s.id}, ${l.id}, ${l.amount})" style="margin-left:8px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:var(--red);font-family:inherit;">환불</button>` : '';
+            const refunded = Number(l.refunded_amount) || 0;
+            const fullyRefunded = isOk && refunded >= l.amount && refunded > 0;
+            const partialRefunded = isOk && refunded > 0 && !fullyRefunded;
+            const pending = Number(l.pending_refund_count) > 0;
+            const refundDate = l.last_refunded_at ? l.last_refunded_at.slice(0,10) : '';
+
+            // 환불 버튼: PENDING 있거나 전액 환불됐으면 숨김. 부분 환불은 잔여액 환불용으로 유지
+            const remaining = isOk ? l.amount - refunded : 0;
+            let refundBtn = '';
+            if (isOk && !fullyRefunded && !pending) {
+              refundBtn = `<button onclick="refundFromDetail(${s.id}, ${l.id}, ${remaining})" style="margin-left:8px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:var(--red);font-family:inherit;">${partialRefunded ? '추가 환불' : '환불'}</button>`;
+            }
+
+            // 상태 라벨
+            let statusLabel;
+            if (!isOk) statusLabel = '✗ ' + (l.result_code || '');
+            else if (pending) statusLabel = `<span style="color:#b45309;font-weight:700;">⚠ 환불 응답 미확인</span>`;
+            else if (fullyRefunded) statusLabel = `<span style="color:#475569;font-weight:700;">⊘ 환불 완료${refundDate ? ' · ' + refundDate : ''}</span>`;
+            else if (partialRefunded) statusLabel = `<span style="color:#b45309;font-weight:700;">↩ 부분 환불 ${fmt(refunded)}원</span>`;
+            else statusLabel = '✓ 성공';
+
+            const amountStyle = fullyRefunded ? 'text-decoration:line-through;color:var(--text-muted);' : '';
             return `<div class="detail-log-row ${isOk?'ok':'fail'}">
               <span>${(l.billed_at||'').slice(0,16)}</span>
-              <span class="amt">${fmt(l.amount)}원</span>
-              <span class="res">${isOk?'✓ 성공':'✗ '+(l.result_code||'')}${refundBtn}</span>
+              <span class="amt" style="${amountStyle}">${fmt(l.amount)}원</span>
+              <span class="res">${statusLabel}${refundBtn}</span>
             </div>`;
           }).join('')}
         </div>
