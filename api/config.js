@@ -19,6 +19,9 @@ module.exports = {
   INNOPAY_DELETE_BILLKEY_URL: required('INNOPAY_DELETE_BILLKEY_URL', 'https://api.innopay.co.kr/api/delAutoCardBill'),
   INNOPAY_CANCEL_URL: required('INNOPAY_CANCEL_URL', 'https://api.innopay.co.kr/api/cancelApi'),
   INNOPAY_CANCEL_PWD: process.env.INNOPAY_CANCEL_PWD || '',
+  // 거래 조회 API (v1/transactions) 인증용 Merchant-Key — InnoPay에서 발급
+  INNOPAY_MERCHANT_KEY: process.env.INNOPAY_MERCHANT_KEY || '',
+  INNOPAY_TXN_QUERY_URL: process.env.INNOPAY_TXN_QUERY_URL || 'https://api.innopay.co.kr/v1/transactions',
   CORS_ORIGIN: required('CORS_ORIGIN', 'https://shop.motiphysio.com'),
   SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || '',
   DB_PATH: required('DB_PATH', './motishop.db'),

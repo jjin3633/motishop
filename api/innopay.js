@@ -143,4 +143,77 @@ async function chargeWithRetry(params, { maxAttempts = 2, delayMs = 2000 } = {})
   return last;
 }
 
-module.exports = { chargeBillKey, chargeWithRetry, deleteBillKey, refundBillKey, notifySlack };
+/**
+ * 거래 조회 API — TID 기준 단일 거래 상태 조회
+ * 환불·결제 timeout 후 PG 측 실제 처리 상태 확인 시 사용 (#5, #11 화해)
+ * @param {string} tid - InnoPay 거래 일련번호
+ * @returns {Promise<{ok, status, data?, error?}>}
+ */
+async function queryTransactionByTid(tid) {
+  if (!cfg.INNOPAY_MERCHANT_KEY) {
+    return { ok: false, error: 'NO_MERCHANT_KEY', message: 'INNOPAY_MERCHANT_KEY 미설정 (.env 확인)' };
+  }
+  try {
+    const { data, status } = await axios.get(`${cfg.INNOPAY_TXN_QUERY_URL}/${encodeURIComponent(tid)}`, {
+      headers: { 'MID': cfg.INNOPAY_MID, 'Merchant-Key': cfg.INNOPAY_MERCHANT_KEY },
+      timeout: 10000,
+    });
+    return { ok: !!data?.success, status, data: data?.data || data, raw: data };
+  } catch (e) {
+    return {
+      ok: false,
+      status: e.response?.status,
+      error: e.response?.data?.error || e.code || 'ERR',
+      message: e.response?.data?.message || e.message,
+    };
+  }
+}
+
+/**
+ * 거래 조회 API — MOID(가맹점 주문번호) 기준 조회
+ */
+async function queryTransactionByMoid(moid) {
+  if (!cfg.INNOPAY_MERCHANT_KEY) {
+    return { ok: false, error: 'NO_MERCHANT_KEY' };
+  }
+  try {
+    const { data, status } = await axios.get(`${cfg.INNOPAY_TXN_QUERY_URL}/orders/${encodeURIComponent(moid)}`, {
+      headers: { 'MID': cfg.INNOPAY_MID, 'Merchant-Key': cfg.INNOPAY_MERCHANT_KEY },
+      timeout: 10000,
+    });
+    return { ok: !!data?.success, status, data: data?.data || data, raw: data };
+  } catch (e) {
+    return {
+      ok: false,
+      status: e.response?.status,
+      error: e.response?.data?.error || e.code || 'ERR',
+      message: e.response?.data?.message || e.message,
+    };
+  }
+}
+
+/**
+ * 거래 조회 API — MID + 날짜 기준 일괄 조회 (일일 정합성 화해 cron용)
+ * @param {string} startDate YYYYMMDD
+ */
+async function queryTransactionsByDate(startDate) {
+  if (!cfg.INNOPAY_MERCHANT_KEY) {
+    return { ok: false, error: 'NO_MERCHANT_KEY' };
+  }
+  try {
+    const { data, status } = await axios.get(`${cfg.INNOPAY_TXN_QUERY_URL}/merchants/${cfg.INNOPAY_MID}?startDate=${startDate}`, {
+      headers: { 'MID': cfg.INNOPAY_MID, 'Merchant-Key': cfg.INNOPAY_MERCHANT_KEY },
+      timeout: 15000,
+    });
+    return { ok: !!data?.success, status, data: data?.data || data, raw: data };
+  } catch (e) {
+    return {
+      ok: false,
+      status: e.response?.status,
+      error: e.response?.data?.error || e.code || 'ERR',
+      message: e.response?.data?.message || e.message,
+    };
+  }
+}
+
+module.exports = { chargeBillKey, chargeWithRetry, deleteBillKey, refundBillKey, queryTransactionByTid, queryTransactionByMoid, queryTransactionsByDate, notifySlack };
