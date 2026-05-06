@@ -589,19 +589,27 @@ app.get('/api/mypage/me', mypageAuth, (req, res) => {
     FROM subscribers WHERE id=?
   `).get(req.subscriberId);
 
-  // 결제 내역 + 환불 정보 LEFT JOIN (InnoPay 환불 성공 코드 = '2001')
+  // 결제 내역 + 환불 합계
   const logs = db.prepare(`
     SELECT l.id, l.moid, l.amount, l.result_code, l.result_msg, l.billed_at,
            COALESCE(SUM(CASE WHEN r.result_code='2001' THEN r.amount ELSE 0 END), 0) as refunded_amount,
-           MAX(CASE WHEN r.result_code='2001' THEN r.refunded_at ELSE NULL END) as last_refunded_at
+           MAX(CASE WHEN r.result_code='2001' THEN r.refunded_at ELSE NULL END) as last_refunded_at,
+           SUM(CASE WHEN r.result_code='PENDING' THEN 1 ELSE 0 END) as pending_refund_count
     FROM billing_logs l
-    LEFT JOIN refunds r ON r.moid = l.moid
+    LEFT JOIN refunds r ON r.moid = l.moid AND r.subscriber_id = l.subscriber_id
     WHERE l.subscriber_id = ?
     GROUP BY l.id
-    ORDER BY l.billed_at DESC LIMIT 10
+    ORDER BY l.billed_at DESC LIMIT 20
   `).all(req.subscriberId);
 
-  res.json({ ok: true, subscriber: sub, billingLogs: logs });
+  // 환불 상세 (상세 모달용) — 같은 moid에 여러 환불 row 가능 (부분환불 N회)
+  const refunds = db.prepare(`
+    SELECT id, moid, amount, reason, result_code, result_msg, refunded_at
+    FROM refunds WHERE subscriber_id = ?
+    ORDER BY refunded_at DESC
+  `).all(req.subscriberId);
+
+  res.json({ ok: true, subscriber: sub, billingLogs: logs, refunds });
 });
 
 app.post('/api/mypage/change-password', mypageAuth, (req, res) => {

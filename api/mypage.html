@@ -108,6 +108,33 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 .badge-fail { background: rgba(239,68,68,.12); color: var(--red); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
 .badge-refunded { background: rgba(100,116,139,.12); color: #475569; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
 .badge-partial { background: rgba(245,158,11,.14); color: #b45309; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+.log-row-clickable { cursor: pointer; transition: background .15s; }
+.log-row-clickable:hover { background: var(--gray50); }
+.log-chevron { color: var(--text-muted); font-size: 18px; font-weight: 300; line-height: 1; margin-left: 4px; }
+
+/* 결제 상세 모달 (Netflix 스타일) */
+.pd-status { margin-bottom: 18px; }
+.pd-status-badge { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 700; }
+.pd-amount-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid var(--gray100); margin-bottom: 18px; }
+.pd-amount-label { font-size: 14px; color: var(--text-sub); font-weight: 600; }
+.pd-amount-value { text-align: right; font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.pd-amount-final { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-top: 6px; }
+.pd-section { padding: 14px 0; border-bottom: 1px solid var(--gray100); }
+.pd-section:last-of-type { border-bottom: none; }
+.pd-section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.pd-info-row { display: flex; justify-content: space-between; padding: 8px 0; }
+.pd-info-label { font-size: 13px; color: var(--text-sub); }
+.pd-info-value { font-size: 13px; color: var(--text); font-weight: 600; }
+.pd-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; }
+.pd-refund-item { padding: 12px 14px; background: var(--gray50); border-radius: 10px; margin-bottom: 8px; }
+.pd-refund-item:last-child { margin-bottom: 0; }
+.pd-refund-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.pd-refund-amount { font-size: 15px; font-weight: 800; color: var(--text); }
+.pd-refund-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+.pd-refund-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.pd-refund-reason { font-size: 12px; color: var(--text-sub); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--gray100); }
+.pd-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--gray100); font-size: 12px; color: var(--text-muted); text-align: center; }
+.pd-footer a { color: var(--blue); font-weight: 700; text-decoration: none; }
 
 /* ── Action Buttons ── */
 .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -330,6 +357,15 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
   </div>
 </div>
 
+<!-- 결제 상세 모달 -->
+<div class="modal-overlay" id="paymentDetailModal" onclick="if(event.target===this)closePaymentDetail()">
+  <div class="modal resub-modal-box">
+    <button class="modal-close" onclick="closePaymentDetail()" aria-label="닫기">×</button>
+    <h3>결제 상세</h3>
+    <div id="pdContent"></div>
+  </div>
+</div>
+
 <!-- 비밀번호 변경 모달 -->
 <div class="modal-overlay" id="pwModal" onclick="if(event.target===this)closePwModal()">
   <div class="modal">
@@ -513,6 +549,7 @@ document.addEventListener('keydown', e => {
   const closers = {
     pwModal: closePwModal, billingModal: closeBillingModal, cancelModal: closeCancelModal,
     featChangeModal: closeFeatChange, resubModal: closeResubModal, updateCardModal: closeUpdateCardModal,
+    paymentDetailModal: closePaymentDetail,
   };
   if (closers[id]) closers[id]();
   else { last.classList.remove('open'); unlockBody(); }
@@ -685,36 +722,119 @@ async function showApp() {
     }
   }
 
-  // 결제 내역
+  // 결제 내역 — row 클릭 시 상세 모달
+  _allBillingLogs = data.billingLogs || [];
+  _allRefunds = data.refunds || [];
   const logList = document.getElementById('logList');
   if (data.billingLogs.length) {
     logList.innerHTML = data.billingLogs.map(l => {
       const isOk = l.result_code==='0000' || l.result_code==='00';
       const refunded = Number(l.refunded_amount) || 0;
-      const fullyRefunded = refunded >= l.amount && refunded > 0;
-      const partial = refunded > 0 && !fullyRefunded;
+      const fullyRefunded = isOk && refunded >= l.amount && refunded > 0;
+      const partial = isOk && refunded > 0 && !fullyRefunded;
+      const pending = Number(l.pending_refund_count) > 0;
       const badgeClass = !isOk ? 'badge-fail'
+        : pending ? 'badge-partial'
         : fullyRefunded ? 'badge-refunded'
         : partial ? 'badge-partial'
         : 'badge-ok';
-      const refundDate = l.last_refunded_at ? l.last_refunded_at.slice(0,10) : '';
       const badgeText = !isOk ? '실패'
-        : fullyRefunded ? `환불 완료${refundDate ? ' · ' + refundDate : ''}`
-        : partial ? `부분 환불 ${fmt(refunded)}원`
+        : pending ? '환불 처리중'
+        : fullyRefunded ? '환불'
+        : partial ? '부분환불'
         : '성공';
       const amountStyle = fullyRefunded ? 'text-decoration:line-through;color:var(--text-muted);' : '';
       return `
-      <div class="log-row">
+      <div class="log-row log-row-clickable" onclick="openPaymentDetail(${l.id})">
         <div class="log-date">${(l.billed_at||'').slice(0,10)}</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="log-amount" style="${amountStyle}">${fmt(l.amount)}원</span>
           <span class="${badgeClass}">${badgeText}</span>
+          <span class="log-chevron" aria-hidden="true">›</span>
         </div>
       </div>`;
     }).join('');
   } else {
     logList.innerHTML = '<div class="feat-empty">아직 결제 내역이 없습니다</div>';
   }
+}
+
+// 결제 내역 + 환불 데이터 캐시 (상세 모달용)
+let _allBillingLogs = [];
+let _allRefunds = [];
+
+function openPaymentDetail(logId) {
+  const log = _allBillingLogs.find(l => l.id === logId);
+  if (!log) return;
+  const refundsForLog = _allRefunds.filter(r => r.moid === log.moid).sort((a,b) => (b.refunded_at||'').localeCompare(a.refunded_at||''));
+  const isOk = log.result_code==='0000' || log.result_code==='00';
+  const successRefunds = refundsForLog.filter(r => r.result_code === '2001');
+  const pendingRefunds = refundsForLog.filter(r => r.result_code === 'PENDING');
+  const refundedTotal = successRefunds.reduce((s, r) => s + (Number(r.amount)||0), 0);
+  const fullyRefunded = isOk && refundedTotal >= log.amount && refundedTotal > 0;
+  const partial = isOk && refundedTotal > 0 && !fullyRefunded;
+
+  // 상태 헤드라인
+  let statusBadge, statusColor;
+  if (!isOk) { statusBadge = '결제 실패'; statusColor = '#ef4444'; }
+  else if (pendingRefunds.length) { statusBadge = '환불 처리중'; statusColor = '#b45309'; }
+  else if (fullyRefunded) { statusBadge = '환불 완료'; statusColor = '#475569'; }
+  else if (partial) { statusBadge = '부분 환불'; statusColor = '#b45309'; }
+  else { statusBadge = '결제 완료'; statusColor = '#16a34a'; }
+
+  const billedAt = (log.billed_at||'').slice(0,16).replace('T',' ');
+  const finalAmount = log.amount - refundedTotal;
+
+  // 환불 내역 리스트
+  const refundsHTML = refundsForLog.length ? `
+    <div class="pd-section">
+      <div class="pd-section-title">환불 내역 (${refundsForLog.length}건)</div>
+      ${refundsForLog.map(r => {
+        const ok = r.result_code === '2001';
+        const pending = r.result_code === 'PENDING';
+        const tagColor = ok ? '#475569' : pending ? '#b45309' : '#ef4444';
+        const tagText = ok ? '완료' : pending ? '처리중' : '실패';
+        return `<div class="pd-refund-item">
+          <div class="pd-refund-row">
+            <span class="pd-refund-amount">${fmt(r.amount)}원</span>
+            <span class="pd-refund-tag" style="background:${tagColor}1f;color:${tagColor};">${tagText}</span>
+          </div>
+          <div class="pd-refund-meta">${(r.refunded_at||'').slice(0,16).replace('T',' ')}</div>
+          ${r.reason ? `<div class="pd-refund-reason">${r.reason}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '';
+
+  document.getElementById('pdContent').innerHTML = `
+    <div class="pd-status">
+      <span class="pd-status-badge" style="background:${statusColor}1f;color:${statusColor};">${statusBadge}</span>
+    </div>
+    <div class="pd-amount-row">
+      <div class="pd-amount-label">결제 금액</div>
+      <div class="pd-amount-value">
+        <span style="${fullyRefunded ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${fmt(log.amount)}원</span>
+        ${refundedTotal > 0 ? `<div class="pd-amount-final">최종 결제액: ${fmt(finalAmount)}원</div>` : ''}
+      </div>
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title">결제 정보</div>
+      <div class="pd-info-row"><span class="pd-info-label">결제 일시</span><span class="pd-info-value">${billedAt}</span></div>
+      <div class="pd-info-row"><span class="pd-info-label">결제 수단</span><span class="pd-info-value">자동 결제 (등록 카드)</span></div>
+      <div class="pd-info-row"><span class="pd-info-label">거래 번호</span><span class="pd-info-value pd-mono">${log.moid || '-'}</span></div>
+      ${!isOk && log.result_msg ? `<div class="pd-info-row"><span class="pd-info-label">실패 사유</span><span class="pd-info-value" style="color:#ef4444;">${log.result_msg}</span></div>` : ''}
+    </div>
+    ${refundsHTML}
+    <div class="pd-footer">
+      문의: <a href="tel:07043657740">070-4365-7740</a> · 평일 10:00–19:00
+    </div>
+  `;
+  document.getElementById('paymentDetailModal').classList.add('open');
+  lockBody();
+}
+function closePaymentDetail() {
+  document.getElementById('paymentDetailModal').classList.remove('open');
+  unlockBody();
 }
 
 // 기능 목록 렌더링
