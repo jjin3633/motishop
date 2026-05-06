@@ -214,4 +214,28 @@ try {
   }
 } catch (e) { console.error('[migration 테스트가입자 삭제] 실패:', e.message); }
 
+// 운영 오픈 — cutoff 이전 모든 가입자 일괄 정리 (1회성, 사용자 지정)
+// cutoff 이전 created_at만 매칭 → 운영 시작 후 신규 가입은 보존, idempotent
+try {
+  const CUTOFF_KST = '2026-05-07 00:00:00';  // 5/6 자정까지 가입한 모든 row 삭제
+  const targets = db.prepare(
+    `SELECT id, company, name, phone FROM subscribers WHERE created_at < ?`
+  ).all(CUTOFF_KST);
+
+  if (targets.length > 0) {
+    const childTables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds', 'payment_notis'];
+    const tx = db.transaction((rows) => {
+      for (const r of rows) {
+        for (const t of childTables) {
+          try { db.prepare(`DELETE FROM ${t} WHERE subscriber_id=?`).run(r.id); } catch (e) { /* 컬럼 없을 수 있음 */ }
+        }
+        db.prepare(`DELETE FROM subscribers WHERE id=?`).run(r.id);
+      }
+    });
+    tx(targets);
+    const summary = targets.map(t => `${t.company}(id=${t.id})`).join(', ');
+    console.log(`[migration] 운영 오픈 정리: ${targets.length}건 삭제 (cutoff=${CUTOFF_KST}) — ${summary}`);
+  }
+} catch (e) { console.error('[migration 운영오픈정리] 실패:', e.message); }
+
 module.exports = db;
