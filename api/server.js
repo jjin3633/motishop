@@ -244,7 +244,7 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
     // 임시 비밀번호 SMS 발송 (솔라피)
     const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영해요.\n\n마이페이지 로그인 정보 안내드립니다.\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호를 변경하고, 마이페이지에서 구독 중인 기능을 확인해보세요!\nhttps://shop.motiphysio.com/mypage`;
-    sendSMS({ to: cleanPhone, text: smsText }).then(r => {
+    sendSMS({ to: cleanPhone, text: smsText, subject: '[Moti Shop] 가입 환영 · 임시 비밀번호 안내' }).then(r => {
       if (!r.ok) notifySlack(`⚠️ 임시비번 SMS 실패: ${company} (${maskPhone(cleanPhone)}) — ${r.resultCode} ${r.resultMsg}`);
     }).catch(e => console.error('[SMS 발송 실패]', e.message));
 
@@ -412,7 +412,7 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     notifySlack(`💸 환불 처리: ${sub.company} (id=${id}) / ${refundAmount.toLocaleString()}원 — ${refundReason}`);
     // 회원에게 환불 통보 SMS
     const refundText = `[Moti Shop] ${sub.company}님, ${refundAmount.toLocaleString()}원 환불 처리되었어요.\n카드사 정책에 따라 영업일 기준 3~7일 후 입금됩니다.\n문의: 070-4365-7740`;
-    sendSMS({ to: sub.phone, text: refundText }).catch(e => console.error('[환불 SMS 실패]', e.message));
+    sendSMS({ to: sub.phone, text: refundText, subject: '[Moti Shop] 환불 처리 완료' }).catch(e => console.error('[환불 SMS 실패]', e.message));
     return res.json({ ok: true, resultMsg: result.resultMsg });
   }
   notifySlack(`🔴 환불 실패: ${sub.company} (id=${id}) — ${result.resultCode} ${result.resultMsg}`);
@@ -461,7 +461,7 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
 
   // SMS 발송
   const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 마이페이지 임시 비밀번호가 재발급되었어요.\n\n- 새 임시 비밀번호: ${tempPw}\n\n마이페이지에서 로그인 후 비밀번호 변경 부탁드려요.\nhttps://shop.motiphysio.com/mypage`;
-  sendSMS({ to: sub.phone, text: smsText }).then(r => {
+  sendSMS({ to: sub.phone, text: smsText, subject: '[Moti Shop] 임시 비밀번호 재발급' }).then(r => {
     if (!r.ok) notifySlack(`⚠️ 비번재발급 SMS 실패: ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
   }).catch(e => console.error('[SMS 발송 실패]', e.message));
 
@@ -553,7 +553,7 @@ app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
 
     // 회원에게 해지 확인 SMS (분쟁 방지 + 안심)
     const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
-    sendSMS({ to: sub.phone, text: cancelText }).then(r => {
+    sendSMS({ to: sub.phone, text: cancelText, subject: '[Moti Shop] 구독 해지 완료' }).then(r => {
       console.log(`[해지 SMS] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
       if (!r.ok) notifySlack(`⚠️ 해지 SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
     }).catch(e => {
@@ -650,7 +650,7 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
 
   // 회원에게 재구독 완료 SMS
   const resubText = `[Moti Shop] ${sub.company}님, 다시 구독해주셔서 감사해요.\n\n- 결제 금액: ${chargeAmount.toLocaleString()}원\n- 다음 결제일: ${nextBilling}\n\n마이페이지에서 구독 정보를 확인하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
-  sendSMS({ to: sub.phone, text: resubText }).then(r => {
+  sendSMS({ to: sub.phone, text: resubText, subject: '[Moti Shop] 재구독 완료' }).then(r => {
     console.log(`[재구독 SMS] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
     if (!r.ok) notifySlack(`⚠️ 재구독 SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
   }).catch(e => {
@@ -693,7 +693,7 @@ app.post('/api/mypage/update-card', paymentActionLimiter, mypageAuth, async (req
 
   // 회원에게 갱신 완료 SMS
   const smsText = `[Moti Shop] ${sub.company}님, 카드 정보가 정상적으로 갱신되었어요.\n다음 결제일: ${sub.next_billing_date}\nhttps://shop.motiphysio.com/mypage`;
-  sendSMS({ to: sub.phone, text: smsText }).catch(e => console.error('[카드갱신 SMS 실패]', e.message));
+  sendSMS({ to: sub.phone, text: smsText, subject: '[Moti Shop] 카드 정보 갱신 완료' }).catch(e => console.error('[카드갱신 SMS 실패]', e.message));
 
   res.json({ ok: true, next_billing_date: sub.next_billing_date });
 });

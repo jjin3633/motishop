@@ -25,14 +25,15 @@ function buildAuthHeader() {
 }
 
 /**
- * SMS 발송 (90바이트 이하면 SMS, 초과 시 자동 LMS)
+ * SMS/LMS 발송 (90바이트 이하면 SMS, 초과 시 자동 LMS)
  * @param {object} params
- * @param {string} params.to    - 수신번호 (010xxxxxxxx 형식, 하이픈 제거됨)
- * @param {string} params.text  - 본문
- * @param {string} [params.from] - 발신번호 (기본: SOLAPI_FROM)
+ * @param {string} params.to       - 수신번호 (010xxxxxxxx 형식, 하이픈 제거됨)
+ * @param {string} params.text     - 본문
+ * @param {string} [params.subject] - LMS 제목 (40바이트 권장). 지정하면 LMS 강제 + 알림 헤더에 표시되어 본문 첫줄 잘림 방지
+ * @param {string} [params.from]   - 발신번호 (기본: SOLAPI_FROM)
  * @returns {Promise<{ok, resultCode, resultMsg, raw?}>}
  */
-async function sendSMS({ to, text, from }) {
+async function sendSMS({ to, text, from, subject }) {
   if (!cfg.SOLAPI_API_KEY || !cfg.SOLAPI_API_SECRET) {
     console.warn('[SMS] SOLAPI 미설정 — 발송 스킵');
     return { ok: false, resultCode: 'NO_CONFIG', resultMsg: 'SOLAPI 키 미설정' };
@@ -43,14 +44,18 @@ async function sendSMS({ to, text, from }) {
     return { ok: false, resultCode: 'BAD_NUMBER', resultMsg: '발신/수신번호 누락' };
   }
 
+  const message = {
+    to: toNum,
+    from: fromNum,
+    text: String(text || '').slice(0, 2000),
+  };
+  if (subject) {
+    message.subject = String(subject).slice(0, 40);  // LMS 제목 40바이트 제한
+    message.type = 'LMS';  // subject 있으면 LMS 강제 (통신사 자동 추출 방지)
+  }
+
   try {
-    const { data } = await axios.post(SOLAPI_ENDPOINT, {
-      message: {
-        to: toNum,
-        from: fromNum,
-        text: String(text || '').slice(0, 2000),
-      },
-    }, {
+    const { data } = await axios.post(SOLAPI_ENDPOINT, { message }, {
       headers: { 'Authorization': buildAuthHeader(), 'Content-Type': 'application/json' },
       timeout: 10000,
     });
