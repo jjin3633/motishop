@@ -764,13 +764,13 @@ function renderSubscribers(rows) {
   const tbody = document.getElementById('tbody-subscribers');
   document.getElementById('sub-count').textContent = `총 ${rows.length}명 (고객 기준)`;
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty">해당하는 가입자가 없습니다</td></tr>'; return; }
-  tbody.innerHTML = rows.map(r => {
+  tbody.innerHTML = rows.map((r, idx) => {
     const reSub = r._groupSize > 1
       ? ` <span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(26,107,255,.1);color:var(--blue2);margin-left:4px;">재가입 ${r._groupSize}회</span>`
       : '';
     return `
     <tr class="tbl-row-clickable" onclick="openDetail(${r.id})">
-      <td style="color:var(--gray400)">${r.id}</td>
+      <td style="color:var(--gray400)">${idx + 1}</td>
       <td><strong>${r.company}</strong>${reSub}</td>
       <td>${r.name}</td>
       <td>${r.phone}</td>
@@ -954,9 +954,9 @@ function filterLogs() {
   document.getElementById('log-count').textContent = `${filtered.length}건`;
   const tbody = document.getElementById('tbody-logs');
   if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">결제 내역이 없습니다</td></tr>'; return; }
-  tbody.innerHTML = filtered.map(r => `
+  tbody.innerHTML = filtered.map((r, idx) => `
     <tr>
-      <td style="color:var(--gray400)">${r.id}</td>
+      <td style="color:var(--gray400)">${idx + 1}</td>
       <td>${r.company}</td>
       <td>${r.name}</td>
       <td class="fw700">${fmt(r.amount)}원</td>
