@@ -144,6 +144,16 @@ try {
   if (r.changes > 0) console.log(`[migration] 안면 기능 명칭 통일: ${r.changes}건 업데이트`);
 } catch (e) { console.error('[migration 안면키] 실패:', e.message); }
 
+// cancelled_at 백필 (2026-05-06) — 컬럼 추가 전에 해지된 row의 cancelled_at NULL을 NOW로 채움
+// 효과: admin "해지일시 / 자동탈퇴 예정" 행 정상 표시 + 30일 자동탈퇴 cron 정상 작동
+try {
+  const r = db.prepare(
+    `UPDATE subscribers SET cancelled_at = datetime('now', '+9 hours')
+     WHERE status = 'cancelled' AND cancelled_at IS NULL`
+  ).run();
+  if (r.changes > 0) console.log(`[migration] cancelled_at 백필: ${r.changes}건`);
+} catch (e) { console.error('[migration cancelled_at 백필] 실패:', e.message); }
+
 // 테스트 가입자 정리 (2026-05-06) — 사용자 지정
 // 종속 테이블(billing_logs / sessions / 등)까지 cascade 삭제. 0건이면 NoOp (idempotent)
 try {
