@@ -118,6 +118,20 @@ db.exec(`
 `);
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_refund_sub ON refunds(subscriber_id)`); } catch(e) {}
 
+// 기능 활성화 SMS 이력 (운영자 누가 언제 어떤 회원에게 보냈는지 — subscribers 무관, 신규 테이블만 INSERT)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS activation_logs (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id   INTEGER NOT NULL,
+    operator_name   TEXT NOT NULL,
+    sent_at         TEXT DEFAULT (datetime('now', '+9 hours')),
+    sms_result_code TEXT,
+    sms_result_msg  TEXT,
+    FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_activation_sub ON activation_logs(subscriber_id)`); } catch(e) {}
+
 // 스케줄러 단독 실행 lock (동시 실행 방지)
 db.exec(`
   CREATE TABLE IF NOT EXISTS scheduler_locks (

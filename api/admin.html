@@ -755,7 +755,7 @@ function closeDetail() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
 function renderDetail(d) {
-  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related, changes = d.changes || [];
+  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related, changes = d.changes || [], activations = d.activationLogs || [];
   const statusMap = { trial:'체험중', active:'구독중', cancelled:'해지' };
   const billingTypeMap = { monthly:'월 구독', annual:'연 구독' };
   const dDays = s.next_billing_date && s.status !== 'cancelled'
@@ -897,6 +897,30 @@ function renderDetail(d) {
               </div>
               <div style="font-size:12px;color:var(--gray600);">${esc(r.features)||'-'}</div>
               <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${period}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    ${activations.length ? `
+      <div class="detail-section">
+        <h4>기능 활성화 SMS 이력 (${activations.length}건)</h4>
+        <div class="detail-related">
+          ${activations.map(a => {
+            const ok = a.sms_result_code === 'OK' || (a.sms_result_code && a.sms_result_code.startsWith('2'));
+            const pending = a.sms_result_code === 'PENDING';
+            const tagColor = pending ? '#b45309' : ok ? '#16a34a' : '#ef4444';
+            const tagText = pending ? '발송중' : ok ? '발송 완료' : '실패';
+            return `<div class="detail-related-row" style="cursor:default;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:700;color:var(--text);">${esc(a.operator_name) || '미상'}</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${(a.sent_at||'').slice(0,16)}</div>
+                  ${!ok && a.sms_result_msg ? `<div style="font-size:11px;color:var(--red);margin-top:4px;">${esc(a.sms_result_msg)}</div>` : ''}
+                </div>
+                <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;background:${tagColor}1f;color:${tagColor};white-space:nowrap;">${tagText}</span>
+              </div>
             </div>`;
           }).join('')}
         </div>
@@ -1248,17 +1272,43 @@ setInterval(loadAll, 300000);
 
 // ── 기능 활성화 안내 SMS ──
 // 운영자가 서버에서 셀프 활성화 처리 완료 후 회원에게 통보용 (명시적 클릭 시에만 발송)
+// 운영자 이름은 localStorage에 저장 (한 번 입력 후 자동), 이력 기록용
+function getOperatorName() {
+  let op = localStorage.getItem('admin_operator_name') || '';
+  if (!op) {
+    op = prompt('운영자 이름을 입력하세요 (이력 기록용 — 한 번만)');
+    if (!op || !op.trim()) return '';
+    op = op.trim();
+    localStorage.setItem('admin_operator_name', op);
+  }
+  return op;
+}
+function changeOperatorName() {
+  const cur = localStorage.getItem('admin_operator_name') || '';
+  const next = prompt(`운영자 이름 변경\n현재: ${cur}`, cur);
+  if (next && next.trim()) {
+    localStorage.setItem('admin_operator_name', next.trim());
+    alert('운영자 이름이 "' + next.trim() + '"로 변경되었습니다.');
+  }
+}
+
 async function notifyActivated(id, name) {
-  if (!confirm(`${name} 원장님께 '구독 기능 활성화 완료' SMS를 발송하시겠습니까?\n프로그램 재부팅 안내 포함됩니다.`)) return;
+  const operator = getOperatorName();
+  if (!operator) return;
+  if (!confirm(`${name} 원장님께 '구독 기능 활성화 완료' SMS를 발송하시겠습니까?\n발송자: ${operator}`)) return;
   try {
     const res = await fetch('/api/admin/notify-activated', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-pw': ADMIN_PW },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id, operatorName: operator }),
     });
     const r = await res.json();
-    if (r.ok) alert('기능 활성화 SMS 발송 완료');
-    else alert('SMS 발송 실패: ' + (r.msg || ''));
+    if (r.ok) {
+      alert('기능 활성화 SMS 발송 완료\n발송자: ' + operator);
+      openDetail(id);  // 모달 새로고침 → 이력에 즉시 반영
+    } else {
+      alert('SMS 발송 실패: ' + (r.msg || ''));
+    }
   } catch (e) {
     alert('네트워크 오류: ' + e.message);
   }
