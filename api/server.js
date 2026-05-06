@@ -348,7 +348,15 @@ app.get('/api/subscribers/:id', adminAuth, (req, res) => {
     ORDER BY sent_at DESC
   `).all(id);
 
-  res.json({ ok: true, subscriber: sub, billingLogs, stats, related, changes, activationLogs });
+  // 운영자 메모 (삭제되지 않은 것만, 최신순)
+  const memos = db.prepare(`
+    SELECT id, operator_name, content, created_at
+    FROM subscriber_memos
+    WHERE subscriber_id = ? AND deleted_at IS NULL
+    ORDER BY created_at DESC
+  `).all(id);
+
+  res.json({ ok: true, subscriber: sub, billingLogs, stats, related, changes, activationLogs, memos });
 });
 
 app.get('/api/revenue', adminAuth, (req, res) => {
@@ -693,6 +701,48 @@ app.post('/api/admin/notify-activated', adminAuth, (req, res) => {
 
   notifySlack(`✅ 기능 활성화 안내 SMS 발송: ${sub.company} (id=${id}, ${maskName(sub.name)}) by ${operator} — ${sub.features}`);
   res.json({ ok: true, smsSent: true, logId, operator });
+});
+
+// 운영자 메모 추가 (subscribers 무관, 신규 테이블만 INSERT)
+app.post('/api/admin/memos', adminAuth, (req, res) => {
+  const { subscriberId, operatorName, content } = req.body || {};
+  if (!subscriberId) return res.status(400).json({ ok: false, msg: '필수값 누락 (subscriberId)' });
+  if (!operatorName || !String(operatorName).trim()) return res.status(400).json({ ok: false, msg: '운영자 이름 필수' });
+  if (!content || !String(content).trim()) return res.status(400).json({ ok: false, msg: '메모 내용 필수' });
+
+  const sub = db.prepare(`SELECT id FROM subscribers WHERE id=?`).get(subscriberId);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+
+  const operator = String(operatorName).trim().slice(0, 50);
+  const text = String(content).trim().slice(0, 2000);
+
+  const r = db.prepare(`
+    INSERT INTO subscriber_memos (subscriber_id, operator_name, content)
+    VALUES (?, ?, ?)
+  `).run(subscriberId, operator, text);
+
+  res.json({ ok: true, id: r.lastInsertRowid });
+});
+
+// 운영자 메모 삭제 (soft delete — 신규 테이블만 UPDATE, subscribers 무관)
+app.delete('/api/admin/memos/:id', adminAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const { operatorName } = req.body || {};
+  if (!id) return res.status(400).json({ ok: false, msg: '필수값 누락' });
+  if (!operatorName || !String(operatorName).trim()) return res.status(400).json({ ok: false, msg: '운영자 이름 필수' });
+
+  const memo = db.prepare(`SELECT id, deleted_at FROM subscriber_memos WHERE id=?`).get(id);
+  if (!memo) return res.status(404).json({ ok: false, msg: '메모 없음' });
+  if (memo.deleted_at) return res.status(400).json({ ok: false, msg: '이미 삭제된 메모' });
+
+  const operator = String(operatorName).trim().slice(0, 50);
+  db.prepare(`
+    UPDATE subscriber_memos
+    SET deleted_at = datetime('now', '+9 hours'), deleted_by = ?
+    WHERE id = ?
+  `).run(operator, id);
+
+  res.json({ ok: true });
 });
 
 // ── 마이페이지 ──

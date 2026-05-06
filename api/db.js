@@ -132,6 +132,21 @@ db.exec(`
 `);
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_activation_sub ON activation_logs(subscriber_id)`); } catch(e) {}
 
+// 운영자 메모 (어드민 모달에서 가입자별 자유 메모 — subscribers 무관, 신규 테이블만 INSERT/SELECT)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS subscriber_memos (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL,
+    operator_name TEXT NOT NULL,
+    content       TEXT NOT NULL,
+    created_at    TEXT DEFAULT (datetime('now', '+9 hours')),
+    deleted_at    TEXT,
+    deleted_by    TEXT,
+    FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_memo_sub ON subscriber_memos(subscriber_id)`); } catch(e) {}
+
 // 스케줄러 단독 실행 lock (동시 실행 방지)
 db.exec(`
   CREATE TABLE IF NOT EXISTS scheduler_locks (

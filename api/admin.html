@@ -755,7 +755,7 @@ function closeDetail() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
 function renderDetail(d) {
-  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related, changes = d.changes || [], activations = d.activationLogs || [];
+  const s = d.subscriber, stats = d.stats, logs = d.billingLogs, related = d.related, changes = d.changes || [], activations = d.activationLogs || [], memos = d.memos || [];
   const statusMap = { trial:'체험중', active:'구독중', cancelled:'해지' };
   const billingTypeMap = { monthly:'월 구독', annual:'연 구독' };
   const dDays = s.next_billing_date && s.status !== 'cancelled'
@@ -902,6 +902,36 @@ function renderDetail(d) {
         </div>
       </div>
     ` : ''}
+
+    <div class="detail-section">
+      <h4>운영자 메모 ${memos.length ? `(${memos.length}건)` : ''}</h4>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">
+        <textarea id="memoInput-${s.id}" placeholder="이 회원에 대한 메모를 남기세요 (예: 통화 내용, 특이사항, 처리 예정 등)"
+          style="flex:1;min-height:64px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--bg);color:var(--text);"></textarea>
+        <button class="btn-cancel" style="border-color:rgba(26,107,255,.3);background:rgba(26,107,255,.06);color:var(--blue2);white-space:nowrap;align-self:stretch;padding:0 16px;" onclick="addMemo(${s.id})">메모 추가</button>
+      </div>
+      ${memos.length ? `
+        <div class="detail-related">
+          ${memos.map(m => `
+            <div class="detail-related-row" style="cursor:default;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <span style="font-size:13px;font-weight:700;color:var(--text);">${esc(m.operator_name) || '미상'}</span>
+                    <span style="font-size:11px;color:var(--text-muted);">${(m.created_at||'').slice(0,16)}</span>
+                  </div>
+                  <div style="font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap;word-break:break-word;">${esc(m.content)}</div>
+                </div>
+                <button onclick="deleteMemo(${m.id}, ${s.id})" title="메모 삭제"
+                  style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px 8px;font-size:12px;border-radius:6px;white-space:nowrap;">
+                  삭제
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : `<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">아직 메모가 없습니다.</div>`}
+    </div>
 
     ${activations.length ? `
       <div class="detail-section">
@@ -1308,6 +1338,53 @@ async function notifyActivated(id, name) {
       openDetail(id);  // 모달 새로고침 → 이력에 즉시 반영
     } else {
       alert('SMS 발송 실패: ' + (r.msg || ''));
+    }
+  } catch (e) {
+    alert('네트워크 오류: ' + e.message);
+  }
+}
+
+// ── 운영자 메모 (관리자 전용, 외부 노출 X) ──
+async function addMemo(subscriberId) {
+  const operator = getOperatorName();
+  if (!operator) return;
+  const ta = document.getElementById('memoInput-' + subscriberId);
+  if (!ta) return;
+  const content = (ta.value || '').trim();
+  if (!content) { alert('메모 내용을 입력하세요.'); return; }
+  try {
+    const res = await fetch('/api/admin/memos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-pw': ADMIN_PW },
+      body: JSON.stringify({ subscriberId, operatorName: operator, content }),
+    });
+    const r = await res.json();
+    if (r.ok) {
+      ta.value = '';
+      openDetail(subscriberId);  // 모달 새로고침
+    } else {
+      alert('메모 추가 실패: ' + (r.msg || ''));
+    }
+  } catch (e) {
+    alert('네트워크 오류: ' + e.message);
+  }
+}
+
+async function deleteMemo(memoId, subscriberId) {
+  const operator = getOperatorName();
+  if (!operator) return;
+  if (!confirm('이 메모를 삭제하시겠습니까?')) return;
+  try {
+    const res = await fetch('/api/admin/memos/' + memoId, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'x-admin-pw': ADMIN_PW },
+      body: JSON.stringify({ operatorName: operator }),
+    });
+    const r = await res.json();
+    if (r.ok) {
+      openDetail(subscriberId);
+    } else {
+      alert('메모 삭제 실패: ' + (r.msg || ''));
     }
   } catch (e) {
     alert('네트워크 오류: ' + e.message);
