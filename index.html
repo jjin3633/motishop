@@ -90,8 +90,9 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 24px;
     }
-    .nav-logo { text-decoration: none; font-size: 22px; font-weight: 800; color: white; letter-spacing: 0.04em; }
-    .nav-logo span { color: var(--cyan); }
+    .nav-logo { display: inline-flex; align-items: center; text-decoration: none; line-height: 0; }
+    .nav-logo img { height: 28px; width: auto; display: block; }
+    @media (max-width: 768px) { .nav-logo img { height: 24px; } }
     .nav-right { display: flex; align-items: center; gap: 12px; }
     .nav-cta {
       display: inline-flex; align-items: center; gap: 6px;
@@ -1257,7 +1258,7 @@
 <!-- ── NAV ── -->
 <nav>
   <div class="nav-inner">
-    <a class="nav-logo" href="#">Moti <span>Shop</span></a>
+    <a class="nav-logo" href="#" aria-label="Moti Shop"><img src="assets/logo-blue.png" alt="Moti Shop" /></a>
     <div class="nav-right">
       <a class="nav-cta" href="#trial">무료 체험 신청</a>
     </div>
