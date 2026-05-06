@@ -212,6 +212,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
   .btn-feat-cancel, .btn-feat-add { padding: 6px 12px; font-size: 11px; }
   .log-row { padding: 12px 14px; gap: 8px; flex-wrap: wrap; }
   .log-date { font-size: 12px; }
+}
+@media (max-width: 480px) {
+  /* 좁은 모바일: 한 줄 깨지지 않게 세로 정렬 + 환불 뱃지 줄바꿈 허용 */
+  .log-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .log-row > div:last-child { width: 100%; justify-content: space-between; }
   .modal { padding: 24px 20px; border-radius: 16px; }
   .login-box { padding: 36px 24px; }
   .section-title { font-size: 12px; margin-bottom: 10px; }
@@ -225,8 +230,8 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
   <div class="login-box">
     <div class="login-logo">Moti <span>Shop</span></div>
     <div class="login-sub">마이페이지 로그인</div>
-    <input type="tel" id="loginPhone" placeholder="전화번호 (숫자만)" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')login()" />
-    <input type="password" id="loginPw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')login()" />
+    <input type="tel" id="loginPhone" placeholder="전화번호 (숫자만)" inputmode="numeric" autocomplete="tel" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')login()" />
+    <input type="password" id="loginPw" placeholder="비밀번호" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()" />
     <button onclick="login()">로그인</button>
     <div class="login-err" id="loginErr"></div>
     <div class="login-note">초기 비밀번호는 담당자에게 문의해주세요.<br>070-4365-7740</div>
@@ -326,7 +331,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 </div>
 
 <!-- 비밀번호 변경 모달 -->
-<div class="modal-overlay" id="pwModal">
+<div class="modal-overlay" id="pwModal" onclick="if(event.target===this)closePwModal()">
   <div class="modal">
     <h3>비밀번호 변경</h3>
     <p>현재 비밀번호를 확인한 후 새 비밀번호를 설정합니다.</p>
@@ -342,7 +347,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 </div>
 
 <!-- 구독 유형 변경 모달 -->
-<div class="modal-overlay" id="billingModal">
+<div class="modal-overlay" id="billingModal" onclick="if(event.target===this)closeBillingModal()">
   <div class="modal">
     <h3 id="billingModalTitle">구독 유형 변경</h3>
     <p id="billingModalDesc"></p>
@@ -354,7 +359,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 </div>
 
 <!-- 해지 확인 모달 -->
-<div class="modal-overlay" id="cancelModal">
+<div class="modal-overlay" id="cancelModal" onclick="if(event.target===this)closeCancelModal()">
   <div class="modal">
     <h3>구독을 해지하시겠습니까?</h3>
     <p>해지 후에는 다음 결제일부터 청구되지 않습니다. 현재 체험/구독 중인 기능은 기간이 끝날 때까지 유지됩니다. 이 작업은 되돌릴 수 없습니다.</p>
@@ -450,7 +455,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 </div>
 
 <!-- 기능 변경 확인 모달 (추가/해지) -->
-<div class="modal-overlay" id="featChangeModal">
+<div class="modal-overlay" id="featChangeModal" onclick="if(event.target===this)closeFeatChange()">
   <div class="modal">
     <h3 id="featChangeTitle">기능을 변경하시겠습니까?</h3>
     <p id="featChangeDesc" style="white-space:pre-line;"></p>
@@ -496,6 +501,22 @@ const FEATURE_PRICES = {
   monthly: Object.fromEntries(ALL_FEATURES.map(f => [f.key, f.monthly])),
   annual:  Object.fromEntries(ALL_FEATURES.map(f => [f.key, f.annual])),
 };
+
+// ESC 키로 열려있는 모달 닫기 (WCAG 2.1.2)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  // 마지막에 열린 모달부터 우선 닫기 (z-index 기준)
+  const opens = [...document.querySelectorAll('.modal-overlay.open')];
+  if (!opens.length) return;
+  const last = opens[opens.length - 1];
+  const id = last.id;
+  const closers = {
+    pwModal: closePwModal, billingModal: closeBillingModal, cancelModal: closeCancelModal,
+    featChangeModal: closeFeatChange, resubModal: closeResubModal, updateCardModal: closeUpdateCardModal,
+  };
+  if (closers[id]) closers[id]();
+  else { last.classList.remove('open'); unlockBody(); }
+});
 
 // 모달 body scroll lock 헬퍼 — 여러 모달 중첩 시 reference count로 안전하게
 let _modalLockCount = 0;

@@ -2160,11 +2160,13 @@
   const stickyCta = document.getElementById('mobileStickyCta');
   const problemSection = document.querySelector('section.problem');
   const howItWorks = document.querySelector('.howitworks');
+  const trialFormSection = document.getElementById('trial');
   if (stickyCta && problemSection && howItWorks && 'IntersectionObserver' in window) {
     let problemReached = false;
     let pastHowItWorks = false;
+    let trialFormVisible = false;  // 가입 폼 진입 시 sticky CTA 가림 방지 (#trial 카드 등록 버튼 보호)
     const update = () => {
-      const shouldShow = problemReached && !pastHowItWorks;
+      const shouldShow = problemReached && !pastHowItWorks && !trialFormVisible;
       stickyCta.classList.toggle('hidden', !shouldShow);
     };
     const problemObs = new IntersectionObserver((entries) => {
@@ -2179,6 +2181,13 @@
     }, { threshold: 0 });
     problemObs.observe(problemSection);
     howItWorksObs.observe(howItWorks);
+    if (trialFormSection) {
+      const trialObs = new IntersectionObserver((entries) => {
+        trialFormVisible = entries[0].isIntersecting;
+        update();
+      }, { threshold: 0.05 });
+      trialObs.observe(trialFormSection);
+    }
     stickyCta.classList.add('hidden'); // 초기 숨김
   }
 
