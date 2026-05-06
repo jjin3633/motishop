@@ -104,8 +104,10 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 .log-row:last-child { border-bottom: none; }
 .log-date { font-size: 13px; color: var(--text-sub); }
 .log-amount { font-size: 14px; font-weight: 700; color: var(--text); }
-.badge-ok { background: rgba(34,197,94,.12); color: #16a34a; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
-.badge-fail { background: rgba(239,68,68,.12); color: var(--red); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+.badge-ok { background: rgba(34,197,94,.12); color: #16a34a; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+.badge-fail { background: rgba(239,68,68,.12); color: var(--red); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+.badge-refunded { background: rgba(100,116,139,.12); color: #475569; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+.badge-partial { background: rgba(245,158,11,.14); color: #b45309; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
 
 /* ── Action Buttons ── */
 .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -640,7 +642,10 @@ async function showApp() {
       const refunded = Number(l.refunded_amount) || 0;
       const fullyRefunded = refunded >= l.amount && refunded > 0;
       const partial = refunded > 0 && !fullyRefunded;
-      const badgeClass = !isOk ? 'badge-fail' : fullyRefunded ? 'badge-cancelled' : 'badge-ok';
+      const badgeClass = !isOk ? 'badge-fail'
+        : fullyRefunded ? 'badge-refunded'
+        : partial ? 'badge-partial'
+        : 'badge-ok';
       const refundDate = l.last_refunded_at ? l.last_refunded_at.slice(0,10) : '';
       const badgeText = !isOk ? '실패'
         : fullyRefunded ? `환불 완료${refundDate ? ' · ' + refundDate : ''}`
