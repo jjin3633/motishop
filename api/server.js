@@ -377,6 +377,81 @@ app.get('/api/revenue', adminAuth, (req, res) => {
   res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, yearly, monthly, monthlyByYear, selectedYear: year });
 });
 
+// 활성 사용자 개요 (운영 지표 — KPI + 일별 추세 + 시간대별 가입)
+app.get('/api/admin/active-overview', adminAuth, (req, res) => {
+  // KPI 1: 현재 활성 (trial+active)
+  const activeBreak = db.prepare(`
+    SELECT status, COUNT(*) as count FROM subscribers WHERE status IN ('trial','active') GROUP BY status
+  `).all();
+  const activeNow = activeBreak.reduce((s, r) => s + r.count, 0);
+  const trialCount = activeBreak.find(r => r.status === 'trial')?.count || 0;
+  const activeCount = activeBreak.find(r => r.status === 'active')?.count || 0;
+
+  // KPI 2: MAU — 지난 30일 결제 또는 변경 활동한 distinct 회원
+  const mau = db.prepare(`
+    SELECT COUNT(DISTINCT subscriber_id) as v FROM (
+      SELECT subscriber_id FROM billing_logs WHERE billed_at >= datetime('now', '+9 hours', '-30 days')
+      UNION
+      SELECT subscriber_id FROM subscriber_changes WHERE changed_at >= datetime('now', '+9 hours', '-30 days')
+    )
+  `).get().v;
+
+  // KPI 3: 7일 신규 가입 + 이전 7일 비교
+  const newWeek = db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE created_at >= datetime('now', '+9 hours', '-7 days')`).get().v;
+  const newPrevWeek = db.prepare(`
+    SELECT COUNT(*) as v FROM subscribers
+    WHERE created_at >= datetime('now', '+9 hours', '-14 days')
+      AND created_at < datetime('now', '+9 hours', '-7 days')
+  `).get().v;
+
+  // KPI 4: 7일 결제 성공 (건수 + 금액)
+  const pay7 = db.prepare(`
+    SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total
+    FROM billing_logs WHERE result_code IN ('0000','00')
+      AND billed_at >= datetime('now', '+9 hours', '-7 days')
+  `).get();
+  const payPrev7 = db.prepare(`
+    SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total
+    FROM billing_logs WHERE result_code IN ('0000','00')
+      AND billed_at >= datetime('now', '+9 hours', '-14 days')
+      AND billed_at < datetime('now', '+9 hours', '-7 days')
+  `).get();
+
+  // 일별 활동 (지난 14일) — 가입 / 결제 / 해지 / 환불
+  const dateRange = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dateRange.push(kstDateOnly(d));
+  }
+  const dayMap = Object.fromEntries(dateRange.map(d => [d, { date: d, signups: 0, payments: 0, cancels: 0, refunds: 0 }]));
+  const fillField = (rows, field) => rows.forEach(r => { if (dayMap[r.date]) dayMap[r.date][field] = r.count; });
+  fillField(db.prepare(`SELECT DATE(created_at) as date, COUNT(*) as count FROM subscribers WHERE created_at >= datetime('now', '+9 hours', '-14 days') GROUP BY date`).all(), 'signups');
+  fillField(db.prepare(`SELECT DATE(billed_at) as date, COUNT(*) as count FROM billing_logs WHERE result_code IN ('0000','00') AND billed_at >= datetime('now', '+9 hours', '-14 days') GROUP BY date`).all(), 'payments');
+  fillField(db.prepare(`SELECT DATE(cancelled_at) as date, COUNT(*) as count FROM subscribers WHERE cancelled_at >= datetime('now', '+9 hours', '-14 days') GROUP BY date`).all(), 'cancels');
+  fillField(db.prepare(`SELECT DATE(refunded_at) as date, COUNT(*) as count FROM refunds WHERE result_code='2001' AND refunded_at >= datetime('now', '+9 hours', '-14 days') GROUP BY date`).all(), 'refunds');
+  const days = dateRange.map(d => dayMap[d]);
+
+  // 시간대별 가입 (24h 분포, 지난 30일)
+  const hourlyRaw = db.prepare(`
+    SELECT CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as count
+    FROM subscribers
+    WHERE created_at >= datetime('now', '+9 hours', '-30 days')
+    GROUP BY hour
+  `).all();
+  const hourly = Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    count: hourlyRaw.find(r => r.hour === h)?.count || 0,
+  }));
+
+  res.json({
+    activeNow, trialCount, activeCount, mau,
+    newWeek, newPrevWeek,
+    pay7, payPrev7,
+    days, hourly,
+  });
+});
+
 app.get('/api/logs', adminAuth, (req, res) => {
   const rows = db.prepare(`
     SELECT l.*, s.company, s.name FROM billing_logs l
