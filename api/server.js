@@ -307,12 +307,16 @@ function adminAuth(req, res, next) {
 }
 
 app.get('/api/subscribers', adminAuth, (req, res) => {
+  // 가입 순서대로 가져와 joinNumber 부여 (가장 먼저 가입한 사람 = 1, 이후 +1)
+  // 그 다음 화면 표시는 최신순(신순)으로 reverse
   const rows = db.prepare(`
     SELECT id, company, name, phone, features, billing_type,
            charge_amount, trial_start, next_billing_date, status, created_at,
            CASE WHEN pw_hash IS NOT NULL THEN 1 ELSE 0 END as has_password
-    FROM subscribers ORDER BY created_at DESC
+    FROM subscribers ORDER BY created_at ASC
   `).all();
+  rows.forEach((r, i) => { r.joinNumber = i + 1; });
+  rows.reverse();
   res.json(rows);
 });
 

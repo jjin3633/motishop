@@ -1107,7 +1107,7 @@ function renderSubscribers(rows) {
       : '';
     return `
     <tr class="tbl-row-clickable" onclick="openDetail(${r.id})">
-      <td style="color:var(--gray400)">${idx + 1}</td>
+      <td style="color:var(--gray400)">${r.joinNumber || (idx + 1)}</td>
       <td><strong>${esc(r.company)}</strong>${reSub}</td>
       <td>${esc(r.name)}</td>
       <td>${esc(r.phone)}</td>
