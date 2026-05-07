@@ -704,6 +704,15 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
+// 표시 명칭 매핑 — DB값은 그대로, 운영자 시야에 PLUS/LITE 구분되게
+// (CSV export는 DB raw 유지, 화면 표시만 라벨 적용)
+function featLabel(key) {
+  return key === 'ALL IN ONE' ? 'ALL IN ONE PLUS' : key;
+}
+function displayFeatures(featuresStr) {
+  return (featuresStr || '').split(',').map(f => featLabel(f.trim())).filter(Boolean).join(', ');
+}
+
 // 모달 body scroll lock 헬퍼 — iOS Safari 호환 (position:fixed 패턴)
 let _modalLockCount = 0;
 let _modalLockY = 0;
@@ -790,7 +799,7 @@ function renderDetail(d) {
       <div class="detail-grid">
         <div class="detail-row"><span class="lbl">타입</span><span class="val">${billingTypeMap[s.billing_type]||s.billing_type}</span></div>
         <div class="detail-row"><span class="lbl">결제액</span><span class="val">${fmt(s.charge_amount)}원</span></div>
-        <div class="detail-row full"><span class="lbl">구독 기능</span><span class="val">${esc(s.features)||'-'}</span></div>
+        <div class="detail-row full"><span class="lbl">구독 기능</span><span class="val">${esc(displayFeatures(s.features))||'-'}</span></div>
         <div class="detail-row"><span class="lbl">가입일</span><span class="val">${(s.created_at||'').slice(0,10)}</span></div>
         <div class="detail-row"><span class="lbl">체험 시작</span><span class="val">${s.trial_start||'-'}</span></div>
         <div class="detail-row"><span class="lbl">다음 결제일</span><span class="val">${s.next_billing_date||'-'}${dDaysLabel}</span></div>
@@ -895,7 +904,7 @@ function renderDetail(d) {
                 <span class="badge b-${r.status}">${statusMap[r.status]||r.status}</span>
                 <span style="font-size:13px;font-weight:700;color:var(--text);">${billingTypeMap[r.billing_type]||r.billing_type} · ${fmt(r.charge_amount)}원</span>
               </div>
-              <div style="font-size:12px;color:var(--gray600);">${esc(r.features)||'-'}</div>
+              <div style="font-size:12px;color:var(--gray600);">${esc(displayFeatures(r.features))||'-'}</div>
               <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${period}</div>
             </div>`;
           }).join('')}
@@ -1102,7 +1111,7 @@ function renderSubscribers(rows) {
       <td><strong>${esc(r.company)}</strong>${reSub}</td>
       <td>${esc(r.name)}</td>
       <td>${esc(r.phone)}</td>
-      <td style="max-width:180px;font-size:12px;color:var(--gray600);line-height:1.6">${esc(r.features)}</td>
+      <td style="max-width:180px;font-size:12px;color:var(--gray600);line-height:1.6">${esc(displayFeatures(r.features))}</td>
       <td><span class="badge b-${r.billing_type}">${r.billing_type==='monthly'?'월구독':'연구독'}</span></td>
       <td class="fw700">${fmt(r.charge_amount)}원</td>
       <td><span class="badge b-${r.status}">${{trial:'체험중',active:'구독중',cancelled:'해지'}[r.status]||r.status}</span></td>

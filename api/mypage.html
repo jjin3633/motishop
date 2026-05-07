@@ -524,14 +524,27 @@ let sessionToken = sessionStorage.getItem('moti_token');
 let currentSubscriber = null;
 const fmt = n => Number(n||0).toLocaleString();
 
+// key = DB에 저장되는 내부값 (절대 변경 X — 기존 가입자 데이터 호환)
+// label = 화면 표시 명칭 (없으면 key 그대로 사용)
 const ALL_FEATURES = [
   { key: '모아레', monthly: 23900, annual: 17900 },
   { key: '3D 신경·림프·장기', monthly: 35900, annual: 29900 },
   { key: '척추 세부 분석', monthly: 47900, annual: 39900 },
   { key: '손실키 분석', monthly: 79900, annual: 65900 },
   { key: '안면 비대칭·여백·탄력', monthly: 29900, annual: 23900 },
-  { key: 'ALL IN ONE', monthly: 107900, annual: 89900 },
+  { key: 'ALL IN ONE LITE', monthly: 89900, annual: 74900 },
+  { key: 'ALL IN ONE', label: 'ALL IN ONE PLUS', monthly: 107900, annual: 89900 },
 ];
+function featLabel(key) {
+  const f = ALL_FEATURES.find(x => x.key === key);
+  return (f && f.label) || key;
+}
+// 번들(단독 선택 — 다른 기능과 동시 선택 불가)
+const BUNDLE_FEATURES = ['ALL IN ONE', 'ALL IN ONE LITE'];
+function getBundle(featureList) {
+  for (const b of BUNDLE_FEATURES) if (featureList.includes(b)) return b;
+  return null;
+}
 // renderBillingSwitch / openBillingModal에서 사용하는 가격 lookup
 const FEATURE_PRICES = {
   monthly: Object.fromEntries(ALL_FEATURES.map(f => [f.key, f.monthly])),
@@ -846,7 +859,13 @@ function renderFeatList() {
   const featList = document.getElementById('featList');
 
   const subscribedFeats = ALL_FEATURES.filter(f => subscribed.includes(f.key));
-  const availFeats = ALL_FEATURES.filter(f => !subscribed.includes(f.key));
+  let availFeats = ALL_FEATURES.filter(f => !subscribed.includes(f.key));
+
+  // 풀 ALL IN ONE 가입자는 LITE 자동 다운그레이드 차단 (어드민 수동만 허용)
+  const currentBundle = getBundle(subscribed);
+  if (currentBundle === 'ALL IN ONE') {
+    availFeats = availFeats.filter(f => f.key !== 'ALL IN ONE LITE');
+  }
 
   let html = '';
 
@@ -855,7 +874,7 @@ function renderFeatList() {
     html += subscribedFeats.map(f => `
       <div class="feat-row">
         <div class="feat-dot"></div>
-        <div class="feat-name">${f.key}</div>
+        <div class="feat-name">${featLabel(f.key)}</div>
         <span class="feat-price">월 ${fmt(f[billingType])}원</span>
         ${s.status !== 'cancelled' ? `<button class="btn-feat-cancel" onclick="cancelFeat('${f.key}')">해지</button>` : ''}
       </div>`).join('');
@@ -866,7 +885,7 @@ function renderFeatList() {
     html += availFeats.map(f => `
       <div class="feat-row avail">
         <div class="feat-dot"></div>
-        <div class="feat-name" style="color:var(--text-sub)">${f.key}</div>
+        <div class="feat-name" style="color:var(--text-sub)">${featLabel(f.key)}</div>
         <span class="feat-price">월 ${fmt(f[billingType])}원</span>
         <button class="btn-feat-add" onclick="addFeat('${f.key}')">추가</button>
       </div>`).join('');
@@ -885,8 +904,9 @@ function renderBillingSwitch() {
   const targetType = isMonthly ? 'annual' : 'monthly';
   const prices = FEATURE_PRICES[targetType];
   const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
-  let targetAmount = feats.includes('ALL IN ONE')
-    ? prices['ALL IN ONE']
+  const _bundle = getBundle(feats);
+  let targetAmount = _bundle
+    ? prices[_bundle]
     : feats.reduce((sum, f) => sum + (prices[f] || 0), 0);
 
   document.getElementById('billingSwitchCurrent').textContent = isMonthly ? '월 구독 중' : '연 구독 중';
@@ -906,8 +926,9 @@ function openBillingModal() {
   const targetType = isMonthly ? 'annual' : 'monthly';
   const prices = FEATURE_PRICES[targetType];
   const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
-  let targetAmount = feats.includes('ALL IN ONE')
-    ? prices['ALL IN ONE']
+  const _bundle = getBundle(feats);
+  let targetAmount = _bundle
+    ? prices[_bundle]
     : feats.reduce((sum, f) => sum + (prices[f] || 0), 0);
 
   document.getElementById('billingModalTitle').textContent = isMonthly ? '연 구독으로 전환' : '월 구독으로 전환';
@@ -943,7 +964,8 @@ let pendingFeatures = null;
 
 function calcAmount(features, billingType) {
   const prices = FEATURE_PRICES[billingType] || FEATURE_PRICES.monthly;
-  if (features.includes('ALL IN ONE')) return prices['ALL IN ONE'];
+  const b = getBundle(features);
+  if (b) return prices[b];
   return features.reduce((sum, f) => sum + (prices[f] || 0), 0);
 }
 
@@ -952,12 +974,13 @@ function openFeatChange(action, featKey, newFeatures) {
   const newAmount = calcAmount(newFeatures, s.billing_type);
   const isAdd = action === 'add';
 
+  const featLbl = featLabel(featKey);
   document.getElementById('featChangeTitle').textContent = isAdd
-    ? `'${featKey}' 추가 구독`
-    : `'${featKey}' 해지`;
+    ? `'${featLbl}' 추가 구독`
+    : `'${featLbl}' 해지`;
   document.getElementById('featChangeDesc').textContent = isAdd
-    ? `다음 결제일부터 '${featKey}' 기능이 추가됩니다.`
-    : `'${featKey}' 기능이 다음 결제일부터 청구되지 않습니다.`;
+    ? `다음 결제일부터 '${featLbl}' 기능이 추가됩니다.`
+    : `'${featLbl}' 기능이 다음 결제일부터 청구되지 않습니다.`;
   document.getElementById('featChangeBefore').textContent = `${fmt(s.charge_amount)}원`;
   document.getElementById('featChangeAfter').textContent = `${fmt(newAmount)}원`;
   document.getElementById('featChangeDate').textContent = (s.next_billing_date||'').slice(0,10);
@@ -987,7 +1010,7 @@ async function cancelFeat(featKey) {
   const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
   const remaining = subscribed.filter(f => f !== featKey);
   if (remaining.length === 0) {
-    if (!confirm(`'${featKey}'를 해지하면 구독 중인 기능이 없게 됩니다. 전체 해지로 진행하시겠습니까?`)) return;
+    if (!confirm(`'${featLabel(featKey)}'를 해지하면 구독 중인 기능이 없게 됩니다. 전체 해지로 진행하시겠습니까?`)) return;
     openCancelModal(); return;
   }
   openFeatChange('cancel', featKey, remaining);
@@ -1118,12 +1141,15 @@ function setResubOwner(type) {
 }
 
 function toggleResubFeat(key) {
-  if (key === 'ALL IN ONE') {
-    if (resubFeats.has('ALL IN ONE')) resubFeats.delete('ALL IN ONE');
-    else { resubFeats = new Set(['ALL IN ONE']); }
-  } else {
+  const isBundle = BUNDLE_FEATURES.includes(key);
+  if (isBundle) {
+    // 번들 클릭 → 본인 토글, 켜질 땐 단독으로
     if (resubFeats.has(key)) resubFeats.delete(key);
-    else { resubFeats.delete('ALL IN ONE'); resubFeats.add(key); }
+    else { resubFeats = new Set([key]); }
+  } else {
+    // 개별 기능 → 모든 번들 제거 + 본인 토글
+    if (resubFeats.has(key)) resubFeats.delete(key);
+    else { BUNDLE_FEATURES.forEach(b => resubFeats.delete(b)); resubFeats.add(key); }
   }
   renderResubModal();
 }
@@ -1136,7 +1162,7 @@ function renderResubModal() {
     return `<div class="resub-feat-item ${sel?'selected':''}" onclick="toggleResubFeat('${f.key}')">
       <div class="resub-feat-left">
         <div class="resub-feat-check"></div>
-        <div class="resub-feat-name">${f.key}</div>
+        <div class="resub-feat-name">${featLabel(f.key)}</div>
       </div>
       <div class="resub-feat-price">월 ${fmt(price)}원</div>
     </div>`;

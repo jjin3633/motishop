@@ -90,6 +90,7 @@ const FEATURE_PRICES = {
     '척추 세부 분석': 47900,
     '손실키 분석': 79900,
     '안면 비대칭·여백·탄력': 29900,
+    'ALL IN ONE LITE': 89900,
     'ALL IN ONE': 107900,
   },
   annual: {
@@ -98,9 +99,27 @@ const FEATURE_PRICES = {
     '척추 세부 분석': 39900,
     '손실키 분석': 65900,
     '안면 비대칭·여백·탄력': 23900,
+    'ALL IN ONE LITE': 74900,
     'ALL IN ONE': 89900,
   }
 };
+
+// 번들 상품 (단독 선택 — 다른 기능과 동시 선택 불가)
+// 우선순위: 풀 ALL IN ONE > LITE (둘 다 들어오면 풀로 통일)
+const BUNDLE_FEATURES = ['ALL IN ONE', 'ALL IN ONE LITE'];
+function getBundle(featureList) {
+  for (const b of BUNDLE_FEATURES) if (featureList.includes(b)) return b;
+  return null;
+}
+
+// 표시 명칭 매핑 — 내부 key는 그대로(DB 호환), 사용자에게 보여줄 때만 라벨 변환
+// 'ALL IN ONE' → 'ALL IN ONE PLUS' (LITE는 동일)
+function featLabel(key) {
+  return key === 'ALL IN ONE' ? 'ALL IN ONE PLUS' : key;
+}
+function displayFeatures(featuresStr) {
+  return (featuresStr || '').split(',').map(f => featLabel(f.trim())).filter(Boolean).join(', ');
+}
 
 // ── 유틸 ──
 // KST 기준 YYYY-MM-DD (toISOString은 항상 UTC라 사용 금지)
@@ -198,13 +217,15 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
   const featList = String(features).split(',').map(f => f.trim()).filter(Boolean);
   const prices = FEATURE_PRICES[billingType];
   // 가격표 sync 검증 — 알 수 없는 키면 차단 (#15)
-  const unknownFeats = featList.filter(f => f !== 'ALL IN ONE' && !(f in prices));
+  const unknownFeats = featList.filter(f => !(f in prices));
   if (unknownFeats.length > 0) {
     notifySlack(`🔴 알 수 없는 기능 키(가입): ${unknownFeats.join(', ')} (${maskPhone(String(phone).replace(/[^0-9]/g, ''))})`);
     return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
   }
-  const monthlyAmount = featList.includes('ALL IN ONE')
-    ? prices['ALL IN ONE']
+  // 번들 선택 시 다른 항목 무시하고 번들 단독 가격 적용
+  const subBundle = getBundle(featList);
+  const monthlyAmount = subBundle
+    ? prices[subBundle]
     : featList.reduce((s, f) => s + prices[f], 0);
   if (monthlyAmount <= 0) {
     return res.status(400).json({ ok: false, msg: '유효하지 않은 기능 선택' });
@@ -685,7 +706,7 @@ app.post('/api/admin/notify-activated', adminAuth, (req, res) => {
   `).run(id, operator);
   const logId = insertResult.lastInsertRowid;
 
-  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 신청하신 구독 기능이 정상 활성화되었어요.\n\n활성화된 기능: ${sub.features}\n\n새 기능을 사용하시려면 모티피지오 프로그램을 재부팅 부탁드려요.\n이용 문의: 070-4365-7740`;
+  const smsText = `[Moti Shop] ${sub.company} ${sub.name}님, 신청하신 구독 기능이 정상 활성화되었어요.\n\n활성화된 기능: ${displayFeatures(sub.features)}\n\n새 기능을 사용하시려면 모티피지오 프로그램을 재부팅 부탁드려요.\n이용 문의: 070-4365-7740`;
 
   sendSMS({ to: sub.phone, text: smsText, subject: '[Moti Shop] 구독 기능 활성화 완료' }).then(r => {
     db.prepare(`UPDATE activation_logs SET sms_result_code=?, sms_result_msg=? WHERE id=?`)
@@ -891,8 +912,10 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
   }
 
   const prices = FEATURE_PRICES[billingType] || FEATURE_PRICES.monthly;
+  const reactBundle = getBundle(features);
+  if (reactBundle) features = [reactBundle];  // 번들이면 단독으로
   const featStr = features.join(', ');
-  const monthlyAmount = features.includes('ALL IN ONE') ? prices['ALL IN ONE'] : features.reduce((s, f) => s + (prices[f] || 0), 0);
+  const monthlyAmount = reactBundle ? prices[reactBundle] : features.reduce((s, f) => s + (prices[f] || 0), 0);
   const chargeAmount = billingType === 'annual' ? monthlyAmount * 12 : monthlyAmount;
   if (chargeAmount !== Number(amount)) {
     return res.status(400).json({ ok: false, msg: '결제 금액 불일치' });
@@ -1002,16 +1025,27 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
   const prices = FEATURE_PRICES[sub.billing_type] || FEATURE_PRICES.monthly;
 
   // 가격표 sync 검증 — features 키와 가격표 일치 안 하면 0원 결제 양산 위험 → 차단
-  const unknownFeats = features.filter(f => f !== 'ALL IN ONE' && !(f in prices));
+  const unknownFeats = features.filter(f => !(f in prices));
   if (unknownFeats.length > 0) {
     notifySlack(`🔴 알 수 없는 기능 키: ${unknownFeats.join(', ')} (subscriber_id=${req.subscriberId}) — 가격표 동기화 점검 필요`);
     return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
   }
 
+  // 다운그레이드 차단: 풀 ALL IN ONE → ALL IN ONE LITE 자동 변경 금지 (어드민 수동만)
+  const oldFeatures = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  const oldBundle = getBundle(oldFeatures);
+  const newBundle = getBundle(features);
+  if (oldBundle === 'ALL IN ONE' && newBundle === 'ALL IN ONE LITE') {
+    return res.status(403).json({
+      ok: false,
+      msg: '플랜 축소(ALL IN ONE PLUS → ALL IN ONE LITE)는 고객센터(070-4365-7740)로 문의 부탁드립니다.'
+    });
+  }
+
   let newAmount;
-  if (features.includes('ALL IN ONE')) {
-    features = ['ALL IN ONE'];  // 다른 항목 강제 제거 (#17 일관성)
-    newAmount = prices['ALL IN ONE'];
+  if (newBundle) {
+    features = [newBundle];  // 번들은 단독 (다른 항목 강제 제거)
+    newAmount = prices[newBundle];
   } else {
     newAmount = features.reduce((sum, f) => sum + prices[f], 0);
   }
@@ -1044,12 +1078,10 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
   const prices = FEATURE_PRICES[billingType];
   const features = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
 
-  let newAmount;
-  if (features.includes('ALL IN ONE')) {
-    newAmount = prices['ALL IN ONE'];
-  } else {
-    newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
-  }
+  const billingBundle = getBundle(features);
+  const newAmount = billingBundle
+    ? prices[billingBundle]
+    : features.reduce((sum, f) => sum + (prices[f] || 0), 0);
 
   // 변경 이력 기록
   if (sub.billing_type !== billingType || sub.charge_amount !== newAmount) {

@@ -730,7 +730,17 @@
     .pricing .section-sub { color: rgba(255,255,255,.4); }
     .pricing .section-label, .pricing .section-eyebrow { color: var(--cyan); }
     .pricing .section-label::before { background: var(--cyan); }
-    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 56px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .pricing-grid.bundle { grid-template-columns: repeat(2, 1fr); max-width: 820px; margin-left: 0; margin-right: auto; }
+    .pricing-group-label {
+      display: block;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,.4);
+      margin-top: 56px;
+      margin-bottom: 24px;
+    }
+    .pricing-grid + .pricing-group-label { margin-top: 80px; }
     .price-card {
       background: rgba(255,255,255,.035);
       -webkit-backdrop-filter: blur(24px) saturate(1.5);
@@ -774,6 +784,56 @@
       padding: 4px 12px; border-radius: 6px;
       z-index: 3;
     }
+    /* LITE — 풀 ALL IN ONE과 동급 카드, 시각 톤만 한 단계 다운 */
+    .price-card.featured.lite {
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,.02) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 14px 40px rgba(0,0,0,.22);
+    }
+    .price-card.featured.lite:hover {
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        0 22px 55px rgba(0,0,0,.32);
+    }
+    .price-card.featured.lite::before { display: none; }
+    /* 타이틀 옆 인라인 티어 배지 */
+    .lite-tag, .plus-tag {
+      display: inline-block;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      vertical-align: middle;
+      margin-left: 8px;
+      position: relative;
+      top: -2px;  /* 시각 중앙 미세 보정 (24px 타이틀 기준) */
+    }
+    .lite-tag {
+      background: rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+    }
+    .plus-tag {
+      background: rgba(0,212,255,.18);
+      color: var(--cyan);
+    }
+    /* 번들 카드 하단 — 포함 기능 리스트 */
+    .bundle-feats {
+      margin-top: 18px; padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .bundle-feat {
+      font-size: 16px; font-weight: 400; color: rgba(255,255,255,.72);
+      letter-spacing: -0.01em;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .bundle-feat::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: rgba(0,212,255,.7); flex-shrink: 0;
+    }
+    .price-card.featured.lite .bundle-feat::before { background: rgba(255,255,255,.5); }
     .price-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
     .price-card h4 { font-size: 24px; font-weight: 600; color: white; margin-bottom: 6px; letter-spacing: -0.02em; }
     .price-card .desc { font-size: 18px; font-weight: 400; color: rgba(255,255,255,.5); line-height: 1.6; margin-bottom: 24px; }
@@ -1144,6 +1204,7 @@
     @media (max-width: 1024px) {
       .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+      .pricing-grid.bundle { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
       .problem-grid { grid-template-columns: 1fr; }
       .feat-card h3 { font-size: 22px; }
       .compare-slide.active { grid-template-columns: 1fr; }
@@ -1177,6 +1238,7 @@
       .features-grid { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
       .feat-badge { font-size: 16px; }
       .pricing-grid { grid-template-columns: 1fr; gap: 18px; margin-top: 28px; }
+      .pricing-grid.bundle { grid-template-columns: 1fr; }
       .price-card { padding: 24px 22px; border-radius: 16px; }
       .price-card h4 { font-size: 22px; }
       .faq-q { font-size: 22px; }
@@ -1394,28 +1456,6 @@
           <h3>안면 비대칭·여백·탄력</h3>
         </div>
         <p>좌우 비대칭, 윤곽선 비율, 탄력 점수까지.<br>말로 설명할 수 없던 변화를 숫자로.</p>
-      </div>
-      <div class="feat-card" style="border-color:rgba(0,212,255,.2);">
-        <div class="feat-thumb feat-thumb-all">
-          <div class="all-marquee">
-            <div class="all-marquee-track">
-              <div class="all-marquee-card"><img src="assets/features/moire.jpg" alt="모아레" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card"><img src="assets/features/skeleton1.png" alt="3D 신경·림프·장기" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card"><img src="assets/features/spinedetail1.png" alt="척추 세부" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card"><img src="assets/features/lossheight.png" alt="손실키" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card"><img src="assets/features/face.png" alt="안면 비대칭" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/moire.jpg" alt="" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/skeleton1.png" alt="" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/spinedetail1.png" alt="" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/lossheight.png" alt="" loading="lazy" decoding="async" /></div>
-              <div class="all-marquee-card" aria-hidden="true"><img src="assets/features/face.png" alt="" loading="lazy" decoding="async" /></div>
-            </div>
-          </div>
-          <div class="feat-thumb-gradient"></div>
-          <span class="feat-badge" style="position:absolute;top:14px;left:14px;z-index:6;">추천</span>
-          <h3 style="position:absolute;bottom:0;left:0;right:0;padding:10px 18px 18px;color:white;z-index:6;font-size:22px;font-weight:700;letter-spacing:-0.02em;">ALL IN ONE</h3>
-        </div>
-        <p>5개 기능을 하나로 묶었습니다.<br>개별 구독 대비 월 최대 40% 저렴합니다.</p>
       </div>
     </div>
   </div>
@@ -1645,7 +1685,7 @@
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 트레이너</span>
-            <span class="problem-persona-role">PT 스튜디오 · Mini · ALL IN ONE 구독</span>
+            <span class="problem-persona-role">PT 스튜디오 · Mini · ALL IN ONE PLUS 구독</span>
           </div>
         </div>
       </div>
@@ -1657,7 +1697,43 @@
 <section class="pricing">
   <div class="section-inner">
     <h2 class="section-title">30일 써보고 결정하세요.</h2>
-    <div class="pricing-grid">
+
+    <!-- 묶음 패키지 -->
+    <span class="pricing-group-label">묶음 패키지</span>
+    <div class="pricing-grid bundle">
+      <div class="price-card featured">
+        <h4>ALL IN ONE <span class="plus-tag">PLUS</span></h4>
+        <p class="desc">5개 기능 전부, 개별 대비 50% 절감.</p>
+        <div class="price-rows">
+          <div class="price-row"><span class="label">월 구독</span><span class="amount">107,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">89,900원</span><span class="save-badge">-17%</span></span></div>
+        </div>
+        <div class="bundle-feats">
+          <div class="bundle-feat">모아레</div>
+          <div class="bundle-feat">3D 신경·림프·장기</div>
+          <div class="bundle-feat">척추 세부 분석</div>
+          <div class="bundle-feat">손실키 분석</div>
+          <div class="bundle-feat">안면 비대칭·여백·탄력</div>
+        </div>
+      </div>
+      <div class="price-card featured lite">
+        <h4>ALL IN ONE <span class="lite-tag">LITE</span></h4>
+        <p class="desc">핵심 3개 기능, 부담 없는 시작.</p>
+        <div class="price-rows">
+          <div class="price-row"><span class="label">월 구독</span><span class="amount">89,900원</span></div>
+          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">74,900원</span><span class="save-badge">-17%</span></span></div>
+        </div>
+        <div class="bundle-feats">
+          <div class="bundle-feat">척추 세부 분석</div>
+          <div class="bundle-feat">손실키 분석</div>
+          <div class="bundle-feat">안면 비대칭·여백·탄력</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 개별 기능 -->
+    <span class="pricing-group-label">개별 기능</span>
+    <div class="pricing-grid individual">
       <div class="price-card">
         <h4>모아레</h4>
         <p class="desc">불균형을 등고선 한 장으로.</p>
@@ -1696,14 +1772,6 @@
         <div class="price-rows">
           <div class="price-row"><span class="label">월 구독</span><span class="amount">29,900원</span></div>
           <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">23,900원</span><span class="save-badge">-20%</span></span></div>
-        </div>
-      </div>
-      <div class="price-card featured">
-        <h4>ALL IN ONE</h4>
-        <p class="desc">5개 기능 전부, 월 40% 절감.</p>
-        <div class="price-rows">
-          <div class="price-row"><span class="label">월 구독</span><span class="amount">107,900원</span></div>
-          <div class="price-row annual"><span class="label">연 구독 (월 환산)</span><span class="amount-wrap"><span class="amount">89,900원</span><span class="save-badge">-17%</span></span></div>
         </div>
       </div>
     </div>
@@ -1783,7 +1851,8 @@
           <div class="feat-select-item" onclick="toggleFeat(this)" data-name="척추 세부 분석" data-monthly="47900" data-annual="39900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">척추 세부 분석</span></div><span class="feat-select-price">월 47,900원</span></div>
           <div class="feat-select-item" onclick="toggleFeat(this)" data-name="손실키 분석" data-monthly="79900" data-annual="65900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">손실키 분석</span></div><span class="feat-select-price">월 79,900원</span></div>
           <div class="feat-select-item" onclick="toggleFeat(this)" data-name="안면 비대칭·여백·탄력" data-monthly="29900" data-annual="23900"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">안면 비대칭·여백·탄력</span></div><span class="feat-select-price">월 29,900원</span></div>
-          <div class="feat-select-item" onclick="toggleFeat(this, true)" data-name="ALL IN ONE" data-monthly="107900" data-annual="89900" id="feat-all"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">ALL IN ONE</span></div><span class="feat-select-price">월 107,900원</span></div>
+          <div class="feat-select-item bundle" onclick="toggleFeat(this, true)" data-name="ALL IN ONE LITE" data-monthly="89900" data-annual="74900" id="feat-lite"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">ALL IN ONE <span class="lite-tag" style="font-size:11px;padding:2px 7px;margin-left:6px;top:-1px;">LITE</span> <span style="font-size:14px;color:rgba(255,255,255,.5);font-weight:400;">· 척추+손실키+안면</span></span></div><span class="feat-select-price">월 89,900원</span></div>
+          <div class="feat-select-item bundle" onclick="toggleFeat(this, true)" data-name="ALL IN ONE" data-monthly="107900" data-annual="89900" id="feat-all"><div class="feat-select-left"><div class="feat-select-check"></div><span class="feat-select-name">ALL IN ONE <span class="plus-tag" style="font-size:11px;padding:2px 7px;margin-left:6px;top:-1px;">PLUS</span> <span style="font-size:14px;color:rgba(255,255,255,.5);font-weight:400;">· 5종 풀패키지</span></span></div><span class="feat-select-price">월 107,900원</span></div>
         </div>
         <div class="price-summary">
           <div class="price-summary-label">선택 기능 합계</div>
@@ -1827,7 +1896,7 @@
 
 제4조의2 (구독 신청 및 이용계약의 성립) ① 본 서비스는 별도의 회원가입 절차 없이, 사이트 내 구독 신청 폼에서 다음 각 호의 절차를 모두 완료하는 시점에 회사와 회원 간 이용계약이 성립합니다. 1. 업체명·대표자(원장)·연락처 등 신청 정보의 기입, 2. 구독할 기능 및 결제 주기(월/연)의 선택, 3. 본 약관 및 관련 약관 전체에 대한 동의(필수), 4. 결제 수단(신용카드 또는 체크카드)의 정상 등록(주식회사 인피니소프트의 안전결제창을 통함). ② 카드 등록이 정상적으로 완료된 시점에 회원의 전화번호를 아이디로, 시스템이 자동 생성한 임시 비밀번호와 함께 마이페이지 로그인 정보가 발급됩니다. 회원은 마이페이지 접속 후 즉시 비밀번호를 변경할 것을 권장합니다. ③ 임시 비밀번호의 전달 방식(화면 표시, 문자메시지 등)은 회사의 운영 정책에 따르며, 변경 시 사이트에 사전 공지합니다. ④ 이용계약 성립과 동시에 무료 체험(제5조 제1항 제2호)이 개시되며, 첫 결제는 무료 체험 종료일 다음 날에 발생합니다.
 
-제5조 (서비스의 내용 및 변경) ① 회사가 제공하는 서비스의 내용은 다음과 같습니다. 1. 모티피지오 기기에 적용되는 부가 기능(모아레, 3D 신경·림프·장기, 척추 세부 분석, 손실키 분석, 안면 비대칭·여백·탄력, ALL IN ONE 등)의 구독형 제공, 2. 무료 체험 30일 운영, 3. 자동 결제 등록 및 결제 관리, 4. 회원 마이페이지를 통한 구독·결제 정보 관리, 5. 기타 회사가 추가로 개발하거나 다른 회사와의 제휴를 통해 제공하는 서비스. ② 회사는 운영상·기술상 필요에 따라 제공 중인 서비스의 일부 또는 전부를 변경할 수 있으며, 변경 사유와 내용을 사전에 사이트에 공지합니다. ③ 무료로 제공되는 서비스의 일부 또는 전부는 회사의 정책 또는 운영상의 필요에 따라 수정·중단·변경될 수 있으며, 이에 대해 관련 법령에 특별한 규정이 없는 한 회원에게 별도의 보상을 하지 않습니다.
+제5조 (서비스의 내용 및 변경) ① 회사가 제공하는 서비스의 내용은 다음과 같습니다. 1. 모티피지오 기기에 적용되는 부가 기능(모아레, 3D 신경·림프·장기, 척추 세부 분석, 손실키 분석, 안면 비대칭·여백·탄력, ALL IN ONE LITE, ALL IN ONE PLUS 등)의 구독형 제공, 2. 무료 체험 30일 운영, 3. 자동 결제 등록 및 결제 관리, 4. 회원 마이페이지를 통한 구독·결제 정보 관리, 5. 기타 회사가 추가로 개발하거나 다른 회사와의 제휴를 통해 제공하는 서비스. ② 회사는 운영상·기술상 필요에 따라 제공 중인 서비스의 일부 또는 전부를 변경할 수 있으며, 변경 사유와 내용을 사전에 사이트에 공지합니다. ③ 무료로 제공되는 서비스의 일부 또는 전부는 회사의 정책 또는 운영상의 필요에 따라 수정·중단·변경될 수 있으며, 이에 대해 관련 법령에 특별한 규정이 없는 한 회원에게 별도의 보상을 하지 않습니다.
 
 제6조 (회원의 의무) ① 회원은 다음 행위를 하여서는 아니 됩니다. 1. 신청 또는 변경 시 허위 내용의 등록, 2. 회사 또는 제3자의 명예를 손상시키거나 업무를 방해하는 행위, 3. 회사가 게시한 정보의 무단 변경, 4. 회사가 정한 정보 이외의 정보(컴퓨터 프로그램 등) 송신 또는 게시, 5. 회사 또는 제3자의 저작권 등 지적재산권 침해, 6. 외설 또는 폭력적인 메시지·화상·음성, 기타 공서양속에 반하는 정보를 사이트에 공개·게시하는 행위, 7. 자동 결제 카드 정보 도용 또는 부정 사용, 8. 기타 관련 법령에 위반되는 행위. ② 회원은 마이페이지 로그인 정보(아이디로 사용되는 전화번호 및 비밀번호)를 철저히 관리할 책임이 있으며, 이를 제3자에게 양도·대여할 수 없습니다. 회원의 부주의로 인한 정보 유출에 따른 손해의 책임은 회원에게 있습니다. 임시 비밀번호를 발급받은 회원은 마이페이지 접속 후 지체 없이 비밀번호를 변경하여야 합니다. ③ 회원은 결제 카드 정보가 변경되거나 만료된 경우 즉시 회사에 통지하거나 마이페이지에서 갱신해야 하며, 미통지로 인해 발생한 결제 실패 및 그에 따른 서비스 중단의 책임은 회원에게 있습니다.
 
@@ -2286,13 +2355,15 @@
     updatePriceTotal();
   }
 
-  function toggleFeat(el, isAll) {
-    if (isAll) {
+  function toggleFeat(el, isBundle) {
+    if (isBundle) {
+      // 번들(라이트/풀) 클릭 → 다른 모든 항목 해제 후 본인만 단독
       const was = el.classList.contains('selected');
       document.querySelectorAll('.feat-select-item').forEach(i => i.classList.remove('selected'));
       if (!was) el.classList.add('selected');
     } else {
-      document.getElementById('feat-all').classList.remove('selected');
+      // 개별 기능 클릭 → 모든 번들 해제 + 본인 토글
+      document.querySelectorAll('.feat-select-item.bundle').forEach(b => b.classList.remove('selected'));
       el.classList.toggle('selected');
     }
     updatePriceTotal();
