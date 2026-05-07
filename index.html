@@ -2581,6 +2581,16 @@
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFooterTerms(); });
 
+  // 마이페이지·외부에서 ?openTerms=terms|privacy|refund 진입 시 자동 모달 오픈
+  (function () {
+    const params = new URLSearchParams(location.search);
+    const target = params.get('openTerms');
+    if (target && ['terms','privacy','refund'].includes(target)) {
+      // 약관 본문(.terms-body) DOM 렌더 후 호출
+      window.addEventListener('load', () => setTimeout(() => openFooterTerms(target), 100));
+    }
+  })();
+
   // Feature card modal — 기능별 이미지 매핑 (이미지 추가 시 여기만 수정)
   const FEAT_IMAGES = {
     moire: [

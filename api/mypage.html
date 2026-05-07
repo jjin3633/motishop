@@ -248,6 +248,24 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
   .login-box { padding: 36px 24px; }
   .section-title { font-size: 12px; margin-bottom: 10px; }
 }
+
+/* ── Footer (메인과 동일 디자인) ── */
+.mp-footer { background: var(--navy); padding: 56px 24px 36px; text-align: left; border-top: 1px solid rgba(255,255,255,.05); margin-top: 60px; }
+.mp-footer-inner { max-width: 1200px; margin: 0 auto; }
+.mp-footer-company { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.85); margin: 0 0 12px; letter-spacing: -.01em; }
+.mp-footer-info { font-size: 14px; color: rgba(255,255,255,.6); line-height: 1.85; margin: 0 0 22px; }
+.mp-footer-info p { margin: 0; }
+.mp-footer-info a { color: rgba(255,255,255,.75); text-decoration: none; }
+.mp-footer-info a:hover { color: #fff; }
+.mp-footer-links { display: flex; gap: 26px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); margin: 6px 0 18px; flex-wrap: wrap; }
+.mp-footer-links a { font-size: 14px; color: rgba(255,255,255,.95); font-weight: 600; text-decoration: none; cursor: pointer; transition: color .15s; letter-spacing: -.01em; }
+.mp-footer-links a:hover { color: #fff; }
+.mp-footer-copy { font-size: 12px; color: rgba(255,255,255,.4); margin: 0; letter-spacing: .02em; }
+@media (max-width: 768px) {
+  .mp-footer { padding: 42px 24px 28px; }
+  .mp-footer-links { gap: 18px; }
+  .mp-footer-info { font-size: 12px; line-height: 1.9; }
+}
 </style>
 </head>
 <body>
@@ -1433,5 +1451,28 @@ async function submitUpdateCard() {
 // 자동 로그인
 if (sessionToken) showApp();
 </script>
+
+<!-- ── FOOTER (메인과 동일) ── -->
+<footer class="mp-footer">
+  <div class="mp-footer-inner">
+    <p class="mp-footer-company">(주)엠지솔루션스</p>
+    <div class="mp-footer-info">
+      <p>대표자 : 박재현</p>
+      <p>사업자 등록 번호 : 217-86-00674</p>
+      <p>통신판매업 신고번호 : 제 2022-서울마포-1090호</p>
+      <p>주소 : 서울특별시 마포구 동교로 23길 10, 1층·5층 모티피지오</p>
+      <p>고객센터 : <a href="tel:07043657740">070-4365-7740</a></p>
+    </div>
+
+    <div class="mp-footer-links">
+      <a href="/?openTerms=terms" target="_blank" rel="noopener">이용약관</a>
+      <a href="/?openTerms=privacy" target="_blank" rel="noopener">개인정보처리방침</a>
+      <a href="/?openTerms=refund" target="_blank" rel="noopener">환불 정책</a>
+    </div>
+
+    <p class="mp-footer-copy">Copyright ⓒ 2026 MGsolutions Inc. All rights reserved.</p>
+  </div>
+</footer>
+
 </body>
 </html>
