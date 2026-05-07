@@ -681,7 +681,7 @@ function renderStatusPeriod(s) {
   if (s.status === 'trial') {
     el.innerHTML = `
       <div class="period-headline">무료 체험 중</div>
-      <div class="period-main"><span class="accent">${trialEnd}</span>까지 무료 사용</div>
+      <div class="period-main"><span class="accent">${trialEnd}</span> 까지 무료 사용</div>
       <div class="period-sub">체험 종료 후 ${cycleLabel} <span class="period-amount">${amount}</span> 자동 결제 시작 · ${cycleLabel} 구독</div>
     `;
   } else if (s.status === 'active') {
@@ -693,7 +693,7 @@ function renderStatusPeriod(s) {
   } else if (s.status === 'cancelled') {
     el.innerHTML = `
       <div class="period-headline">해지 완료</div>
-      <div class="period-main"><span class="accent">${nextDate}</span>까지 사용 가능</div>
+      <div class="period-main"><span class="accent">${nextDate}</span> 까지 사용 가능</div>
       <div class="period-sub">이후 자동 결제는 발생하지 않아요. 마이페이지에서 언제든 다시 구독 가능합니다.</div>
     `;
   } else {
