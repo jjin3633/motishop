@@ -405,7 +405,14 @@
       font-size: 22px; font-weight: 600;
       color: var(--text);
       line-height: 1.6; letter-spacing: -0.02em;
-      margin-bottom: 32px;
+      margin: 0 0 24px;
+      min-height: 110px; /* 데스크탑 기준 카드별 메시지 영역 정렬 */
+    }
+    .problem-card .problem-quote {
+      font-size: 22px; font-weight: 600;
+      color: var(--text);
+      line-height: 1.6; letter-spacing: -0.02em;
+      margin: 0 0 32px;
       flex: 1;
     }
     .problem-card h3 .hl {
@@ -1233,7 +1240,8 @@
       .stat-label { font-size: 18px; }
       .problem-grid { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
       .problem-card { padding: 28px 24px 22px; border-radius: 16px; }
-      .problem-card h3 { font-size: 22px; margin-bottom: 24px; line-height: 1.55; }
+      .problem-card h3 { font-size: 22px; margin-bottom: 18px; line-height: 1.55; min-height: 0; }
+      .problem-card .problem-quote { font-size: 22px; margin-bottom: 24px; line-height: 1.55; }
       .problem-persona-name { font-size: 20px; }
       .problem-persona-role { font-size: 18px; white-space: normal; overflow: visible; text-overflow: clip; }
       .features-grid { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
@@ -1301,7 +1309,8 @@
       .feat-card p, .feat-roi { font-size: 18px; }
       /* 문제 카드 */
       .problem-card { padding: 28px 24px 24px; }
-      .problem-card h3 { font-size: 22px; }
+      .problem-card h3 { font-size: 22px; min-height: 0; }
+      .problem-card .problem-quote { font-size: 22px; }
       .problem-avatar { width: 44px; height: 44px; font-size: 30px; }
       /* 요금 카드 */
       .price-card { padding: 20px; }
@@ -1664,7 +1673,8 @@
     <h2 class="section-title">먼저 써본 원장님들이 증명합니다.</h2>
     <div class="problem-grid">
       <div class="problem-card">
-        <h3>30대 환자분이 측정 결과 보더니<br><span class="hl">그 자리에서 3개월권 결제</span>하셨어요.<br><br>"제가 1.5cm 줄었다고요?" 하시면서요.</h3>
+        <h3>30대 환자분이 측정 결과 보더니<br><span class="hl">그 자리에서 3개월권 결제</span>하셨어요.</h3>
+        <p class="problem-quote">"제가 1.5cm 줄었다고요?" 하시면서요.</p>
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">박** 원장</span>
@@ -1673,7 +1683,8 @@
         </div>
       </div>
       <div class="problem-card">
-        <h3>얼굴 라인 변화가 숫자로 찍히니까<br><span class="hl">회원분들이 알아서 재등록</span>하세요.<br><br>재등록률이 한 달 만에 눈에 띄게 올랐습니다.</h3>
+        <h3>얼굴 라인 변화가 숫자로 찍히니까<br><span class="hl">회원분들이 알아서 재등록</span>하세요.</h3>
+        <p class="problem-quote">재등록률이 한 달 만에 눈에 띄게 올랐습니다.</p>
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">윤** 원장</span>
@@ -1682,7 +1693,8 @@
         </div>
       </div>
       <div class="problem-card">
-        <h3>한 번에 다 보여주니까 <span class="hl">회원님들이 알아서 카드를 꺼내</span>세요.<br><br>더 이상 길게 설명할 필요가 없어졌습니다.</h3>
+        <h3>한 번에 다 보여주니까 <span class="hl">회원님들이 알아서 카드를 꺼내</span>세요.</h3>
+        <p class="problem-quote">더 이상 길게 설명할 필요가 없어졌습니다.</p>
         <div class="problem-persona">
           <div class="problem-persona-info">
             <span class="problem-persona-name">이** 트레이너</span>
