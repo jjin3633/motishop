@@ -1031,14 +1031,16 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
     return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
   }
 
-  // 다운그레이드 차단: 풀 ALL IN ONE → ALL IN ONE LITE 자동 변경 금지 (어드민 수동만)
+  // 묶음 상품 자동 변경 전면 차단 (양방향)
+  // 묶음 가입자는 다른 묶음·개별 기능으로의 자동 전환 불가 — 변경 원하면 해지 후 재가입
+  // (개별 기능 가입자 → 묶음 업그레이드는 허용)
   const oldFeatures = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
   const oldBundle = getBundle(oldFeatures);
   const newBundle = getBundle(features);
-  if (oldBundle === 'ALL IN ONE' && newBundle === 'ALL IN ONE LITE') {
+  if (oldBundle && oldBundle !== newBundle) {
     return res.status(403).json({
       ok: false,
-      msg: '플랜 축소(ALL IN ONE PLUS → ALL IN ONE LITE)는 고객센터(070-4365-7740)로 문의 부탁드립니다.'
+      msg: '묶음 상품(ALL IN ONE PLUS · LITE) 변경은 자동 처리되지 않습니다.\n변경을 원하시면 현재 구독 해지 후 재가입해 주세요.\n자세한 안내는 고객센터(070-4365-7740 · 카카오톡)로 문의 부탁드립니다.'
     });
   }
 

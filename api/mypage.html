@@ -862,15 +862,13 @@ function renderFeatList() {
   let availFeats = ALL_FEATURES.filter(f => !subscribed.includes(f.key));
 
   // 요금제별 추가 가능 항목 필터
+  // 묶음 가입자(PLUS / LITE)는 자동 변경 전면 차단 — 변경 원하면 해지 후 재가입
   const currentBundle = getBundle(subscribed);
-  if (currentBundle === 'ALL IN ONE') {
-    // PLUS 가입자: 5개 기능 전부 포함 → 추가 가능 0
+  if (currentBundle) {
+    // 묶음 가입자: 추가 가능 항목 0 (PLUS·LITE 모두)
     availFeats = [];
-  } else if (currentBundle === 'ALL IN ONE LITE') {
-    // LITE 가입자: PLUS 업그레이드만 (개별 추가는 번들 충돌·역가성비 방지)
-    availFeats = availFeats.filter(f => f.key === 'ALL IN ONE');
   }
-  // 그 외(개별 기능 가입자): 기존 동작 — 모든 비-구독 항목 노출
+  // 개별 기능 가입자: 기존 동작 — 모든 비-구독 항목 노출 (LITE/PLUS 묶음 업그레이드 허용)
 
   let html = '';
 
@@ -886,18 +884,23 @@ function renderFeatList() {
   }
 
   if (availFeats.length && s.status !== 'cancelled') {
-    const isLiteUpgradeOnly = currentBundle === 'ALL IN ONE LITE';
-    html += `<div class="feat-section-title">${isLiteUpgradeOnly ? '업그레이드' : '추가 가능'}</div>`;
-    html += availFeats.map(f => {
-      const isUpgradeRow = isLiteUpgradeOnly && f.key === 'ALL IN ONE';
-      return `
+    html += `<div class="feat-section-title">추가 가능</div>`;
+    html += availFeats.map(f => `
       <div class="feat-row avail">
         <div class="feat-dot"></div>
         <div class="feat-name" style="color:var(--text-sub)">${featLabel(f.key)}</div>
         <span class="feat-price">월 ${fmt(f[billingType])}원</span>
-        <button class="btn-feat-add" onclick="${isUpgradeRow ? `upgradeToPlus()` : `addFeat('${f.key}')`}">${isUpgradeRow ? '업그레이드' : '추가'}</button>
+        <button class="btn-feat-add" onclick="addFeat('${f.key}')">추가</button>
+      </div>`).join('');
+  }
+
+  // 묶음 가입자에게 변경 안내 (PLUS/LITE 모두)
+  if (currentBundle && s.status !== 'cancelled') {
+    html += `
+      <div style="margin-top:14px;padding:14px 16px;border-radius:10px;background:var(--bg-soft,rgba(0,0,0,.03));font-size:13px;color:var(--text-sub);line-height:1.6;">
+        ⓘ 묶음 상품(ALL IN ONE PLUS · LITE)은 다른 플랜으로 자동 변경되지 않습니다.<br>
+        변경을 원하시면 현재 구독 해지 후 재가입해 주세요. 문의: <strong style="color:var(--text);">070-4365-7740</strong>
       </div>`;
-    }).join('');
   }
 
   if (!html) html = '<div class="feat-empty">구독 중인 기능이 없습니다</div>';
@@ -1030,28 +1033,6 @@ async function addFeat(featKey) {
   const subscribed = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
   const updated = [...subscribed, featKey];
   openFeatChange('add', featKey, updated);
-}
-
-// LITE → PLUS 업그레이드 (LITE 묶음 해제 후 PLUS로 단독 변경)
-async function upgradeToPlus() {
-  const s = currentSubscriber;
-  const billingType = s.billing_type === 'annual' ? 'annual' : 'monthly';
-  const newAmount = calcAmount(['ALL IN ONE'], billingType);
-  pendingFeatures = ['ALL IN ONE'];
-
-  document.getElementById('featChangeTitle').textContent = 'ALL IN ONE PLUS로 업그레이드';
-  document.getElementById('featChangeDesc').textContent =
-    `다음 결제일부터 ALL IN ONE PLUS(5개 기능 전체)로 변경됩니다.`;
-  document.getElementById('featChangeBefore').textContent = `${fmt(s.charge_amount)}원`;
-  document.getElementById('featChangeAfter').textContent = `${fmt(newAmount)}원`;
-  document.getElementById('featChangeDate').textContent = (s.next_billing_date||'').slice(0,10);
-
-  const btn = document.getElementById('featChangeConfirmBtn');
-  btn.textContent = '업그레이드';
-  btn.classList.remove('danger');
-
-  document.getElementById('featChangeModal').classList.add('open');
-  lockBody();
 }
 
 async function updateFeatures(features) {
