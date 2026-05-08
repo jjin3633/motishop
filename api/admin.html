@@ -707,7 +707,10 @@ function esc(s) {
 // 표시 명칭 매핑 — DB값은 그대로, 운영자 시야에 PLUS/LITE 구분되게
 // (CSV export는 DB raw 유지, 화면 표시만 라벨 적용)
 function featLabel(key) {
-  return key === 'ALL IN ONE' ? 'ALL IN ONE PLUS' : key;
+  if (key === 'ALL IN ONE') return 'ALL IN ONE PLUS';
+  if (key === '안면 비대칭·여백·탄력') return '안면 여백·탄력';
+  if (key === '3D 신경·림프·장기') return '3D 신경 · 림프 · 장기';
+  return key;
 }
 function displayFeatures(featuresStr) {
   return (featuresStr || '').split(',').map(f => featLabel(f.trim())).filter(Boolean).join(', ');

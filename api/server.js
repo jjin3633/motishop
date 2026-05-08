@@ -114,8 +114,13 @@ function getBundle(featureList) {
 
 // 표시 명칭 매핑 — 내부 key는 그대로(DB 호환), 사용자에게 보여줄 때만 라벨 변환
 // 'ALL IN ONE' → 'ALL IN ONE PLUS' (LITE는 동일)
+// '안면 비대칭·여백·탄력' → '안면 여백·탄력' (비대칭은 기기 기본 내장이라 구독 표시명에서 제외)
+// '3D 신경·림프·장기' → '3D 신경 · 림프 · 장기' (가독성 위해 점 사이 공백)
 function featLabel(key) {
-  return key === 'ALL IN ONE' ? 'ALL IN ONE PLUS' : key;
+  if (key === 'ALL IN ONE') return 'ALL IN ONE PLUS';
+  if (key === '안면 비대칭·여백·탄력') return '안면 여백·탄력';
+  if (key === '3D 신경·림프·장기') return '3D 신경 · 림프 · 장기';
+  return key;
 }
 function displayFeatures(featuresStr) {
   return (featuresStr || '').split(',').map(f => featLabel(f.trim())).filter(Boolean).join(', ');
