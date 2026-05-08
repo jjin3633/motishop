@@ -118,7 +118,7 @@ function getBundle(featureList) {
 // '3D 신경·림프·장기' → '3D 신경 · 림프 · 장기' (가독성 위해 점 사이 공백)
 function featLabel(key) {
   if (key === 'ALL IN ONE') return 'ALL IN ONE PLUS';
-  if (key === '안면 비대칭·여백·탄력') return '안면 여백·탄력';
+  if (key === '안면 비대칭·여백·탄력') return '안면 여백 · 탄력';
   if (key === '3D 신경·림프·장기') return '3D 신경 · 림프 · 장기';
   return key;
 }
