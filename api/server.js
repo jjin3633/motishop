@@ -265,6 +265,7 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
       saveTermsConsent(existing.id, termsAgreed, req);
       console.log(`[재가입 ✓] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
+      notifySlack(`🔁 재가입(신청폼): ${company} (id=${existing.id}, ${maskName(name)}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 기능: ${displayFeatures(features)} / 첫 결제: ${nextBillingDate}`);
       return res.json({ ok: true, trialStart, nextBillingDate, reactivated: true, subscriberId: existing.id });
     }
 
@@ -289,6 +290,7 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
     console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
+    notifySlack(`🎉 신규 가입: ${company} (id=${r.lastInsertRowid}, ${maskName(name)}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 기능: ${displayFeatures(features)} / 첫 결제: ${nextBillingDate}`);
 
     // 임시 비밀번호 SMS 발송 (솔라피)
     const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영해요.\n\n마이페이지 로그인 정보 안내드립니다.\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호를 변경하고, 마이페이지에서 구독 중인 기능을 확인해보세요!\nhttps://shop.motiphysio.com/mypage`;
