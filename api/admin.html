@@ -619,16 +619,16 @@ function renderStats() {
   document.getElementById('kpi-active-sub').textContent = `체험 ${data.now.trialCount} · 구독 ${data.now.activeCount} · MAU ${data.now.mau}`;
 
   // 비즈니스 메트릭 (토글 무관)
-  document.getElementById('kpi-mrr').innerHTML = `${fmt(data.now.mrr)}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> 원</small>`;
-  document.getElementById('kpi-arr').innerHTML = `${fmt(data.now.arr)}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> 원</small>`;
+  document.getElementById('kpi-mrr').innerHTML = `${fmt(data.now.mrr)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
+  document.getElementById('kpi-arr').innerHTML = `${fmt(data.now.arr)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
   if (data.now.trialConversionRate !== null) {
-    document.getElementById('kpi-conversion').innerHTML = `${data.now.trialConversionRate}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> %</small>`;
+    document.getElementById('kpi-conversion').innerHTML = `${data.now.trialConversionRate}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> %</small>`;
     document.getElementById('kpi-conversion-sub').textContent = `${data.now.trialConvDenominator}명 중 ${data.now.trialConvNumerator}명 통과`;
   } else {
     document.getElementById('kpi-conversion').textContent = '—';
     document.getElementById('kpi-conversion-sub').textContent = '데이터 부족 (가입 30일 경과자 0명)';
   }
-  document.getElementById('kpi-total-revenue').innerHTML = `${fmt(data.now.totalRevenue)}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> 원</small>`;
+  document.getElementById('kpi-total-revenue').innerHTML = `${fmt(data.now.totalRevenue)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
 
   // KPI 2~4: 기간 토글 따라 라벨/값 변경
   if (_statsPeriod === 'daily') {
@@ -638,7 +638,7 @@ function renderStats() {
     document.getElementById('kpi-2-sub').innerHTML = _diffArrow(_changePct(cur.signups, prev.signups), `이전 7일 ${prev.signups}건`);
 
     document.getElementById('kpi-3-label').textContent = '결제 성공 (7일)';
-    document.getElementById('kpi-3').innerHTML = `${cur.payCount}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> · ${fmt(cur.payTotal)}원</small>`;
+    document.getElementById('kpi-3').innerHTML = `${cur.payCount}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> · ${fmt(cur.payTotal)}원</small>`;
     document.getElementById('kpi-3-sub').innerHTML = _diffArrow(_changePct(cur.payCount, prev.payCount), `이전 7일 ${prev.payCount}건`);
 
     document.getElementById('kpi-4-label').textContent = '해지 (7일)';
@@ -654,7 +654,7 @@ function renderStats() {
     document.getElementById('kpi-2-sub').innerHTML = _diffArrow(_changePct(cur.signups, prev.signups), `지난 달 ${prev.signups}건`);
 
     document.getElementById('kpi-3-label').textContent = '결제 성공 (이번 달)';
-    document.getElementById('kpi-3').innerHTML = `${cur.payCount}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> · ${fmt(cur.payTotal)}원</small>`;
+    document.getElementById('kpi-3').innerHTML = `${cur.payCount}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> · ${fmt(cur.payTotal)}원</small>`;
     document.getElementById('kpi-3-sub').innerHTML = _diffArrow(_changePct(cur.payCount, prev.payCount), `지난 달 ${prev.payCount}건`);
 
     document.getElementById('kpi-4-label').textContent = '해지 (이번 달)';
@@ -670,11 +670,11 @@ function renderStats() {
     document.getElementById('kpi-2-sub').innerHTML = _diffArrow(_changePct(cur.signups, prev.signups), `작년 ${prev.signups}건`);
 
     document.getElementById('kpi-3-label').textContent = '결제 성공 (올해)';
-    document.getElementById('kpi-3').innerHTML = `${cur.payCount}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> · ${fmt(cur.payTotal)}원</small>`;
+    document.getElementById('kpi-3').innerHTML = `${cur.payCount}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> · ${fmt(cur.payTotal)}원</small>`;
     document.getElementById('kpi-3-sub').innerHTML = _diffArrow(_changePct(cur.payCount, prev.payCount), `작년 ${prev.payCount}건`);
 
     document.getElementById('kpi-4-label').textContent = '누적 결제';
-    document.getElementById('kpi-4').innerHTML = `${all.payCount}<small style="font-size:0.65em;color:var(--text-sub);font-weight:600;"> · ${fmt(all.payTotal)}원</small>`;
+    document.getElementById('kpi-4').innerHTML = `${all.payCount}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> · ${fmt(all.payTotal)}원</small>`;
     document.getElementById('kpi-4-sub').innerHTML = `누적 가입 ${all.signups}건${all.refundAmt > 0 ? ' · 누적 환불 ' + fmt(all.refundAmt) + '원' : ''}`;
 
     document.getElementById('trend-title').textContent = '년별 활동 (전체)';
