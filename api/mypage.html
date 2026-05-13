@@ -53,8 +53,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 .container { max-width: 720px; margin: 0 auto; padding: 32px 20px; }
 
 /* ── Status Card ── */
-.status-card { background: var(--navy); border: 1px solid var(--navy); border-radius: 20px; padding: 32px 28px; margin-bottom: 20px; position: relative; overflow: hidden; box-shadow: 0 8px 28px rgba(6,16,30,.12); }
-.status-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 90% 50%, rgba(0,212,255,.14) 0%, transparent 60%); pointer-events: none; }
+.status-card { background: var(--navy); border: 1px solid var(--navy); border-radius: 20px; padding: 32px 28px; margin-bottom: 20px; position: relative; overflow: hidden; box-shadow: 0 8px 28px rgba(6,16,30,.12); transition: background .3s; }
+.status-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 90% 50%, rgba(0,212,255,.14) 0%, transparent 60%); pointer-events: none; transition: background .3s; }
+/* 해지 상태 — 활성 톤(네이비+cyan glow) 다운하여 비활성 시각 강조 */
+.status-card.cancelled { background: linear-gradient(180deg, #1a1f2e 0%, #14181f 100%); border-color: #1a1f2e; }
+.status-card.cancelled::before { background: radial-gradient(ellipse 70% 80% at 90% 50%, rgba(120,130,150,.08) 0%, transparent 60%); }
 .status-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; position: relative; }
 .status-company { font-size: 20px; font-weight: 900; color: white; margin-bottom: 4px; letter-spacing: -.02em; }
 .status-name { font-size: 14px; color: rgba(255,255,255,.5); }
@@ -739,6 +742,8 @@ async function showApp() {
     document.getElementById('resubBox').style.display = 'none';
     document.getElementById('updateCardBtn').style.display = '';
   }
+  // 상단 status-card 색상 톤 — 해지 상태에선 활성 cyan glow 다운 (첫 번째 카드만)
+  document.querySelector('.status-card')?.classList.toggle('cancelled', s.status === 'cancelled');
 
   currentSubscriber = s;
   currentSubscriber.pendingExpiry = data.pendingExpiry || [];
