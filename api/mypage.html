@@ -899,10 +899,10 @@ function renderFeatList() {
   const nextDate = (s.next_billing_date || '').slice(0, 10);
 
   if (totalCount > 0) {
-    // 헤더 라벨 — 상태별 분기 (전체 해지 vs 부분 해지 예정 vs 정상 구독)
+    // 헤더 라벨 — 상태별 분기
     let headerLabel;
     if (isCancelled) {
-      headerLabel = `해지 완료 — ${totalCount}개 기능${nextDate ? ` (${nextDate}까지)` : ''}`;
+      headerLabel = `해지 완료 — ${totalCount}개 기능`;
     } else if (pendingFeats.length > 0) {
       headerLabel = `구독 중 (${subscribedFeats.length}개) · 해지 예정 (${pendingFeats.length}개)`;
     } else {
@@ -910,7 +910,7 @@ function renderFeatList() {
     }
     html += `<div class="feat-section-title">${headerLabel}</div>`;
 
-    // 활성 기능 — 해지 상태에 따라 우측 표시 분기
+    // 활성 기능
     html += subscribedFeats.map(f => `
       <div class="feat-row">
         <div class="feat-dot"></div>
@@ -922,13 +922,13 @@ function renderFeatList() {
         }
       </div>`).join('');
 
-    // 해지 예정 기능 — 다음 결제일까지 이용 가능, 시각적으로 약간 톤 다운
+    // 해지 예정 기능 — '해지됨'만 표시
     html += pendingFeats.map(f => `
       <div class="feat-row" style="opacity:.85;">
         <div class="feat-dot" style="background:var(--gray200);"></div>
         <div class="feat-name" style="color:var(--text-sub);">${featLabel(f.key)}</div>
         <span class="feat-price">월 ${fmt(f[billingType])}원</span>
-        <span class="feat-status-tag">해지됨${nextDate ? ` · ${nextDate}까지` : ''}</span>
+        <span class="feat-status-tag">해지됨</span>
       </div>`).join('');
   }
 
