@@ -473,7 +473,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       </div>
 
       <!-- 비즈니스 메트릭 (토글 무관, 현 시점 기준) -->
-      <div class="top-stats" style="margin-bottom:24px;">
+      <div class="top-stats" style="margin-bottom:14px;">
         <div class="stat-card">
           <div class="stat-label">MRR (월간 정기 매출)</div>
           <div class="stat-num" id="kpi-mrr">—</div>
@@ -493,6 +493,30 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
           <div class="stat-label">누적 매출</div>
           <div class="stat-num" id="kpi-total-revenue">—</div>
           <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">전체 결제 - 환불</div>
+        </div>
+      </div>
+
+      <!-- 회원당 가치 + 요금제 분포 -->
+      <div class="top-stats" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-label">ARPU (회원당 평균 월 매출)</div>
+          <div class="stat-num" id="kpi-arpu">—</div>
+          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">MRR ÷ 활성 회원 수</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ALL IN ONE PLUS</div>
+          <div class="stat-num" id="kpi-plan-plus">—</div>
+          <div class="stat-sub" id="kpi-plan-plus-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ALL IN ONE LITE</div>
+          <div class="stat-num" id="kpi-plan-lite">—</div>
+          <div class="stat-sub" id="kpi-plan-lite-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">개별 기능 가입자</div>
+          <div class="stat-num" id="kpi-plan-individual">—</div>
+          <div class="stat-sub" id="kpi-plan-individual-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
         </div>
       </div>
 
@@ -629,6 +653,18 @@ function renderStats() {
     document.getElementById('kpi-conversion-sub').textContent = '데이터 부족 (가입 30일 경과자 0명)';
   }
   document.getElementById('kpi-total-revenue').innerHTML = `${fmt(data.now.totalRevenue)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
+
+  // 회원당 가치 + 요금제 분포
+  document.getElementById('kpi-arpu').innerHTML = `${fmt(data.now.arpu)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
+  const pb = data.now.planBreak;
+  const planTotal = pb.plus + pb.lite + pb.individual;
+  const pct = (n) => planTotal > 0 ? Math.round(100 * n / planTotal) : 0;
+  document.getElementById('kpi-plan-plus').innerHTML = `${pb.plus}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 명</small>`;
+  document.getElementById('kpi-plan-plus-sub').textContent = `전체 활성 ${planTotal}명 중 ${pct(pb.plus)}%`;
+  document.getElementById('kpi-plan-lite').innerHTML = `${pb.lite}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 명</small>`;
+  document.getElementById('kpi-plan-lite-sub').textContent = `전체 활성 ${planTotal}명 중 ${pct(pb.lite)}%`;
+  document.getElementById('kpi-plan-individual').innerHTML = `${pb.individual}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 명</small>`;
+  document.getElementById('kpi-plan-individual-sub').textContent = `전체 활성 ${planTotal}명 중 ${pct(pb.individual)}%`;
 
   // KPI 2~4: 기간 토글 따라 라벨/값 변경
   if (_statsPeriod === 'daily') {

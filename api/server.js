@@ -560,14 +560,31 @@ app.get('/api/admin/active-overview', adminAuth, (req, res) => {
   const totalRefunded = db.prepare(`SELECT COALESCE(SUM(amount),0) as v FROM refunds WHERE result_code='2001'`).get().v;
   const totalRevenue = totalPaid - totalRefunded;
 
+  // ARPU — 활성 회원당 평균 월 매출 (MRR / 활성 회원 수)
+  const arpu = activeNow > 0 ? Math.round(mrr / activeNow) : 0;
+
+  // 요금제별 가입자 분포 (활성 회원 기준)
+  const planBreak = db.prepare(`
+    SELECT
+      SUM(CASE WHEN features = 'ALL IN ONE' THEN 1 ELSE 0 END) as plus,
+      SUM(CASE WHEN features = 'ALL IN ONE LITE' THEN 1 ELSE 0 END) as lite,
+      SUM(CASE WHEN features NOT IN ('ALL IN ONE', 'ALL IN ONE LITE') THEN 1 ELSE 0 END) as individual
+    FROM subscribers WHERE status IN ('trial','active')
+  `).get();
+
   res.json({
     now: {
       activeNow, trialCount, activeCount, mau,
-      mrr, arr,
+      mrr, arr, arpu,
       trialConversionRate,
       trialConvDenominator: trialConv.denominator,
       trialConvNumerator: trialConv.numerator,
       totalRevenue,
+      planBreak: {
+        plus: planBreak.plus || 0,
+        lite: planBreak.lite || 0,
+        individual: planBreak.individual || 0,
+      },
     },
     daily, monthly, yearly,
     hourly,
