@@ -563,14 +563,28 @@ app.get('/api/admin/active-overview', adminAuth, (req, res) => {
   // ARPU — 활성 회원당 평균 월 매출 (MRR / 활성 회원 수)
   const arpu = activeNow > 0 ? Math.round(mrr / activeNow) : 0;
 
-  // 요금제별 가입자 분포 (활성 회원 기준)
-  const planBreak = db.prepare(`
-    SELECT
-      SUM(CASE WHEN features = 'ALL IN ONE' THEN 1 ELSE 0 END) as plus,
-      SUM(CASE WHEN features = 'ALL IN ONE LITE' THEN 1 ELSE 0 END) as lite,
-      SUM(CASE WHEN features NOT IN ('ALL IN ONE', 'ALL IN ONE LITE') THEN 1 ELSE 0 END) as individual
-    FROM subscribers WHERE status IN ('trial','active')
-  `).get();
+  // 요금제별 가입자 분포 + 개별 기능 가입자의 기능별 사용 카운트 (활성 회원 기준)
+  const activeSubs = db.prepare(`
+    SELECT features FROM subscribers WHERE status IN ('trial','active')
+  `).all();
+  let plusCount = 0, liteCount = 0, individualCount = 0;
+  const FEATURE_KEYS = ['모아레', '3D 신경·림프·장기', '척추 세부 분석', '손실키 분석', '안면 비대칭·여백·탄력'];
+  const featureCounts = FEATURE_KEYS.map(k => ({ key: k, count: 0 }));
+  for (const s of activeSubs) {
+    if (s.features === 'ALL IN ONE') plusCount++;
+    else if (s.features === 'ALL IN ONE LITE') liteCount++;
+    else {
+      individualCount++;
+      const feats = (s.features || '').split(',').map(f => f.trim()).filter(Boolean);
+      for (const fc of featureCounts) if (feats.includes(fc.key)) fc.count++;
+    }
+  }
+  const planBreak = {
+    plus: plusCount,
+    lite: liteCount,
+    individual: individualCount,
+    featureCounts,
+  };
 
   res.json({
     now: {

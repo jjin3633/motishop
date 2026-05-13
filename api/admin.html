@@ -640,19 +640,30 @@ function renderStats() {
   }
   document.getElementById('kpi-total-revenue').innerHTML = `${fmt(data.now.totalRevenue)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
 
-  // 기능별 회원 수 (한 카드 안에 3줄 리스트)
+  // 기능별 회원 수
   const pb = data.now.planBreak;
   const planTotal = pb.plus + pb.lite + pb.individual;
   const pct = (n) => planTotal > 0 ? Math.round(100 * n / planTotal) : 0;
   const row = (label, count, percent) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray100);">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray100);">
       <span style="font-size:14px;color:var(--text);">${label}</span>
-      <span style="font-size:16px;font-weight:700;color:var(--text);">${count}명 <span style="font-size:12px;font-weight:500;color:var(--text-muted);margin-left:6px;">${percent}%</span></span>
+      <span>
+        <span style="font-size:16px;font-weight:700;color:var(--text);">${count}명</span>
+        <span style="font-size:12px;font-weight:500;color:var(--text-muted);margin-left:6px;">${percent}%</span>
+      </span>
     </div>`;
+  // 개별 기능 가입자가 어떤 기능 쓰는지 (개별만 집계)
+  const featureRow = (key, count) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 6px 18px;font-size:13px;">
+      <span style="color:var(--text-sub);">└ ${esc(featLabel(key))}</span>
+      <span style="color:var(--text);font-weight:600;">${count}건</span>
+    </div>`;
+  const featureBlock = (pb.featureCounts || []).map(fc => featureRow(fc.key, fc.count)).join('');
   document.getElementById('kpi-plan-list').innerHTML =
     row('ALL IN ONE PLUS', pb.plus, pct(pb.plus)) +
     row('ALL IN ONE LITE', pb.lite, pct(pb.lite)) +
-    row('개별 기능', pb.individual, pct(pb.individual));
+    row('개별 기능 가입자', pb.individual, pct(pb.individual)) +
+    (pb.individual > 0 ? `<div style="padding:6px 0;background:var(--gray50);border-radius:6px;margin-top:4px;">${featureBlock}</div>` : '');
 
   // KPI 2~4: 기간 토글 따라 라벨/값 변경
   if (_statsPeriod === 'daily') {
