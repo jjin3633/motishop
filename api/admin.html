@@ -449,7 +449,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       </div>
 
       <!-- KPI 카드 4개 (라벨·내용은 기간 토글 따라 동적) -->
-      <div class="top-stats" style="margin-bottom:24px;">
+      <div class="top-stats" style="margin-bottom:14px;">
         <div class="stat-card">
           <div class="stat-label">활성 회원 (현재)</div>
           <div class="stat-num" id="kpi-active">—</div>
@@ -469,6 +469,30 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
           <div class="stat-label" id="kpi-4-label">해지</div>
           <div class="stat-num" id="kpi-4">—</div>
           <div class="stat-sub" id="kpi-4-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
+        </div>
+      </div>
+
+      <!-- 비즈니스 메트릭 (토글 무관, 현 시점 기준) -->
+      <div class="top-stats" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-label">MRR (월간 정기 매출)</div>
+          <div class="stat-num" id="kpi-mrr">—</div>
+          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">활성 회원 월 환산</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ARR (연 환산)</div>
+          <div class="stat-num" id="kpi-arr">—</div>
+          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">MRR × 12</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">체험→정식 전환율</div>
+          <div class="stat-num" id="kpi-conversion">—</div>
+          <div class="stat-sub" id="kpi-conversion-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">30~60일 전 가입자</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">누적 매출</div>
+          <div class="stat-num" id="kpi-total-revenue">—</div>
+          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">전체 결제 - 환불</div>
         </div>
       </div>
 
@@ -593,6 +617,18 @@ function renderStats() {
   // KPI 1: 활성 회원 (고정)
   document.getElementById('kpi-active').textContent = data.now.activeNow;
   document.getElementById('kpi-active-sub').textContent = `체험 ${data.now.trialCount} · 구독 ${data.now.activeCount} · MAU ${data.now.mau}`;
+
+  // 비즈니스 메트릭 (토글 무관)
+  document.getElementById('kpi-mrr').innerHTML = `${fmt(data.now.mrr)}<small style="font-size:0.5em;color:var(--text-muted);"> 원</small>`;
+  document.getElementById('kpi-arr').innerHTML = `${fmt(data.now.arr)}<small style="font-size:0.5em;color:var(--text-muted);"> 원</small>`;
+  if (data.now.trialConversionRate !== null) {
+    document.getElementById('kpi-conversion').innerHTML = `${data.now.trialConversionRate}<small style="font-size:0.5em;color:var(--text-muted);"> %</small>`;
+    document.getElementById('kpi-conversion-sub').textContent = `${data.now.trialConvDenominator}명 중 ${data.now.trialConvNumerator}명 통과`;
+  } else {
+    document.getElementById('kpi-conversion').textContent = '—';
+    document.getElementById('kpi-conversion-sub').textContent = '데이터 부족 (가입 30일 경과자 0명)';
+  }
+  document.getElementById('kpi-total-revenue').innerHTML = `${fmt(data.now.totalRevenue)}<small style="font-size:0.5em;color:var(--text-muted);"> 원</small>`;
 
   // KPI 2~4: 기간 토글 따라 라벨/값 변경
   if (_statsPeriod === 'daily') {

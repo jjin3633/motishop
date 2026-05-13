@@ -2368,6 +2368,32 @@
     try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {}
   }
 
+  // 퍼널 측정 — 랜딩 CTA 클릭 + 신청 폼 첫 진입 이벤트
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href="#trial"]');
+    if (link) {
+      track('cta_to_trial', {
+        cta_location: (link.className || '').split(' ')[0] || 'unknown',
+        cta_text: (link.textContent || '').trim().slice(0, 30),
+      });
+    }
+  });
+  if ('IntersectionObserver' in window) {
+    const trialSection = document.getElementById('trial');
+    if (trialSection) {
+      let viewed = false;
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !viewed) {
+            viewed = true;
+            track('signup_form_view');
+          }
+        });
+      }, { threshold: 0.3 });
+      obs.observe(trialSection);
+    }
+  }
+
   function goStep(n) {
     if (n > currentStep) {
       if (currentStep === 1) {

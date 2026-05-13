@@ -527,8 +527,48 @@ app.get('/api/admin/active-overview', adminAuth, (req, res) => {
     hour: h, count: hourlyRaw.find(r => r.hour === h)?.count || 0,
   }));
 
+  // ── 비즈니스 메트릭 (MRR / ARR / 체험전환율 / 누적매출) ──
+  // MRR — 현재 활성·체험 회원의 월 환산 정기 매출
+  const mrrRow = db.prepare(`
+    SELECT COALESCE(SUM(
+      CASE WHEN billing_type='annual' THEN charge_amount / 12.0 ELSE charge_amount END
+    ), 0) as mrr
+    FROM subscribers WHERE status IN ('trial','active')
+  `).get();
+  const mrr = Math.round(mrrRow.mrr || 0);
+  const arr = mrr * 12;
+
+  // 체험 → 정식 전환율 — 30~60일 전 가입자 기준
+  // 분모: 가입 후 30일 이상 경과한 회원 (= 첫 결제 시도 도달)
+  // 분자: 그 중 결제 1회 이상 성공한 회원
+  const trialConv = db.prepare(`
+    SELECT
+      COUNT(DISTINCT s.id) as denominator,
+      COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN s.id END) as numerator
+    FROM subscribers s
+    LEFT JOIN billing_logs b
+      ON b.subscriber_id = s.id AND b.result_code IN ('0000','00')
+    WHERE s.created_at < datetime('now', '+9 hours', '-30 days')
+      AND s.created_at >= datetime('now', '+9 hours', '-60 days')
+  `).get();
+  const trialConversionRate = trialConv.denominator > 0
+    ? Math.round(100 * trialConv.numerator / trialConv.denominator)
+    : null;
+
+  // 누적 매출 (모든 성공 결제 합 - 환불 합)
+  const totalPaid = db.prepare(`SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00')`).get().v;
+  const totalRefunded = db.prepare(`SELECT COALESCE(SUM(amount),0) as v FROM refunds WHERE result_code='2001'`).get().v;
+  const totalRevenue = totalPaid - totalRefunded;
+
   res.json({
-    now: { activeNow, trialCount, activeCount, mau },
+    now: {
+      activeNow, trialCount, activeCount, mau,
+      mrr, arr,
+      trialConversionRate,
+      trialConvDenominator: trialConv.denominator,
+      trialConvNumerator: trialConv.numerator,
+      totalRevenue,
+    },
     daily, monthly, yearly,
     hourly,
   });
