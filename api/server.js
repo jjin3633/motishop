@@ -594,11 +594,7 @@ app.get('/api/admin/active-overview', adminAuth, (req, res) => {
       trialConvDenominator: trialConv.denominator,
       trialConvNumerator: trialConv.numerator,
       totalRevenue,
-      planBreak: {
-        plus: planBreak.plus || 0,
-        lite: planBreak.lite || 0,
-        individual: planBreak.individual || 0,
-      },
+      planBreak,
     },
     daily, monthly, yearly,
     hourly,
