@@ -910,11 +910,11 @@ function renderFeatList() {
     }
     html += `<div class="feat-section-title">${headerLabel}</div>`;
 
-    // 활성 기능
+    // 활성 기능 — cancelled 상태일 땐 시각 톤다운 (회색 dot + sub 텍스트 + opacity)
     html += subscribedFeats.map(f => `
-      <div class="feat-row">
-        <div class="feat-dot"></div>
-        <div class="feat-name">${featLabel(f.key)}</div>
+      <div class="feat-row"${isCancelled ? ' style="opacity:.85;"' : ''}>
+        <div class="feat-dot"${isCancelled ? ' style="background:var(--gray200);"' : ''}></div>
+        <div class="feat-name"${isCancelled ? ' style="color:var(--text-sub);"' : ''}>${featLabel(f.key)}</div>
         <span class="feat-price">월 ${fmt(f[billingType])}원</span>
         ${isCancelled
           ? `<span class="feat-status-tag">해지됨</span>`
