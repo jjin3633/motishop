@@ -496,27 +496,13 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
         </div>
       </div>
 
-      <!-- 회원당 가치 + 요금제 분포 -->
-      <div class="top-stats" style="margin-bottom:24px;">
+      <!-- 기능별 회원 분포 -->
+      <div class="top-stats" style="margin-bottom:24px;grid-template-columns:1fr;">
         <div class="stat-card">
-          <div class="stat-label">ARPU (회원당 평균 월 매출)</div>
-          <div class="stat-num" id="kpi-arpu">—</div>
-          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">MRR ÷ 활성 회원 수</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">ALL IN ONE PLUS</div>
-          <div class="stat-num" id="kpi-plan-plus">—</div>
-          <div class="stat-sub" id="kpi-plan-plus-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">ALL IN ONE LITE</div>
-          <div class="stat-num" id="kpi-plan-lite">—</div>
-          <div class="stat-sub" id="kpi-plan-lite-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">개별 기능 가입자</div>
-          <div class="stat-num" id="kpi-plan-individual">—</div>
-          <div class="stat-sub" id="kpi-plan-individual-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">—</div>
+          <div class="stat-label">기능별 회원 수</div>
+          <div id="kpi-plan-list" style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+            <div style="font-size:14px;color:var(--text-muted);">불러오는 중...</div>
+          </div>
         </div>
       </div>
 
@@ -654,17 +640,19 @@ function renderStats() {
   }
   document.getElementById('kpi-total-revenue').innerHTML = `${fmt(data.now.totalRevenue)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
 
-  // 회원당 가치 + 요금제 분포
-  document.getElementById('kpi-arpu').innerHTML = `${fmt(data.now.arpu)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
+  // 기능별 회원 수 (한 카드 안에 3줄 리스트)
   const pb = data.now.planBreak;
   const planTotal = pb.plus + pb.lite + pb.individual;
   const pct = (n) => planTotal > 0 ? Math.round(100 * n / planTotal) : 0;
-  document.getElementById('kpi-plan-plus').innerHTML = `${pb.plus}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 명</small>`;
-  document.getElementById('kpi-plan-plus-sub').textContent = `전체 활성 ${planTotal}명 중 ${pct(pb.plus)}%`;
-  document.getElementById('kpi-plan-lite').innerHTML = `${pb.lite}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 명</small>`;
-  document.getElementById('kpi-plan-lite-sub').textContent = `전체 활성 ${planTotal}명 중 ${pct(pb.lite)}%`;
-  document.getElementById('kpi-plan-individual').innerHTML = `${pb.individual}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 명</small>`;
-  document.getElementById('kpi-plan-individual-sub').textContent = `전체 활성 ${planTotal}명 중 ${pct(pb.individual)}%`;
+  const row = (label, count, percent) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray100);">
+      <span style="font-size:14px;color:var(--text);">${label}</span>
+      <span style="font-size:16px;font-weight:700;color:var(--text);">${count}명 <span style="font-size:12px;font-weight:500;color:var(--text-muted);margin-left:6px;">${percent}%</span></span>
+    </div>`;
+  document.getElementById('kpi-plan-list').innerHTML =
+    row('ALL IN ONE PLUS', pb.plus, pct(pb.plus)) +
+    row('ALL IN ONE LITE', pb.lite, pct(pb.lite)) +
+    row('개별 기능', pb.individual, pct(pb.individual));
 
   // KPI 2~4: 기간 토글 따라 라벨/값 변경
   if (_statsPeriod === 'daily') {
