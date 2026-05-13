@@ -847,7 +847,37 @@ app.get('/api/mypage/me', mypageAuth, (req, res) => {
     ORDER BY refunded_at DESC
   `).all(req.subscriberId);
 
-  res.json({ ok: true, subscriber: sub, billingLogs: logs, refunds });
+  // 해지 예정 기능 — 현재 결제 주기 내 features에서 빠진 기능 추적
+  // 약관 제3조의2 ③: 변경은 다음 결제일부터 반영 → 다음 결제일까지 이용 가능
+  // 결제 주기 시작 = max(마지막 성공 결제일, trial_start, created_at, 마지막 reactivate)
+  const lastPayment = db.prepare(`
+    SELECT billed_at FROM billing_logs
+    WHERE subscriber_id = ? AND result_code IN ('0000','00')
+    ORDER BY billed_at DESC LIMIT 1
+  `).get(req.subscriberId);
+  const lastReactivate = db.prepare(`
+    SELECT changed_at FROM subscriber_changes
+    WHERE subscriber_id = ? AND change_type = 'reactivate'
+    ORDER BY changed_at DESC LIMIT 1
+  `).get(req.subscriberId);
+  const cycleStart = lastPayment?.billed_at
+    || lastReactivate?.changed_at
+    || sub.trial_start
+    || sub.created_at;
+  // 결제 주기 시작 이후 첫 features 변경 이력 → 그 before_features가 결제 주기 시작 시점 기능
+  const firstChangeInCycle = db.prepare(`
+    SELECT before_features FROM subscriber_changes
+    WHERE subscriber_id = ? AND change_type = 'features' AND changed_at >= ?
+    ORDER BY changed_at ASC LIMIT 1
+  `).get(req.subscriberId, cycleStart);
+  let pendingExpiry = [];
+  if (firstChangeInCycle) {
+    const originalFeats = (firstChangeInCycle.before_features || '').split(',').map(f => f.trim()).filter(Boolean);
+    const currentFeats = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
+    pendingExpiry = originalFeats.filter(f => !currentFeats.includes(f));
+  }
+
+  res.json({ ok: true, subscriber: sub, billingLogs: logs, refunds, pendingExpiry });
 });
 
 app.post('/api/mypage/change-password', mypageAuth, (req, res) => {

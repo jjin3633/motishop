@@ -94,6 +94,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 .btn-feat-cancel:hover { background: rgba(239,68,68,.15); }
 .btn-feat-add { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(26,107,255,.3); background: rgba(26,107,255,.08); color: var(--blue); cursor: pointer; font-family: inherit; white-space: nowrap; transition: all .15s; }
 .btn-feat-add:hover { background: rgba(26,107,255,.16); }
+.feat-status-tag { font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 8px; background: var(--gray100); color: var(--text-muted); white-space: nowrap; letter-spacing: .01em; }
 .feat-section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); padding: 10px 20px 6px; background: var(--gray50); border-bottom: 1px solid var(--gray100); letter-spacing: .05em; text-transform: uppercase; }
 .feat-row.avail { opacity: .7; }
 .feat-row.avail .feat-dot { background: var(--gray200); }
@@ -740,6 +741,7 @@ async function showApp() {
   }
 
   currentSubscriber = s;
+  currentSubscriber.pendingExpiry = data.pendingExpiry || [];
   renderFeatList();
   renderBillingSwitch();
 
@@ -877,31 +879,59 @@ function renderFeatList() {
   const featList = document.getElementById('featList');
 
   const subscribedFeats = ALL_FEATURES.filter(f => subscribed.includes(f.key));
+  // 해지 예정 기능 — 현재 결제 주기 내 features에서 빠진 기능 (약관: 다음 결제일까지 이용 가능)
+  const pendingFeats = (s.pendingExpiry || [])
+    .map(key => ALL_FEATURES.find(f => f.key === key))
+    .filter(Boolean);
   let availFeats = ALL_FEATURES.filter(f => !subscribed.includes(f.key));
 
   // 요금제별 추가 가능 항목 필터
   // 묶음 가입자(PLUS / LITE)는 자동 변경 전면 차단 — 변경 원하면 해지 후 재가입
   const currentBundle = getBundle(subscribed);
   if (currentBundle) {
-    // 묶음 가입자: 추가 가능 항목 0 (PLUS·LITE 모두)
     availFeats = [];
   }
-  // 개별 기능 가입자: 기존 동작 — 모든 비-구독 항목 노출 (LITE/PLUS 묶음 업그레이드 허용)
 
   let html = '';
+  const isCancelled = s.status === 'cancelled';
+  const totalCount = subscribedFeats.length + pendingFeats.length;
+  const nextDate = (s.next_billing_date || '').slice(0, 10);
 
-  if (subscribedFeats.length) {
-    html += `<div class="feat-section-title">구독 중 (${subscribedFeats.length}개)</div>`;
+  if (totalCount > 0) {
+    // 헤더 라벨 — 상태별 분기 (전체 해지 vs 부분 해지 예정 vs 정상 구독)
+    let headerLabel;
+    if (isCancelled) {
+      headerLabel = `해지 완료 — ${totalCount}개 기능${nextDate ? ` (${nextDate}까지)` : ''}`;
+    } else if (pendingFeats.length > 0) {
+      headerLabel = `구독 중 (${subscribedFeats.length}개) · 해지 예정 (${pendingFeats.length}개)`;
+    } else {
+      headerLabel = `구독 중 (${subscribedFeats.length}개)`;
+    }
+    html += `<div class="feat-section-title">${headerLabel}</div>`;
+
+    // 활성 기능 — 해지 상태에 따라 우측 표시 분기
     html += subscribedFeats.map(f => `
       <div class="feat-row">
         <div class="feat-dot"></div>
         <div class="feat-name">${featLabel(f.key)}</div>
         <span class="feat-price">월 ${fmt(f[billingType])}원</span>
-        ${s.status !== 'cancelled' ? `<button class="btn-feat-cancel" onclick="cancelFeat('${f.key}')">해지</button>` : ''}
+        ${isCancelled
+          ? `<span class="feat-status-tag">해지됨</span>`
+          : `<button class="btn-feat-cancel" onclick="cancelFeat('${f.key}')">해지</button>`
+        }
+      </div>`).join('');
+
+    // 해지 예정 기능 — 다음 결제일까지 이용 가능, 시각적으로 약간 톤 다운
+    html += pendingFeats.map(f => `
+      <div class="feat-row" style="opacity:.85;">
+        <div class="feat-dot" style="background:var(--gray200);"></div>
+        <div class="feat-name" style="color:var(--text-sub);">${featLabel(f.key)}</div>
+        <span class="feat-price">월 ${fmt(f[billingType])}원</span>
+        <span class="feat-status-tag">해지됨${nextDate ? ` · ${nextDate}까지` : ''}</span>
       </div>`).join('');
   }
 
-  if (availFeats.length && s.status !== 'cancelled') {
+  if (availFeats.length && !isCancelled) {
     html += `<div class="feat-section-title">추가 가능</div>`;
     html += availFeats.map(f => `
       <div class="feat-row avail">
@@ -913,7 +943,7 @@ function renderFeatList() {
   }
 
   // 묶음 가입자에게 변경 안내 (PLUS/LITE 모두)
-  if (currentBundle && s.status !== 'cancelled') {
+  if (currentBundle && !isCancelled) {
     html += `
       <div style="padding:14px 20px;font-size:13px;color:var(--text-sub);line-height:1.6;border-top:1px solid var(--gray100);">
         ⓘ 묶음 상품(ALL IN ONE PLUS · LITE)은 다른 플랜으로 자동 변경되지 않습니다.<br>
