@@ -695,11 +695,7 @@ function renderStatusPeriod(s) {
       <div class="period-sub">${nextDate}에 <span class="period-amount">${amount}</span> 자동 결제 예정 · ${cycleLabel} 구독</div>
     `;
   } else if (s.status === 'cancelled') {
-    el.innerHTML = `
-      <div class="period-headline">해지 완료</div>
-      <div class="period-main"><span class="accent">${nextDate}</span> 까지 사용 가능</div>
-      <div class="period-sub">이후 자동 결제는 발생하지 않아요. 마이페이지에서 언제든 다시 구독 가능합니다.</div>
-    `;
+    el.innerHTML = `<div class="period-main">해지됨</div>`;
   } else {
     el.innerHTML = `<div class="period-main">상태: ${s.status}</div>`;
   }
