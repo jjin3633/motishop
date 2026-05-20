@@ -61,7 +61,7 @@ app.use((req, res, next) => {
 // Rate limiting — 민감 엔드포인트 보호
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,  // 15분
-  max: 10,                    // IP당 15분에 10회 시도까지
+  max: 30,                    // IP당 15분에 30회 (운영자·회원 친화적 완화)
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, msg: '너무 많은 시도입니다. 15분 후 다시 시도해주세요.' },
