@@ -668,34 +668,6 @@
       border-radius: 1px;
       box-shadow: 0 0 10px rgba(0,212,255,.55);
     }
-    /* 가이드 카드 — 이미지 + 캡션 형태 */
-    .feat-guide-cell {
-      flex-direction: column !important;
-      padding: 32px 24px 28px;
-      gap: 22px;
-      background: radial-gradient(ellipse at top, rgba(0,212,255,.05), transparent 60%);
-    }
-    .feat-guide-img {
-      display: block;
-      max-width: 100%;
-      max-height: 68vh;
-      width: auto; height: auto;
-      border-radius: 10px;
-      box-shadow: 0 12px 32px rgba(0,0,0,.45);
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-    .feat-guide-caption {
-      font-size: 16px;
-      font-weight: 500;
-      color: #fff;
-      letter-spacing: -.01em;
-      text-align: center;
-      max-width: 640px;
-      line-height: 1.5;
-      word-break: keep-all;
-    }
     /* Carousel track — 가로 native scroll-snap (Instagram 스토리식) */
     .feat-modal-track {
       display: flex;
@@ -778,10 +750,6 @@
       .feat-modal-tabs { gap: 28px; padding: 12px 0 10px; margin-bottom: 12px; }
       .feat-modal-tab { font-size: 14px; }
       .feat-modal-tab.active::after { bottom: -11px; }
-      /* 가이드 카드 모바일 패딩 축소 */
-      .feat-guide-cell { padding: 24px 16px 20px; gap: 16px; }
-      .feat-guide-img { max-height: 58vh; border-radius: 8px; }
-      .feat-guide-caption { font-size: 14px; line-height: 1.55; }
     }
     .feat-card { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
     .feat-card:hover { background: rgba(255,255,255,.055); border-color: rgba(0,212,255,.4); transform: translateY(-4px); box-shadow: 0 0 0 1px rgba(0,212,255,.2), 0 20px 56px rgba(0,0,0,.4); }
@@ -1543,7 +1511,7 @@
     <div class="features-grid">
       <div class="feat-card" onclick="openFeatModal('moire')">
         <div class="feat-thumb">
-          <img src="assets/features/moire.jpg" alt="모아레 분석 화면" loading="lazy" decoding="async" />
+          <img src="assets/features/moire.png" alt="모아레 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
           <span class="feat-badge badge-hot">인기</span>
           <h3>모아레 (Moiré)</h3>
@@ -2763,7 +2731,7 @@
   // Feature card modal — 기능별 이미지 매핑 (이미지 추가 시 여기만 수정)
   const FEAT_IMAGES = {
     moire: [
-      'assets/features/moire.jpg',
+      'assets/features/moire.png',
       'assets/features/moire2.jpg',
     ],
     nerve: [
@@ -2786,10 +2754,10 @@
   // 가이드 탭 활성 여부 — 가이드 데이터 있는 기능만 자동으로 탭 노출됨
   const FEAT_GUIDE_ENABLED = true;
 
-  // Feature card modal — 사용 가이드 (이미지 + 캡션). 데이터 없는 기능은 탭 자동 숨김.
+  // Feature card modal — 사용 가이드 이미지 (캡션은 이미지에 직접 포함). 데이터 빈 기능은 탭 자동 숨김.
   const FEAT_GUIDES = {
     moire: [
-      { src: 'assets/features/moire_use_guude1.png', caption: '1. 화면 상단에 모아레 토글 클릭' },
+      'assets/features/moire_use_guude1.png',
     ],
     nerve: [],
     spine: [],
@@ -2897,18 +2865,10 @@
   function buildFeatTrack() {
     const total = _featImages.length;
     const track = document.getElementById('featModalTrack');
-    if (_featTab === 'guide') {
-      track.innerHTML = _featImages.map((item, i) =>
-        `<div class="feat-modal-cell feat-guide-cell">
-           <img class="feat-guide-img" src="${item.src}" alt="${item.caption}" loading="${i === 0 ? 'eager' : 'lazy'}" />
-           <div class="feat-guide-caption">${item.caption}</div>
-         </div>`
-      ).join('');
-    } else {
-      track.innerHTML = _featImages.map((src, i) =>
-        `<div class="feat-modal-cell"><img src="${src}" alt="기능 예시 ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" /></div>`
-      ).join('');
-    }
+    const altPrefix = _featTab === 'guide' ? '사용 가이드' : '기능 예시';
+    track.innerHTML = _featImages.map((src, i) =>
+      `<div class="feat-modal-cell"><img src="${src}" alt="${altPrefix} ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" /></div>`
+    ).join('');
 
     const prevBtn = document.getElementById('featModalPrev');
     const nextBtn = document.getElementById('featModalNext');
