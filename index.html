@@ -2789,6 +2789,9 @@
     ],
   };
 
+  // 가이드 탭 활성 여부 — 가이드 이미지 준비 완료 후 true로 변경
+  const FEAT_GUIDE_ENABLED = false;
+
   // Feature card modal — 활성화 가이드 단계 (모티피지오 기기에서 기능 켜는 방법)
   // ⚠️ 본문은 추정 경로 — 사장님 기기 실제 메뉴 확인 후 정확하게 수정 필요
   const FEAT_GUIDES = {
@@ -2837,8 +2840,11 @@
       _featImages = [featKey];
     } else {
       _featKey = featKey;
-      _featTab = 'guide';            // 기본 시작: 활성화 가이드
-      _featImages = FEAT_GUIDES[featKey] || FEAT_IMAGES[featKey] || [];
+      // 가이드 플래그 OFF면 결과 예시만 노출 (가이드 이미지 준비 후 ON)
+      _featTab = (FEAT_GUIDE_ENABLED && FEAT_GUIDES[featKey] && FEAT_GUIDES[featKey].length) ? 'guide' : 'examples';
+      _featImages = (_featTab === 'guide')
+        ? FEAT_GUIDES[featKey]
+        : (FEAT_IMAGES[featKey] || []);
     }
 
     if (!_featImages.length) return;
@@ -2871,9 +2877,9 @@
   function syncFeatTabsUI() {
     const tabs = document.querySelectorAll('.feat-modal-tab');
     if (!tabs.length) return;
-    // 탭 영역 자체 표시: FEAT 키가 있고 가이드 데이터가 있을 때만
+    // 탭 영역 자체 표시: 플래그 ON + FEAT 키 + 두 콘텐츠 모두 있을 때만
     const tabsWrap = tabs[0].parentElement;
-    const showTabs = !!(_featKey && FEAT_GUIDES[_featKey] && FEAT_IMAGES[_featKey]);
+    const showTabs = !!(FEAT_GUIDE_ENABLED && _featKey && FEAT_GUIDES[_featKey] && FEAT_IMAGES[_featKey]);
     tabsWrap.style.display = showTabs ? 'flex' : 'none';
     tabs.forEach(t => {
       const active = t.dataset.tab === _featTab;
@@ -3017,7 +3023,7 @@
     _featImages = [];
     _featIdx = 0;
     _featKey = '';
-    _featTab = 'guide';
+    _featTab = FEAT_GUIDE_ENABLED ? 'guide' : 'examples';
     const track = document.getElementById('featModalTrack');
     if (track) track.innerHTML = '';
   }
