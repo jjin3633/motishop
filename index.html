@@ -631,6 +631,75 @@
     .feat-modal-box {
       overflow: hidden;
       box-shadow: 0 32px 80px rgba(0,0,0,.6);
+      display: flex;
+      flex-direction: column;
+    }
+    /* 모달 상단 세그먼티드 탭 — Linear/Vercel 풍 underline 스타일 */
+    .feat-modal-tabs {
+      display: flex;
+      gap: 36px;
+      padding: 14px 0 12px;
+      justify-content: center;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+    .feat-modal-tab {
+      background: transparent;
+      border: none;
+      padding: 6px 2px;
+      font-size: 15px;
+      font-weight: 500;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      position: relative;
+      letter-spacing: -.01em;
+      transition: color .2s ease;
+      line-height: 1;
+    }
+    .feat-modal-tab:hover { color: rgba(255,255,255,.85); }
+    .feat-modal-tab.active { color: #fff; }
+    .feat-modal-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -13px;
+      height: 2px;
+      background: var(--cyan);
+      border-radius: 1px;
+      box-shadow: 0 0 10px rgba(0,212,255,.55);
+    }
+    /* 가이드 카드 — 단계별 활성화 경로 */
+    .feat-guide-cell {
+      flex-direction: column !important;
+      padding: 48px 40px;
+      text-align: center;
+      gap: 18px;
+      background: radial-gradient(ellipse at top, rgba(0,212,255,.06), transparent 60%);
+    }
+    .feat-guide-step {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      color: #fff;
+      font-size: 22px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,212,255,.32);
+      letter-spacing: -.02em;
+    }
+    .feat-guide-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -.02em;
+    }
+    .feat-guide-desc {
+      font-size: 15px;
+      color: rgba(255,255,255,.72);
+      line-height: 1.65;
+      max-width: 480px;
+      word-break: keep-all;
+      letter-spacing: -.005em;
     }
     /* Carousel track — 가로 native scroll-snap (Instagram 스토리식) */
     .feat-modal-track {
@@ -710,6 +779,15 @@
       /* dot 사이즈 살짝 크게 + 더 진하게 (화살표 없으니 인지성 높이기) */
       .feat-modal-dot { width: 10px; height: 10px; background: rgba(255,255,255,.45); }
       .feat-modal-dots { gap: 10px; bottom: -32px; }
+      /* 탭 간격·폰트 모바일 조정 */
+      .feat-modal-tabs { gap: 28px; padding: 12px 0 10px; margin-bottom: 12px; }
+      .feat-modal-tab { font-size: 14px; }
+      .feat-modal-tab.active::after { bottom: -11px; }
+      /* 가이드 카드 모바일 패딩 축소 */
+      .feat-guide-cell { padding: 32px 22px; gap: 14px; }
+      .feat-guide-step { width: 48px; height: 48px; font-size: 19px; }
+      .feat-guide-title { font-size: 19px; }
+      .feat-guide-desc { font-size: 14px; }
     }
     .feat-card { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
     .feat-card:hover { background: rgba(255,255,255,.055); border-color: rgba(0,212,255,.4); transform: translateY(-4px); box-shadow: 0 0 0 1px rgba(0,212,255,.2), 0 20px 56px rgba(0,0,0,.4); }
@@ -2233,6 +2311,10 @@
     <button class="feat-modal-nav prev" id="featModalPrev" onclick="featModalNav(-1); event.stopPropagation();" aria-label="이전 이미지">‹</button>
     <button class="feat-modal-nav next" id="featModalNext" onclick="featModalNav(1); event.stopPropagation();" aria-label="다음 이미지">›</button>
     <div class="feat-modal-box">
+      <div class="feat-modal-tabs" role="tablist" onclick="event.stopPropagation()">
+        <button class="feat-modal-tab active" data-tab="guide" role="tab" aria-selected="true" onclick="switchFeatTab('guide'); event.stopPropagation();">활성화 가이드</button>
+        <button class="feat-modal-tab" data-tab="examples" role="tab" aria-selected="false" onclick="switchFeatTab('examples'); event.stopPropagation();">결과 예시</button>
+      </div>
       <div class="feat-modal-track" id="featModalTrack"></div>
     </div>
     <div class="feat-modal-dots" id="featModalDots"></div>
@@ -2707,19 +2789,61 @@
     ],
   };
 
+  // Feature card modal — 활성화 가이드 단계 (모티피지오 기기에서 기능 켜는 방법)
+  // ⚠️ 본문은 추정 경로 — 사장님 기기 실제 메뉴 확인 후 정확하게 수정 필요
+  const FEAT_GUIDES = {
+    moire: [
+      { step: 1, title: '측정 시작', desc: '모티피지오 메인 화면에서 회원 정보를 선택한 뒤 [측정 시작]을 탭합니다.' },
+      { step: 2, title: '모아레 선택', desc: '측정 항목 중 [모아레]를 선택하면 카메라가 자동으로 활성화됩니다.' },
+      { step: 3, title: '결과 확인', desc: '촬영이 완료되면 등고선 패턴이 분석된 결과를 회원에게 함께 보여주세요.' },
+    ],
+    nerve: [
+      { step: 1, title: '체형 측정 완료', desc: '기본 체형 측정(전·후·좌·우 4면)을 먼저 완료합니다.' },
+      { step: 2, title: '3D 분석 진입', desc: '측정 결과 화면 상단의 [3D 분석] 탭을 선택합니다.' },
+      { step: 3, title: '신경·림프·장기 토글', desc: '레이어 토글에서 [신경 / 림프 / 장기]를 켜면 3D 모델 위에 오버레이됩니다.' },
+    ],
+    spine: [
+      { step: 1, title: '척추 측정', desc: '측정 항목에서 [척추]를 선택해 후면 촬영을 진행합니다.' },
+      { step: 2, title: '세부 분석 보기', desc: '척추 결과 화면 하단의 [세부 분석] 버튼을 탭하면 각 구간별 측정값이 표시됩니다.' },
+    ],
+    lossheight: [
+      { step: 1, title: '신장 입력', desc: '회원 정보 등록 시 [신장] 항목을 정확히 입력합니다.' },
+      { step: 2, title: '체형 측정 진행', desc: '전·후·좌·우 체형 측정을 완료합니다.' },
+      { step: 3, title: '손실키 확인', desc: '측정 결과 화면에서 [손실키] 카드를 탭하면 실측 키와 이상 키의 차이가 표시됩니다.' },
+    ],
+    face: [
+      { step: 1, title: '안면 모드 진입', desc: '측정 항목에서 [안면 분석]을 선택합니다.' },
+      { step: 2, title: '정면 촬영', desc: '회원 정면 얼굴을 가이드 라인에 맞춰 촬영합니다.' },
+      { step: 3, title: '항목 토글', desc: '결과 화면에서 [비대칭 / 여백 / 탄력] 탭을 전환하며 각 분석 결과를 보여줍니다.' },
+    ],
+  };
+
   let _featImages = [];
   let _featIdx = 0;
-  let _featModalScrollY = 0;  // 모달 닫힐 때 복귀할 스크롤 위치
+  let _featKey = '';                // 현재 기능 키 (탭 전환 시 콘텐츠 재로드용)
+  let _featTab = 'guide';           // 'guide' (활성화 가이드) | 'examples' (결과 예시)
+  let _featModalScrollY = 0;        // 모달 닫힐 때 복귀할 스크롤 위치
   let _featScrollDebounce = null;
 
   function openFeatModal(featKey) {
     // 하위 호환: 직접 URL 문자열 또는 배열도 받음
-    if (Array.isArray(featKey)) _featImages = featKey;
-    else if (typeof featKey === 'string' && featKey.includes('/')) _featImages = [featKey];
-    else _featImages = FEAT_IMAGES[featKey] || [];
+    if (Array.isArray(featKey)) {
+      _featKey = '';
+      _featTab = 'examples';
+      _featImages = featKey;
+    } else if (typeof featKey === 'string' && featKey.includes('/')) {
+      _featKey = '';
+      _featTab = 'examples';
+      _featImages = [featKey];
+    } else {
+      _featKey = featKey;
+      _featTab = 'guide';            // 기본 시작: 활성화 가이드
+      _featImages = FEAT_GUIDES[featKey] || FEAT_IMAGES[featKey] || [];
+    }
 
     if (!_featImages.length) return;
     _featIdx = 0;
+    syncFeatTabsUI();
     buildFeatTrack();
     document.getElementById('featModal').classList.add('open');
 
@@ -2743,13 +2867,65 @@
     });
   }
 
-  // 트랙에 모든 이미지 셀 생성 + dot/화살표 갱신
+  // 탭 UI 상태 동기화 (active 클래스 / aria-selected)
+  function syncFeatTabsUI() {
+    const tabs = document.querySelectorAll('.feat-modal-tab');
+    if (!tabs.length) return;
+    // 탭 영역 자체 표시: FEAT 키가 있고 가이드 데이터가 있을 때만
+    const tabsWrap = tabs[0].parentElement;
+    const showTabs = !!(_featKey && FEAT_GUIDES[_featKey] && FEAT_IMAGES[_featKey]);
+    tabsWrap.style.display = showTabs ? 'flex' : 'none';
+    tabs.forEach(t => {
+      const active = t.dataset.tab === _featTab;
+      t.classList.toggle('active', active);
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+
+  // 탭 전환 — 콘텐츠 교체 + 트랙 재빌드 + GA4 이벤트
+  function switchFeatTab(tab) {
+    if (tab === _featTab || !_featKey) return;
+    _featTab = tab;
+    _featImages = (tab === 'guide')
+      ? (FEAT_GUIDES[_featKey] || [])
+      : (FEAT_IMAGES[_featKey] || []);
+    if (!_featImages.length) return;
+    _featIdx = 0;
+    syncFeatTabsUI();
+    buildFeatTrack();
+    // 트랙 시작 위치로 즉시 이동
+    requestAnimationFrame(() => {
+      const track = document.getElementById('featModalTrack');
+      if (track) {
+        const prev = track.style.scrollBehavior;
+        track.style.scrollBehavior = 'auto';
+        track.scrollLeft = 0;
+        track.style.scrollBehavior = prev;
+      }
+    });
+    // GA4 — 탭 클릭 추적
+    if (typeof gtag === 'function') {
+      gtag('event', 'feat_modal_tab_switch', { feat_key: _featKey, tab });
+    }
+  }
+
+  // 트랙에 모든 셀 생성 + dot/화살표 갱신 — 탭 종류에 따라 이미지 또는 가이드 카드 렌더
   function buildFeatTrack() {
     const total = _featImages.length;
     const track = document.getElementById('featModalTrack');
-    track.innerHTML = _featImages.map((src, i) =>
-      `<div class="feat-modal-cell"><img src="${src}" alt="기능 예시 ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" /></div>`
-    ).join('');
+    if (_featTab === 'guide') {
+      track.innerHTML = _featImages.map(item =>
+        `<div class="feat-modal-cell feat-guide-cell">
+           <div class="feat-guide-step">${item.step}</div>
+           <div class="feat-guide-title">${item.title}</div>
+           <div class="feat-guide-desc">${item.desc}</div>
+         </div>`
+      ).join('');
+    } else {
+      track.innerHTML = _featImages.map((src, i) =>
+        `<div class="feat-modal-cell"><img src="${src}" alt="기능 예시 ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" /></div>`
+      ).join('');
+    }
 
     const prevBtn = document.getElementById('featModalPrev');
     const nextBtn = document.getElementById('featModalNext');
@@ -2840,6 +3016,8 @@
     _featModalScrollY = 0;
     _featImages = [];
     _featIdx = 0;
+    _featKey = '';
+    _featTab = 'guide';
     const track = document.getElementById('featModalTrack');
     if (track) track.innerHTML = '';
   }
