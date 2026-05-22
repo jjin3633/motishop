@@ -741,9 +741,11 @@
     .feat-modal-dot.active { background: var(--cyan); transform: scale(1.4); }
     .feat-modal-dot:hover:not(.active) { background: rgba(255,255,255,.55); }
     @media (max-width: 768px) {
-      /* 모바일: 화살표 제거 (이미지 가림 방지) — swipe + dot으로만 네비게이션 */
-      .feat-modal-nav, .feat-modal-nav.show { display: none !important; }
-      /* dot 사이즈 살짝 크게 + 더 진하게 (화살표 없으니 인지성 높이기) */
+      /* 모바일: 화살표 이미지 안쪽으로 — 살짝 작게(40px) + 배경 진하게 (이미지 위 가시성) */
+      .feat-modal-nav { width: 40px; height: 40px; font-size: 22px; background: rgba(26,26,46,.92); }
+      .feat-modal-nav.prev { left: 10px; }
+      .feat-modal-nav.next { right: 10px; }
+      /* dot */
       .feat-modal-dot { width: 10px; height: 10px; background: rgba(255,255,255,.45); }
       .feat-modal-dots { gap: 10px; bottom: -32px; }
       /* 탭 간격·폰트 모바일 조정 */
