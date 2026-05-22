@@ -715,7 +715,7 @@
     .feat-modal-close:hover { background: rgba(255,255,255,.2); transform: scale(1.1); }
     /* Carousel — 이미지 2개 이상일 때만 표시 */
     .feat-modal-nav {
-      position: absolute; top: 50%; transform: translateY(-50%);
+      position: absolute; top: calc(50% + 29px); transform: translateY(-50%);
       width: 48px; height: 48px; border-radius: 50%;
       background: rgba(26,26,46,.85); border: 1.5px solid rgba(255,255,255,.2);
       cursor: pointer; color: white; font-size: 26px;
@@ -744,6 +744,7 @@
       /* 모바일: 화살표 이미지 안쪽 + 반투명 배경 + 그림자 (이미지 가림 최소화) */
       .feat-modal-nav {
         width: 40px; height: 40px; font-size: 22px;
+        top: calc(50% + 25px);  /* 탭 높이만큼 보정 — 이미지 정중앙 정렬 */
         background: rgba(26,26,46,.35);
         border-color: rgba(255,255,255,.15);
         color: #fff;
