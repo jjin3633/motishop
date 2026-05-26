@@ -611,13 +611,25 @@ app.get('/api/logs', adminAuth, (req, res) => {
 });
 
 app.post('/api/cancel', adminAuth, async (req, res) => {
-  const { id } = req.body;
+  const { id, notify } = req.body;
   if (!id) return res.status(400).json({ ok: false });
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(id);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
 
   db.prepare(`UPDATE subscribers SET status = 'cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id = ?`).run(id);
-  notifySlack(`👋 해지(관리자): ${sub.company} (id=${id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
+  notifySlack(`👋 해지(관리자): ${sub.company} (id=${id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}${notify ? ' · SMS 발송' : ' · SMS 미발송'}`);
+
+  // 회원에게 해지 안내 SMS — 어드민이 명시적으로 요청한 경우만 (notify=true)
+  if (notify) {
+    const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
+    sendSMS({ to: sub.phone, text: cancelText, subject: '[Moti Shop] 구독 해지 완료' }).then(r => {
+      console.log(`[해지 SMS(어드민)] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
+      if (!r.ok) notifySlack(`⚠️ 해지 SMS 실패(어드민): ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
+    }).catch(e => {
+      console.error('[해지 SMS 예외(어드민)]', e.message);
+      notifySlack(`🔴 해지 SMS 예외(어드민): ${sub.company} (id=${id}) — ${e.message}`);
+    });
+  }
 
   // 빌키 삭제 (InnoPay) — 실패해도 해지는 유지
   let billkeyResult = { ok: false, resultMsg: 'skipped' };
@@ -632,7 +644,7 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
     }
   }
 
-  res.json({ ok: true, billkeyDeleted: billkeyResult.ok });
+  res.json({ ok: true, billkeyDeleted: billkeyResult.ok, smsSent: !!notify });
 });
 
 // 관리자 — 환불 처리 (전자상거래법: 단순 변심 7일, 서비스 결함은 즉시)
