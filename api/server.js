@@ -1282,6 +1282,67 @@ app.post('/api/deploy/webhook', (req, res) => {
   res.json({ ok: true, deploying: true, commit: headCommit });
 });
 
+// Ruby 서브앱 자동 배포 — shop webhook과 동일 패턴(GitHub HMAC + 디바운스 + spawn detached)
+// 디바운스 변수는 shop과 분리 (각 앱 독립 트리거)
+let _lastRubyDeployAt = 0;
+app.post('/api/ruby/deploy/webhook', (req, res) => {
+  if (!cfg.RUBY_WEBHOOK_SECRET) {
+    return res.status(503).json({ error: 'ruby webhook disabled' });
+  }
+  const sig = req.header('X-Hub-Signature-256') || '';
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', cfg.RUBY_WEBHOOK_SECRET)
+    .update(req.rawBody || Buffer.alloc(0))
+    .digest('hex');
+
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expected);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    console.warn('[ruby-webhook] 서명 불일치');
+    return res.status(401).json({ error: 'invalid signature' });
+  }
+
+  const event = req.header('X-GitHub-Event');
+  if (event === 'ping') return res.json({ ok: true, pong: true });
+  if (event !== 'push') return res.json({ skipped: `event: ${event}` });
+
+  const ref = req.body && req.body.ref;
+  if (ref !== 'refs/heads/main') {
+    return res.json({ skipped: `ref: ${ref}` });
+  }
+
+  const headCommit = ((req.body.head_commit && req.body.head_commit.id) || '').slice(0, 7);
+
+  const now = Date.now();
+  if (now - _lastRubyDeployAt < DEPLOY_DEBOUNCE_MS) {
+    const skipMs = DEPLOY_DEBOUNCE_MS - (now - _lastRubyDeployAt);
+    console.log(`[ruby-webhook] 디바운스 스킵 ${headCommit} (${skipMs}ms 남음)`);
+    return res.json({ ok: true, debounced: true, commit: headCommit, retryAfterMs: skipMs });
+  }
+  _lastRubyDeployAt = now;
+  console.log(`[ruby-webhook] 배포 트리거 ${headCommit}`);
+
+  const { spawn } = require('child_process');
+  let child;
+  try {
+    child = spawn(cfg.RUBY_DEPLOY_SCRIPT_PATH, [], {
+      detached: true,
+      stdio: 'ignore',
+      env: { ...process.env, COMMIT: headCommit },
+    });
+    child.on('error', (e) => {
+      console.error('[ruby-webhook] spawn 에러:', e.message);
+      notifySlack(`🔴 Ruby 배포 spawn 실패: ${headCommit} / ${e.message}`);
+    });
+    child.unref();
+  } catch (e) {
+    console.error('[ruby-webhook] spawn 동기 예외:', e.message);
+    return res.status(500).json({ error: 'spawn failed', detail: e.message });
+  }
+
+  res.json({ ok: true, deploying: true, commit: headCommit, app: 'ruby' });
+});
+
 // 5xx 에러 핸들러 — 처리되지 않은 예외를 Slack으로 보고
 // 같은 에러가 5분 내 반복되면 알림 1번만 (스팸 방지)
 const _errorAlertCache = new Map();  // key: errSig → lastNotifiedAt
