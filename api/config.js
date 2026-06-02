@@ -28,6 +28,9 @@ module.exports = {
   NOTIFY_ENABLED: (process.env.NOTIFY_ENABLED || 'false').toLowerCase() === 'true',
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET || '',
   DEPLOY_SCRIPT_PATH: process.env.DEPLOY_SCRIPT_PATH || '/home/ec2-user/motishop-api/deploy.sh',
+  // Ruby 서브앱 (Acti Physio - Ruby 마케팅 랜딩) — webhook 시크릿 비어있으면 라우트 503 반환
+  RUBY_WEBHOOK_SECRET: process.env.RUBY_WEBHOOK_SECRET || '',
+  RUBY_DEPLOY_SCRIPT_PATH: process.env.RUBY_DEPLOY_SCRIPT_PATH || '/home/ec2-user/ruby-deploy/deploy.sh',
   // 솔라피 (SMS / 카카오 알림톡)
   SOLAPI_API_KEY: process.env.SOLAPI_API_KEY || '',
   SOLAPI_API_SECRET: process.env.SOLAPI_API_SECRET || '',
