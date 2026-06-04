@@ -49,7 +49,7 @@ async function chargeSubscriber(sub) {
     billKey: sub.bill_key,
     moid,
     amount: sub.charge_amount,
-    goodsName: '모티피지오 구독',
+    goodsName: '모티샵 구독',
     buyerName: sub.name,
     userId: sub.phone,  // 등록 시점과 동일한 userId (phone)
   });

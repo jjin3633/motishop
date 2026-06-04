@@ -1048,7 +1048,7 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
     billKey,
     moid: newMoid,
     amount: chargeAmount,
-    goodsName: '모티피지오 구독 (재구독)',
+    goodsName: '모티샵 구독',
     buyerName: sub.name,
     userId: sub.phone,
   });

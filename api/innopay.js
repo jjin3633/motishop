@@ -24,7 +24,7 @@ async function chargeBillKey({ billKey, moid, amount, buyerName, userId, goodsNa
       mid: cfg.INNOPAY_MID,
       moid: String(moid),
       buyerName: String(buyerName || ''),
-      goodsName: String(goodsName || '모티피지오 구독'),
+      goodsName: String(goodsName || '모티샵 구독'),
       amt: String(amount),  // 문자열 숫자 (N 타입, 최대 12자리)
       billKey: String(billKey),
       userId: String(userId || ''),
