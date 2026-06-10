@@ -674,16 +674,16 @@
     }
     .feat-scenario-bg-img {
       display: block;
-      width: 100%;
       max-width: 100%;
-      aspect-ratio: 16 / 9;
       max-height: 90vh;
-      object-fit: cover;
-      object-position: center;
-      height: auto;
+      width: auto; height: auto;
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
+    }
+    /* lossheight만 비율 다름(4:3) — 모달 박스를 다른 기능과 비슷한 크기로 줄임 */
+    .feat-scenario-cell[data-feat="lossheight"] .feat-scenario-bg-img {
+      max-height: 72vh;
     }
     .feat-scenario-overlay {
       position: absolute;
@@ -3217,7 +3217,7 @@
       `;
     }
 
-    return `<div class="feat-modal-cell feat-scenario-cell">
+    return `<div class="feat-modal-cell feat-scenario-cell" data-feat="${_featKey}">
       ${bg}
       ${overlay}
       <div class="feat-scenario-content">${content}</div>
