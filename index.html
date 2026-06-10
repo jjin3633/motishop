@@ -674,9 +674,13 @@
     }
     .feat-scenario-bg-img {
       display: block;
+      width: 100%;
       max-width: 100%;
+      aspect-ratio: 16 / 9;
       max-height: 90vh;
-      width: auto; height: auto;
+      object-fit: cover;
+      object-position: center;
+      height: auto;
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
