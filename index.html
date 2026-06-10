@@ -905,21 +905,27 @@
       .feat-modal-tabs { gap: 20px; padding: 12px 0 10px; margin-bottom: 12px; }
       .feat-modal-tab { font-size: 13px; }
       .feat-modal-tab.active::after { bottom: -11px; }
-      /* 시나리오 카드 모바일 — 셀 70% 강제 + 이미지 원본 비율 가운데 정렬 (잘림 X) */
+      /* 시나리오 카드 모바일 — 셀 70vh 강제 + 이미지 원본 비율 가운데 정렬 */
+      /* specificity 강화로 .feat-modal-cell img 룰 override 보장 */
       .feat-scenario-cell {
         min-height: 70vh;
         overflow: hidden;
+        position: relative;
       }
-      .feat-scenario-bg-img {
+      .feat-scenario-cell .feat-scenario-bg-img {
         position: absolute;
-        inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         width: 100%;
         height: 100%;
+        max-width: none;
         max-height: none;
         object-fit: contain;
         object-position: center;
       }
-      /* lossheight 데스크탑 max-height 룰 무효화 — 모바일에선 동일 처리 */
+      /* lossheight 데스크탑 max-height 룰 무효화 — 모바일 동일 처리 */
       .feat-scenario-cell[data-feat="lossheight"] .feat-scenario-bg-img {
         max-height: none;
       }
