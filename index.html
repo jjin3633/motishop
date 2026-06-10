@@ -947,8 +947,32 @@
       font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3;
     }
     .feat-card p {
-      padding: 18px 22px 22px; margin: 0;
+      padding: 18px 22px 12px; margin: 0;
       font-size: 18px; color: rgba(255,255,255,.68); line-height: 1.85; flex: 1;
+    }
+    /* feat-card CTA — 미니멀 텍스트 + 화살표 (카드 전체 onclick에 양보) */
+    .feat-card-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 22px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--cyan);
+      letter-spacing: -.01em;
+      pointer-events: none;
+      transition: color .2s ease;
+    }
+    .feat-card-cta .arrow {
+      display: inline-block;
+      transition: transform .25s ease;
+      line-height: 1;
+    }
+    .feat-card:hover .feat-card-cta {
+      color: #4dd9ff;
+    }
+    .feat-card:hover .feat-card-cta .arrow {
+      transform: translateX(4px);
     }
     .feat-badge {
       display: inline-flex; align-items: center; gap: 6px;
@@ -1519,6 +1543,7 @@
       .problem-persona-role { font-size: 18px; white-space: normal; overflow: visible; text-overflow: clip; }
       .features-grid { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
       .feat-badge { font-size: 16px; }
+      .feat-card-cta { font-size: 16px; padding: 0 22px 18px; }
       .pricing-grid { grid-template-columns: 1fr; gap: 18px; margin-top: 28px; }
       .pricing-grid.bundle { grid-template-columns: 1fr; }
       .price-card { padding: 24px 22px; border-radius: 16px; }
@@ -1695,7 +1720,7 @@
   <div class="section-inner">
     <h2 class="section-title">기기는 그대로<br>기능만 더하면 됩니다.</h2>
     <div class="features-grid">
-      <div class="feat-card" onclick="openFeatModal('moire')">
+      <div class="feat-card" onclick="openFeatModalWithTrack('moire')">
         <div class="feat-thumb">
           <img src="assets/features/moire.png" alt="모아레 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1703,8 +1728,9 @@
           <h3>모아레 (Moiré)</h3>
         </div>
         <p>수치로 어려운 불균형,<br>등고선 이미지 한 장으로 1분 상담.</p>
+        <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
       </div>
-      <div class="feat-card" onclick="openFeatModal('nerve')">
+      <div class="feat-card" onclick="openFeatModalWithTrack('nerve')">
         <div class="feat-thumb">
           <img src="assets/features/skeleton1.png" alt="3D 신경 · 림프 · 장기 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1712,8 +1738,9 @@
           <h3>3D 신경 · 림프 · 장기</h3>
         </div>
         <p>체형만 보던 눈이 내부 구조까지.<br>다른 센터엔 없는 이야기를 이미지로.</p>
+        <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
       </div>
-      <div class="feat-card" onclick="openFeatModal('spine')">
+      <div class="feat-card" onclick="openFeatModalWithTrack('spine')">
         <div class="feat-thumb">
           <img src="assets/features/spinedetail1.png" alt="척추 세부 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1721,8 +1748,9 @@
           <h3>척추 세부 분석</h3>
         </div>
         <p>왜 그 부위가 아픈지 그림으로 보여주세요.<br>"이해됐어요"라는 반응이 재방문을 만듭니다.</p>
+        <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
       </div>
-      <div class="feat-card" onclick="openFeatModal('lossheight')">
+      <div class="feat-card" onclick="openFeatModalWithTrack('lossheight')">
         <div class="feat-thumb">
           <img src="assets/features/lossheight.png" alt="손실키 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1730,8 +1758,9 @@
           <h3>손실키 분석</h3>
         </div>
         <p>"자세가 안 좋으면 키가 줄어요"<br>이제 말 대신 숫자로 보여주세요.</p>
+        <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
       </div>
-      <div class="feat-card" onclick="openFeatModal('face')">
+      <div class="feat-card" onclick="openFeatModalWithTrack('face')">
         <div class="feat-thumb">
           <img src="assets/features/face.png" alt="안면 여백 · 탄력 분석 화면" loading="lazy" decoding="async" />
           <div class="feat-thumb-gradient"></div>
@@ -1739,6 +1768,7 @@
           <h3>안면 여백 · 탄력</h3>
         </div>
         <p>좌우 비대칭, 윤곽선 비율, 탄력 수치까지.<br>말로 설명할 수 없던 변화를 숫자로.</p>
+        <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
       </div>
     </div>
   </div>
@@ -3119,6 +3149,14 @@
     if (tab === 'scenario') return FEAT_SCENARIOS[featKey] || [];
     if (tab === 'guide') return FEAT_GUIDES[featKey] || [];
     return FEAT_IMAGES[featKey] || [];
+  }
+
+  // 카드 클릭 트래킹 래퍼 — GA4 이벤트 + openFeatModal
+  function openFeatModalWithTrack(featKey) {
+    if (typeof gtag === 'function') {
+      gtag('event', 'feat_card_click', { feat_key: featKey });
+    }
+    openFeatModal(featKey);
   }
 
   function openFeatModal(featKey) {
