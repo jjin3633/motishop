@@ -668,23 +668,44 @@
       border-radius: 1px;
       box-shadow: 0 0 10px rgba(0,212,255,.55);
     }
-    /* 활용 시나리오 카드 — 타이포 중심, Stripe/Linear 풍 */
+    /* 활용 시나리오 카드 — 사용 가이드 셀과 동일 크기 (이미지가 셀 크기 결정), 텍스트 오버레이 */
     .feat-scenario-cell {
-      flex-direction: column !important;
+      position: relative;
+    }
+    .feat-scenario-bg-img {
+      display: block;
+      max-width: 100%;
+      max-height: 90vh;
+      width: auto; height: auto;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .feat-scenario-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(6,16,30,.55) 0%, rgba(6,16,30,.78) 50%, rgba(6,16,30,.88) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .feat-scenario-content {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 22px;
-      padding: 56px 48px;
+      padding: 48px 40px;
       text-align: center;
-      background: radial-gradient(ellipse at top, rgba(0,212,255,.06), transparent 65%);
-      min-height: 420px;
+      gap: 18px;
       box-sizing: border-box;
     }
     .feat-scenario-emoji {
       font-size: 44px;
       line-height: 1;
-      opacity: .9;
-      margin-bottom: 4px;
+      opacity: .92;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
     }
     .feat-scenario-title {
       font-size: 28px;
@@ -693,72 +714,60 @@
       letter-spacing: -.025em;
       line-height: 1.3;
       max-width: 720px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.6);
     }
     .feat-scenario-body {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 400;
-      color: rgba(255,255,255,.78);
+      color: rgba(255,255,255,.88);
       line-height: 1.7;
-      max-width: 640px;
+      max-width: 620px;
       letter-spacing: -.005em;
       word-break: keep-all;
-    }
-    .feat-scenario-image {
-      display: block;
-      max-width: 100%;
-      max-height: 44vh;
-      width: auto; height: auto;
-      border-radius: 10px;
-      box-shadow: 0 16px 40px rgba(0,0,0,.45);
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
+      text-shadow: 0 1px 8px rgba(0,0,0,.5);
     }
     .feat-scenario-quotes {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      max-width: 640px;
+      gap: 12px;
+      max-width: 580px;
+      width: 100%;
     }
     .feat-scenario-quote {
       position: relative;
-      padding: 28px 32px 28px 56px;
-      background: rgba(255,255,255,.04);
+      padding: 14px 18px 14px 44px;
+      background: rgba(255,255,255,.08);
       border-left: 3px solid var(--cyan);
-      border-radius: 0 12px 12px 0;
-      font-size: 19px;
+      border-radius: 0 10px 10px 0;
+      font-size: 15px;
       font-weight: 500;
-      color: rgba(255,255,255,.92);
-      line-height: 1.55;
+      color: rgba(255,255,255,.95);
+      line-height: 1.5;
       letter-spacing: -.015em;
       text-align: left;
       word-break: keep-all;
+      backdrop-filter: blur(4px);
     }
     .feat-scenario-quote::before {
       content: '"';
       position: absolute;
-      left: 18px; top: 16px;
-      font-size: 48px;
+      left: 14px; top: 6px;
+      font-size: 34px;
       font-weight: 700;
       color: var(--cyan);
-      opacity: .55;
+      opacity: .7;
       line-height: 1;
       font-family: Georgia, serif;
     }
-    .feat-scenario-divider {
-      width: 56px;
-      height: 1px;
-      background: rgba(255,255,255,.18);
-      margin: 6px 0;
-    }
     .feat-scenario-cta {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--cyan);
       letter-spacing: -.015em;
       line-height: 1.5;
-      max-width: 580px;
-      padding-top: 4px;
+      max-width: 560px;
+      padding-top: 6px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.5);
     }
     /* Carousel track — 가로 native scroll-snap (Instagram 스토리식) */
     .feat-modal-track {
@@ -852,15 +861,16 @@
       .feat-modal-tabs { gap: 20px; padding: 12px 0 10px; margin-bottom: 12px; }
       .feat-modal-tab { font-size: 13px; }
       .feat-modal-tab.active::after { bottom: -11px; }
-      /* 시나리오 카드 모바일 — 패딩·폰트 축소 */
-      .feat-scenario-cell { padding: 36px 22px; gap: 16px; min-height: 360px; }
-      .feat-scenario-emoji { font-size: 36px; }
-      .feat-scenario-title { font-size: 22px; }
-      .feat-scenario-body { font-size: 15px; line-height: 1.65; }
-      .feat-scenario-image { max-height: 36vh; }
-      .feat-scenario-quote { font-size: 16px; padding: 22px 22px 22px 46px; }
-      .feat-scenario-quote::before { font-size: 40px; left: 14px; top: 12px; }
-      .feat-scenario-cta { font-size: 17px; }
+      /* 시나리오 카드 모바일 — 오버레이 텍스트 축소 (이미지 크기는 사용 가이드와 동일하게 유지) */
+      .feat-scenario-content { padding: 28px 20px; gap: 12px; }
+      .feat-scenario-emoji { font-size: 34px; }
+      .feat-scenario-title { font-size: 20px; }
+      .feat-scenario-body { font-size: 13px; line-height: 1.6; }
+      .feat-scenario-quotes { gap: 8px; }
+      .feat-scenario-quote { font-size: 13px; padding: 11px 14px 11px 38px; }
+      .feat-scenario-quote::before { font-size: 28px; left: 11px; top: 4px; }
+      .feat-scenario-cta { font-size: 15px; }
+      .feat-scenario-bg-img { max-height: 78vh; }
     }
     .feat-card { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
     .feat-card:hover { background: rgba(255,255,255,.055); border-color: rgba(0,212,255,.4); transform: translateY(-4px); box-shadow: 0 0 0 1px rgba(0,212,255,.2), 0 20px 56px rgba(0,0,0,.4); }
@@ -2867,34 +2877,33 @@
   const FEAT_GUIDE_ENABLED = true;
 
   // Feature card modal — 활용 시나리오 (원장님 가치 제안). 데이터 빈 기능은 시나리오 탭 자동 숨김.
+  // 모든 슬라이드는 bgImg(기능 대표 이미지)를 셀 크기 결정용으로 두고, 어두운 오버레이 위에 텍스트 표시.
   // 슬라이드 type:
-  //   'problem' — 이모지 + 제목 + 본문
-  //   'solution' — 이미지 + 제목 + 본문
-  //   'quotes' — 회원 인용 큰 따옴표 블록 (배열)
-  //   'outcome' — 본문 + CTA 강조
+  //   'problem' — 이모지 + 제목 + 본문 (도입)
+  //   'solution' — 제목 + 본문 (기능 설명)
+  //   'outcome' — 회원 인용 블록 + 본문 + CTA (결과 + 마무리)
   const FEAT_SCENARIOS = {
     moire: [
       {
+        bgImg: 'assets/features/moire.png',
         type: 'problem',
         emoji: '💭',
         title: '말로 표현 못하는 막연한 불편',
-        body: '원장님, 회원이 "어디가 아픈 것 같은데..."로 운만 떼고 콕 짚어 말하지 못한 적 없으신가요? 모아레 한 장이면 끝납니다.',
+        body: '회원이 "어디가 아픈 것 같은데..."로 운만 떼고 콕 짚어 말하지 못한 적 없으신가요? 모아레 한 장이면 끝납니다.',
       },
       {
+        bgImg: 'assets/features/moire.png',
         type: 'solution',
-        img: 'assets/features/moire.png',
         title: '등고선 분석',
         body: '전신의 좌우 비대칭과 휘어짐을 등고선으로 표현해, 복잡한 검사 없이 한눈에 문제를 보여줍니다.',
       },
       {
-        type: 'quotes',
+        bgImg: 'assets/features/moire.png',
+        type: 'outcome',
         quotes: [
           '어디가 불편한데 콕 짚어 말 못하겠어…',
           '여기저기 뭉치는데 어디부터 풀어야 하지?',
         ],
-      },
-      {
-        type: 'outcome',
         body: '회원이 자기 몸 상태를 한 장으로 보는 순간, 1:1 컨설팅과 패키지 등록의 필요성도 자연스럽게 설득됩니다.',
         cta: '말로 안 되는 불편, 등고선 한 장으로 보여주세요.',
       },
@@ -3038,37 +3047,40 @@
     }
   }
 
-  // 시나리오 셀 렌더 — type별 분기 (problem/solution/quotes/outcome)
+  // 시나리오 셀 렌더 — 모든 슬라이드 공통: bgImg(셀 크기 결정) + overlay + content(텍스트)
   function renderScenarioCell(item, i) {
     const lazy = i === 0 ? 'eager' : 'lazy';
+    const bg = item.bgImg
+      ? `<img class="feat-scenario-bg-img" src="${item.bgImg}" alt="" loading="${lazy}" />`
+      : '';
+    const overlay = `<div class="feat-scenario-overlay"></div>`;
+
+    let content = '';
     if (item.type === 'problem') {
-      return `<div class="feat-modal-cell feat-scenario-cell">
+      content = `
         ${item.emoji ? `<div class="feat-scenario-emoji">${item.emoji}</div>` : ''}
         ${item.title ? `<div class="feat-scenario-title">${item.title}</div>` : ''}
         ${item.body ? `<div class="feat-scenario-body">${item.body}</div>` : ''}
-      </div>`;
-    }
-    if (item.type === 'solution') {
-      return `<div class="feat-modal-cell feat-scenario-cell">
-        ${item.img ? `<img class="feat-scenario-image" src="${item.img}" alt="${item.title || '솔루션'}" loading="${lazy}" />` : ''}
+      `;
+    } else if (item.type === 'solution') {
+      content = `
         ${item.title ? `<div class="feat-scenario-title">${item.title}</div>` : ''}
         ${item.body ? `<div class="feat-scenario-body">${item.body}</div>` : ''}
-      </div>`;
-    }
-    if (item.type === 'quotes') {
-      return `<div class="feat-modal-cell feat-scenario-cell">
-        <div class="feat-scenario-quotes">
-          ${(item.quotes || []).map(q => `<div class="feat-scenario-quote">${q}</div>`).join('')}
-        </div>
-      </div>`;
-    }
-    if (item.type === 'outcome') {
-      return `<div class="feat-modal-cell feat-scenario-cell">
+      `;
+    } else if (item.type === 'outcome') {
+      const quotes = (item.quotes || []).map(q => `<div class="feat-scenario-quote">${q}</div>`).join('');
+      content = `
+        ${quotes ? `<div class="feat-scenario-quotes">${quotes}</div>` : ''}
         ${item.body ? `<div class="feat-scenario-body">${item.body}</div>` : ''}
-        ${item.cta ? `<div class="feat-scenario-divider"></div><div class="feat-scenario-cta">${item.cta}</div>` : ''}
-      </div>`;
+        ${item.cta ? `<div class="feat-scenario-cta">${item.cta}</div>` : ''}
+      `;
     }
-    return '<div class="feat-modal-cell feat-scenario-cell"></div>';
+
+    return `<div class="feat-modal-cell feat-scenario-cell">
+      ${bg}
+      ${overlay}
+      <div class="feat-scenario-content">${content}</div>
+    </div>`;
   }
 
   // 트랙에 모든 셀 생성 + dot/화살표 갱신 — 탭 종류에 따라 이미지/시나리오 카드 렌더
