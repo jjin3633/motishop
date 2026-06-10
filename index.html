@@ -905,9 +905,9 @@
       .feat-modal-tabs { gap: 20px; padding: 12px 0 10px; margin-bottom: 12px; }
       .feat-modal-tab { font-size: 13px; }
       .feat-modal-tab.active::after { bottom: -11px; }
-      /* 시나리오 카드 모바일 — 셀 크기 화면 비율로 강제 + 이미지 cover (텍스트 가독성 우선) */
+      /* 시나리오 카드 모바일 — 셀 70% 강제 + 이미지 원본 비율 가운데 정렬 (잘림 X) */
       .feat-scenario-cell {
-        min-height: 75vh;
+        min-height: 70vh;
         overflow: hidden;
       }
       .feat-scenario-bg-img {
@@ -916,7 +916,7 @@
         width: 100%;
         height: 100%;
         max-height: none;
-        object-fit: cover;
+        object-fit: contain;
         object-position: center;
       }
       /* lossheight 데스크탑 max-height 룰 무효화 — 모바일에선 동일 처리 */
