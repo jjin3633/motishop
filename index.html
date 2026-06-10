@@ -729,8 +729,8 @@
     .feat-scenario-quotes {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      max-width: 580px;
+      gap: 10px;
+      max-width: 600px;
       width: auto;
     }
     .feat-scenario-quote {
@@ -738,14 +738,21 @@
       background: transparent;
       border: none;
       border-radius: 0;
-      font-size: 19px;
-      font-weight: 400;
-      color: rgba(255,255,255,.88);
-      line-height: 1.6;
-      letter-spacing: -.015em;
+      font-size: 22px;
+      font-weight: 500;
+      color: rgba(255,255,255,.96);
+      line-height: 1.65;
+      letter-spacing: -.02em;
       text-align: center;
       word-break: keep-all;
-      text-shadow: 0 1px 8px rgba(0,0,0,.5);
+      text-shadow: 0 2px 12px rgba(0,0,0,.6);
+    }
+    /* 본문/제목 안 핵심 단어 강조 — 시안 + 살짝 굵게 */
+    .feat-scenario-title .hl,
+    .feat-scenario-body .hl {
+      color: var(--cyan);
+      font-weight: 700;
+      text-shadow: 0 2px 14px rgba(0,212,255,.35), 0 1px 8px rgba(0,0,0,.5);
     }
     .feat-scenario-cta {
       font-size: 21px;
@@ -854,8 +861,8 @@
       .feat-scenario-emoji { font-size: 38px; }
       .feat-scenario-title { font-size: 22px; }
       .feat-scenario-body { font-size: 15px; line-height: 1.65; }
-      .feat-scenario-quotes { gap: 6px; }
-      .feat-scenario-quote { font-size: 15px; }
+      .feat-scenario-quotes { gap: 7px; }
+      .feat-scenario-quote { font-size: 17px; line-height: 1.6; }
       .feat-scenario-cta { font-size: 17px; }
       .feat-scenario-bg-img { max-height: 78vh; }
     }
@@ -2875,14 +2882,14 @@
         bgImg: 'assets/features/moire.png',
         type: 'problem',
         emoji: '💭',
-        title: '말로 표현 못하는 막연한 불편',
-        body: '회원이 "어디가 아픈 것 같은데..."로 운만 떼고 콕 짚어 말하지 못한 적 없으신가요? 모아레 한 장이면 끝납니다.',
+        title: '"어디가 아픈 것 같은데..."',
+        body: '회원이 운만 떼던 그 순간. <span class="hl">모아레 한 장이면 끝납니다.</span>',
       },
       {
         bgImg: 'assets/features/moire.png',
         type: 'solution',
-        title: '등고선 분석',
-        body: '전신의 좌우 비대칭과 휘어짐을 등고선으로 표현해, 복잡한 검사 없이 한눈에 문제를 보여줍니다.',
+        title: '<span class="hl">등고선 한 장.</span>',
+        body: '복잡한 검사도, 긴 설명도 없이. 회원의 신뢰를 그 자리에서.',
       },
       {
         bgImg: 'assets/features/moire.png',
@@ -2891,7 +2898,7 @@
           '"어디가 불편한데 콕 짚어 말 못하겠어…"',
           '"여기저기 뭉치는데 어디부터 풀어야 하지?"',
         ],
-        body: '회원이 등고선으로 자기 몸 한 번 보면, 컨설팅이나 패키지 이야기가 훨씬 쉬워집니다.',
+        body: '이제 이 말이 <span class="hl">더 이상 어렵지 않습니다.</span>',
         cta: '한 장이면 됩니다.',
       },
     ],
@@ -2988,11 +2995,7 @@
     const tabsWrap = tabs[0].parentElement;
 
     // 탭별 데이터 보유 여부
-    const has = {
-      scenario: !!(FEAT_SCENARIOS[_featKey] && FEAT_SCENARIOS[_featKey].length),
-      guide: !!(FEAT_GUIDE_ENABLED && FEAT_GUIDES[_featKey] && FEAT_GUIDES[_featKey].length),
-      examples: !!(FEAT_IMAGES[_featKey] && FEAT_IMAGES[_featKey].length),
-    };
+    const has = getFeatTabHas();
 
     // 각 탭 버튼별 표시/숨김 + active 상태
     tabs.forEach(t => {
@@ -3129,10 +3132,40 @@
   setupFeatTrackScrollSync();
 
   // 데스크탑 화살표 / dot 탭 → 부드럽게 슬라이드 (smooth scroll)
+  // 현재 _featKey의 탭별 데이터 보유 매트릭스
+  function getFeatTabHas() {
+    return {
+      scenario: !!(FEAT_SCENARIOS[_featKey] && FEAT_SCENARIOS[_featKey].length),
+      guide: !!(FEAT_GUIDE_ENABLED && FEAT_GUIDES[_featKey] && FEAT_GUIDES[_featKey].length),
+      examples: !!(FEAT_IMAGES[_featKey] && FEAT_IMAGES[_featKey].length),
+    };
+  }
+
+  // 다음 탭으로 자동 전환 (마지막 슬라이드에서 next 누르면 다음 탭 첫 슬라이드로)
+  function getNextAvailableTab(current) {
+    if (!_featKey) return null;
+    const order = ['scenario', 'guide', 'examples'];
+    const has = getFeatTabHas();
+    const start = order.indexOf(current);
+    for (let i = start + 1; i < order.length; i++) {
+      if (has[order[i]]) return order[i];
+    }
+    return null;
+  }
+
   function featModalNav(delta) {
     const total = _featImages.length;
+    const target = _featIdx + delta;
+    // 마지막 슬라이드에서 next → 다음 탭이 있으면 자동 전환
+    if (target >= total && delta > 0) {
+      const nextTab = getNextAvailableTab(_featTab);
+      if (nextTab) {
+        switchFeatTab(nextTab);
+      }
+      return;
+    }
     if (total <= 1) return;
-    const newIdx = Math.max(0, Math.min(total - 1, _featIdx + delta));
+    const newIdx = Math.max(0, Math.min(total - 1, target));
     if (newIdx === _featIdx) return;
     _featIdx = newIdx;
     scrollFeatTrackTo(_featIdx);
