@@ -962,11 +962,17 @@
       padding: 18px 22px 22px; margin: 0;
       font-size: 18px; color: rgba(255,255,255,.68); line-height: 1.85; flex: 1;
     }
-    /* feat-card CTA — 썸네일 우하단, 미니멀 텍스트 + 화살표 */
+    /* feat-card CTA — 썸네일 우하단 Outlined Pill (호버 시 시안 채워짐 + 글로우) */
     .feat-card-cta {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      justify-content: center;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 212, 255, .55);
+      background: rgba(6, 16, 30, .55);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       font-size: 13px;
       font-weight: 600;
       color: var(--cyan);
@@ -974,20 +980,14 @@
       white-space: nowrap;
       flex-shrink: 0;
       pointer-events: none;
-      transition: color .2s ease;
-      text-shadow: 0 2px 8px rgba(0,0,0,.6);
-      padding-bottom: 2px;
-    }
-    .feat-card-cta .arrow {
-      display: inline-block;
-      transition: transform .25s ease;
-      line-height: 1;
+      transition: background .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease, transform .25s ease;
     }
     .feat-card:hover .feat-card-cta {
-      color: #4dd9ff;
-    }
-    .feat-card:hover .feat-card-cta .arrow {
-      transform: translateX(4px);
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: #001a33;
+      box-shadow: 0 6px 20px rgba(0, 212, 255, .5);
+      transform: translateY(-2px);
     }
     .feat-badge {
       display: inline-flex; align-items: center; gap: 6px;
@@ -1743,7 +1743,7 @@
           <span class="feat-badge badge-hot">인기</span>
           <div class="feat-card-head">
             <h3>모아레 (Moiré)</h3>
-            <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
+            <span class="feat-card-cta">자세히 보기</span>
           </div>
         </div>
         <p>수치로 어려운 불균형,<br>등고선 이미지 한 장으로 1분 상담.</p>
@@ -1755,7 +1755,7 @@
           <span class="feat-badge badge-new">신규</span>
           <div class="feat-card-head">
             <h3>3D 신경 · 림프 · 장기</h3>
-            <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
+            <span class="feat-card-cta">자세히 보기</span>
           </div>
         </div>
         <p>체형만 보던 눈이 내부 구조까지.<br>다른 센터엔 없는 이야기를 이미지로.</p>
@@ -1767,7 +1767,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <div class="feat-card-head">
             <h3>척추 세부 분석</h3>
-            <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
+            <span class="feat-card-cta">자세히 보기</span>
           </div>
         </div>
         <p>왜 그 부위가 아픈지 그림으로 보여주세요.<br>"이해됐어요"라는 반응이 재방문을 만듭니다.</p>
@@ -1779,7 +1779,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <div class="feat-card-head">
             <h3>손실키 분석</h3>
-            <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
+            <span class="feat-card-cta">자세히 보기</span>
           </div>
         </div>
         <p>"자세가 안 좋으면 키가 줄어요"<br>이제 말 대신 숫자로 보여주세요.</p>
@@ -1791,7 +1791,7 @@
           <span class="feat-badge badge-pro">프리미엄</span>
           <div class="feat-card-head">
             <h3>안면 여백 · 탄력</h3>
-            <span class="feat-card-cta">자세히 보기 <span class="arrow">→</span></span>
+            <span class="feat-card-cta">자세히 보기</span>
           </div>
         </div>
         <p>좌우 비대칭, 윤곽선 비율, 탄력 수치까지.<br>말로 설명할 수 없던 변화를 숫자로.</p>
