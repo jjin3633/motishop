@@ -203,7 +203,7 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
   }
 }
 
-app.post('/api/subscribe', subscribeLimiter, (req, res) => {
+app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
   const { company, name, phone, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
@@ -251,7 +251,39 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
   try {
     if (existing) {
-      // 재활성화 — 기존 row UPDATE, pw_hash 유지
+      // 재활성화 — 약관 정책: 무료 체험 미적용 + 즉시 결제 (마이페이지 재구독과 동일 흐름)
+      const { chargeWithRetry } = require('./innopay');
+      const newMoid = moid || (kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000));
+
+      // 1) 즉시 결제 시도
+      const chargeResult = await chargeWithRetry({
+        billKey,
+        moid: newMoid,
+        amount: chargeAmount,
+        goodsName: '모티샵 구독',
+        buyerName: name,
+        userId: cleanPhone,
+      });
+
+      // 2) 결제 결과 billing_logs 기록 (성공·실패 모두)
+      const tid = (chargeResult.raw && (chargeResult.raw.tid || chargeResult.raw.pgTid || chargeResult.raw.transSeq || chargeResult.raw.tno)) || '';
+      db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+        .run(existing.id, newMoid, chargeAmount, chargeResult.resultCode || 'ERR', chargeResult.resultMsg || '', tid);
+
+      // 3) 결제 실패 시 — 가입 미완료 (status 변경 X, 502 반환)
+      if (!chargeResult.ok) {
+        console.error(`[재가입 결제 실패] id=${existing.id} ${company} / ${chargeResult.resultCode} ${chargeResult.resultMsg}`);
+        notifySlack(`🔴 재가입 결제 실패(신청폼): ${company} (id=${existing.id}, ${maskName(name)}) — ${chargeResult.resultCode} ${chargeResult.resultMsg}`);
+        return res.status(502).json({ ok: false, msg: '결제 실패: ' + (chargeResult.resultMsg || '카드 정보를 확인해주세요.'), resultCode: chargeResult.resultCode });
+      }
+
+      // 4) 결제 성공 — 다음 결제일 계산 (오늘 + 1개월/1년)
+      const next = new Date();
+      if (billingType === 'monthly') next.setMonth(next.getMonth() + 1);
+      else next.setFullYear(next.getFullYear() + 1);
+      const nextBilling = kstDateOnly(next);
+
+      // 5) 변경 이력 + 가입자 정보 갱신 (status='active', 결제·체험 리셋)
       db.prepare(`INSERT INTO subscriber_changes
         (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
         VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
@@ -259,14 +291,14 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
 
       db.prepare(`UPDATE subscribers SET
         company=?, name=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
-        trial_start=?, next_billing_date=?, status='trial', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL
+        next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
         WHERE id=?`)
-        .run(company, name, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, existing.id);
+        .run(company, name, cleanBizNum, features, billingType, billKey, newMoid, chargeAmount, nextBilling, existing.id);
 
       saveTermsConsent(existing.id, termsAgreed, req);
-      console.log(`[재가입 ✓] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
-      notifySlack(`🔁 재가입(신청폼): ${company} (id=${existing.id}, ${maskName(name)}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 기능: ${displayFeatures(features)} / 첫 결제: ${nextBillingDate}`);
-      return res.json({ ok: true, trialStart, nextBillingDate, reactivated: true, subscriberId: existing.id });
+      console.log(`[재가입 ✓ 결제완료] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);
+      notifySlack(`🔁 재가입(신청폼·결제완료): ${company} (id=${existing.id}, ${maskName(name)}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 기능: ${displayFeatures(features)} / 다음: ${nextBilling}`);
+      return res.json({ ok: true, charge_amount: chargeAmount, next_billing_date: nextBilling, reactivated: true, subscriberId: existing.id });
     }
 
     // 신규 가입 — 임시 비밀번호 생성
