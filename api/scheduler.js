@@ -207,7 +207,7 @@ function scheduleAutoDelete() {
       if (!targets.length) return;
 
       const tx = db.transaction((rows) => {
-        const tables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds', 'payment_notis'];
+        const tables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds', 'payment_notis', 'activation_logs', 'subscriber_memos'];
         for (const r of rows) {
           for (const t of tables) {
             try { db.prepare(`DELETE FROM ${t} WHERE subscriber_id=?`).run(r.id); } catch (e) { /* 일부 테이블에 컬럼 없을 수 있음 */ }
