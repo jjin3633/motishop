@@ -437,6 +437,20 @@ app.get('/api/revenue', adminAuth, (req, res) => {
     `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00')`
   ).get()?.v || 0;
 
+  // 다음 달 예상 수익 — active 구독자 중 next_billing_date가 다음 달인 사람들의 charge_amount 합
+  const nextMonthEstimate = db.prepare(
+    `SELECT COALESCE(SUM(charge_amount),0) as v FROM subscribers
+     WHERE status='active'
+       AND next_billing_date IS NOT NULL
+       AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`
+  ).get()?.v || 0;
+  const nextMonthCount = db.prepare(
+    `SELECT COUNT(*) as v FROM subscribers
+     WHERE status='active'
+       AND next_billing_date IS NOT NULL
+       AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`
+  ).get()?.v || 0;
+
   const yearly = db.prepare(`
     SELECT strftime('%Y', billed_at) as year, SUM(amount) as total, COUNT(*) as count
     FROM billing_logs WHERE result_code IN ('0000','00') GROUP BY year ORDER BY year DESC
@@ -453,7 +467,7 @@ app.get('/api/revenue', adminAuth, (req, res) => {
     GROUP BY month ORDER BY month ASC
   `).all(year);
 
-  res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, yearly, monthly, monthlyByYear, selectedYear: year });
+  res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, nextMonthEstimate, nextMonthCount, yearly, monthly, monthlyByYear, selectedYear: year });
 });
 
 // 활성 사용자 개요 (일/월/년 단위 KPI + 추세 + 시간대별 가입)

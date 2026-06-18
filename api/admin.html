@@ -127,7 +127,7 @@ tr:hover td { background:var(--gray50); }
 .fw700 { font-weight:700; }
 
 /* ── Revenue ── */
-.rev-top { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+.rev-top { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
 .rev-card { background:white; border-radius:14px; padding:22px 26px; border:1px solid var(--gray100); box-shadow:0 1px 4px rgba(0,0,0,.04); }
 .rev-card.hl { background:var(--navy); border-color:var(--navy); }
 .rev-card .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
@@ -216,7 +216,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .top-stats { grid-template-columns:repeat(3,1fr); }
-  .rev-top { grid-template-columns:repeat(3,1fr); }
+  .rev-top { grid-template-columns:repeat(2,1fr); }
   .rev-grid { grid-template-columns:1fr; }
 }
 @media (max-width: 768px) {
@@ -364,6 +364,11 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
           <div class="lbl">이번 달 수익</div>
           <div class="amt" id="rev-month">—<small>원</small></div>
           <div class="sub" id="rev-month-sub"></div>
+        </div>
+        <div class="rev-card">
+          <div class="lbl">다음 달 예상 수익</div>
+          <div class="amt" id="rev-next">—<small>원</small></div>
+          <div class="sub" id="rev-next-sub"></div>
         </div>
         <div class="rev-card">
           <div class="lbl">올해 누적 수익</div>
@@ -1250,10 +1255,16 @@ async function loadRevenue(year) {
   if (!d) return;
 
   const now = new Date();
+  const nextMonthLabel = (() => {
+    const n = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월';
+  })();
   document.getElementById('rev-month').innerHTML = fmt(d.thisMonthTotal) + '<small>원</small>';
+  document.getElementById('rev-next').innerHTML  = fmt(d.nextMonthEstimate || 0) + '<small>원</small>';
   document.getElementById('rev-year').innerHTML  = fmt(d.thisYearTotal)  + '<small>원</small>';
   document.getElementById('rev-total').innerHTML = fmt(d.allTimeTotal)   + '<small>원</small>';
   document.getElementById('rev-month-sub').textContent = now.getFullYear() + '년 ' + (now.getMonth()+1) + '월';
+  document.getElementById('rev-next-sub').textContent  = nextMonthLabel + ' · 결제 예정 ' + (d.nextMonthCount || 0) + '건';
   document.getElementById('rev-year-sub').textContent  = now.getFullYear() + '년 합계';
   document.getElementById('st-month').innerHTML = fmt(d.thisMonthTotal) + '<small>원</small>';
   document.getElementById('st-all').innerHTML   = fmt(d.allTimeTotal) + '<small>원</small>';
