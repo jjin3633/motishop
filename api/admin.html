@@ -1264,7 +1264,19 @@ async function loadRevenue(year) {
   document.getElementById('rev-year').innerHTML  = fmt(d.thisYearTotal)  + '<small>원</small>';
   document.getElementById('rev-total').innerHTML = fmt(d.allTimeTotal)   + '<small>원</small>';
   document.getElementById('rev-month-sub').textContent = now.getFullYear() + '년 ' + (now.getMonth()+1) + '월';
-  document.getElementById('rev-next-sub').textContent  = nextMonthLabel + ' · 결제 예정 ' + (d.nextMonthCount || 0) + '건';
+  // 다음 달 카드 sub — breakdown 표시 (정기 N · 체험 N · 합 N건)
+  const bd = d.nextMonthBreakdown || {};
+  const subParts = [nextMonthLabel];
+  subParts.push('정기 ' + (bd.active || 0) + ' · 체험 ' + (bd.trial || 0) + ' = ' + (d.nextMonthCount || 0) + '건');
+  document.getElementById('rev-next-sub').textContent = subParts.join(' · ');
+  // 디버그: 누락 정보 + 명단을 콘솔에 dump
+  console.group('🔍 다음 달 예상 수익 진단');
+  console.log('💰 총액:', d.nextMonthEstimate, '원 (' + (d.nextMonthCount || 0) + '건)');
+  console.log('📊 status별:', { 정기active: bd.active, 체험trial: bd.trial });
+  console.log('🚫 제외:', { 해지: bd.excludedCancelled, 빌키삭제: bd.excludedBillkeyDeleted, 결제일없음: bd.excludedNoNextDate });
+  console.log('📅 다른 월:', { 이번달결제: bd.inThisMonth, '다다음달이후': bd.inLaterMonth });
+  if (Array.isArray(d.nextMonthList)) console.table(d.nextMonthList);
+  console.groupEnd();
   document.getElementById('rev-year-sub').textContent  = now.getFullYear() + '년 합계';
   document.getElementById('st-month').innerHTML = fmt(d.thisMonthTotal) + '<small>원</small>';
   document.getElementById('st-all').innerHTML   = fmt(d.allTimeTotal) + '<small>원</small>';

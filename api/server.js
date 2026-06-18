@@ -452,6 +452,23 @@ app.get('/api/revenue', adminAuth, (req, res) => {
     `SELECT COUNT(*) as v FROM subscribers WHERE ${nextMonthWhere}`
   ).get()?.v || 0;
 
+  // 다음 달 결제 예정 breakdown — status별 / 누락 사유별 분석 (디버그용)
+  const nextMonthBreakdown = {
+    active: db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status='active' AND cancelled_at IS NULL AND (billkey_deleted IS NULL OR billkey_deleted=0) AND next_billing_date IS NOT NULL AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`).get()?.v || 0,
+    trial:  db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status='trial' AND cancelled_at IS NULL AND (billkey_deleted IS NULL OR billkey_deleted=0) AND next_billing_date IS NOT NULL AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`).get()?.v || 0,
+    // 제외 사유별 (active+trial 중에서)
+    excludedCancelled:     db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status IN ('active','trial') AND cancelled_at IS NOT NULL AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`).get()?.v || 0,
+    excludedBillkeyDeleted:db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status IN ('active','trial') AND billkey_deleted=1 AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`).get()?.v || 0,
+    excludedNoNextDate:    db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status IN ('active','trial') AND cancelled_at IS NULL AND (billkey_deleted IS NULL OR billkey_deleted=0) AND next_billing_date IS NULL`).get()?.v || 0,
+    // 다른 월에 잡힌 active+trial (이번달/이후 다음달)
+    inThisMonth: db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status IN ('active','trial') AND cancelled_at IS NULL AND (billkey_deleted IS NULL OR billkey_deleted=0) AND next_billing_date IS NOT NULL AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours')`).get()?.v || 0,
+    inLaterMonth: db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE status IN ('active','trial') AND cancelled_at IS NULL AND (billkey_deleted IS NULL OR billkey_deleted=0) AND next_billing_date IS NOT NULL AND next_billing_date > strftime('%Y-%m-%d', 'now', '+9 hours', '+1 months', 'start of month', '+1 months', '-1 days')`).get()?.v || 0,
+  };
+  // 다음 달 결제 예정 가입자 명단 (확인용)
+  const nextMonthList = db.prepare(
+    `SELECT id, company, name, status, charge_amount, next_billing_date FROM subscribers WHERE ${nextMonthWhere} ORDER BY next_billing_date`
+  ).all();
+
   const yearly = db.prepare(`
     SELECT strftime('%Y', billed_at) as year, SUM(amount) as total, COUNT(*) as count
     FROM billing_logs WHERE result_code IN ('0000','00') GROUP BY year ORDER BY year DESC
@@ -468,7 +485,7 @@ app.get('/api/revenue', adminAuth, (req, res) => {
     GROUP BY month ORDER BY month ASC
   `).all(year);
 
-  res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, nextMonthEstimate, nextMonthCount, yearly, monthly, monthlyByYear, selectedYear: year });
+  res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, nextMonthEstimate, nextMonthCount, nextMonthBreakdown, nextMonthList, yearly, monthly, monthlyByYear, selectedYear: year });
 });
 
 // 활성 사용자 개요 (일/월/년 단위 KPI + 추세 + 시간대별 가입)
