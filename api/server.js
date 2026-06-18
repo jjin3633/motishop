@@ -437,16 +437,17 @@ app.get('/api/revenue', adminAuth, (req, res) => {
     `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00')`
   ).get()?.v || 0;
 
-  // 다음 달 예상 수익 — active 구독자 중 next_billing_date가 다음 달인 사람들의 charge_amount 합
+  // 다음 달 예상 수익 — active + trial 구독자 중 next_billing_date가 다음 달인 사람들의 charge_amount 합
+  // (trial 사용자도 trial 종료 시 자동 결제 → 다음달 실제 수익에 포함되므로)
   const nextMonthEstimate = db.prepare(
     `SELECT COALESCE(SUM(charge_amount),0) as v FROM subscribers
-     WHERE status='active'
+     WHERE status IN ('active','trial')
        AND next_billing_date IS NOT NULL
        AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`
   ).get()?.v || 0;
   const nextMonthCount = db.prepare(
     `SELECT COUNT(*) as v FROM subscribers
-     WHERE status='active'
+     WHERE status IN ('active','trial')
        AND next_billing_date IS NOT NULL
        AND strftime('%Y-%m', next_billing_date) = strftime('%Y-%m', 'now', '+9 hours', '+1 months')`
   ).get()?.v || 0;
