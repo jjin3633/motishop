@@ -522,6 +522,103 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
         <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">시간대별 가입 분포 (지난 30일)</div>
         <div style="height:240px;position:relative;"><canvas id="hourlySignupChart"></canvas></div>
       </div>
+
+      <!-- ── 실시간 운영 모니터 (자체 분석) — 2026-06-18 추가 ── -->
+      <div style="margin-top:36px;padding-top:28px;border-top:2px solid var(--gray100);">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
+          <div style="font-size:18px;font-weight:800;color:var(--text);">실시간 운영 모니터</div>
+          <div style="font-size:12px;color:var(--text-muted);">자체 수집 데이터 기반 · GA4 독립</div>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;">방문 · 전환 · 유입 · 이탈 · 기능 관심도를 한눈에</div>
+
+        <!-- 기간 필터 -->
+        <div class="toolbar" style="margin-bottom:14px;gap:12px;flex-wrap:wrap;">
+          <div class="period-toggle">
+            <button class="period-btn rt-period active" data-days="1" onclick="setRtPeriod(1, this)">오늘</button>
+            <button class="period-btn rt-period" data-days="7" onclick="setRtPeriod(7, this)">7일</button>
+            <button class="period-btn rt-period" data-days="30" onclick="setRtPeriod(30, this)">30일</button>
+          </div>
+          <span id="rt-range-label" style="font-size:12px;color:var(--text-muted);"></span>
+          <div class="toolbar-right"><button class="btn-sm primary" onclick="loadAnalytics()">새로고침</button></div>
+        </div>
+
+        <!-- KPI 1: 방문자 / 가입자 / PV / 전환율 -->
+        <div class="top-stats" style="margin-bottom:14px;">
+          <div class="stat-card">
+            <div class="stat-label">방문자 (Unique)</div>
+            <div class="stat-num" id="rt-visitors">—</div>
+            <div class="stat-sub" id="rt-visitors-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">서로 다른 세션 수</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">신규 가입자</div>
+            <div class="stat-num" id="rt-signups">—</div>
+            <div class="stat-sub" id="rt-signups-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">기간 내 신규 가입</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">전체 페이지뷰</div>
+            <div class="stat-num" id="rt-pageviews">—</div>
+            <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">page load 합</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">방문 → 가입 전환율</div>
+            <div class="stat-num" id="rt-conversion-rate">—</div>
+            <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">신규 / 방문자</div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Funnel -->
+        <div class="stat-card" style="margin-bottom:14px;">
+          <div class="stat-label" style="margin-bottom:14px;">카드 클릭 → 모달 탐색 → 가입 funnel</div>
+          <div id="rt-funnel" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--text-muted);">불러오는 중...</div>
+        </div>
+
+        <!-- KPI 3 + 4: 페이지별 이탈률 + 유입 채널 -->
+        <div class="rev-grid" style="margin-bottom:14px;">
+          <div class="box">
+            <div class="box-head"><span class="box-title">페이지별 이탈률 · 체류</span></div>
+            <div class="box-body" style="padding:0;">
+              <table class="year-table">
+                <thead><tr><th>페이지</th><th>방문</th><th>평균 체류</th><th>이탈률</th></tr></thead>
+                <tbody id="rt-pages"><tr><td colspan="4" class="empty">불러오는 중...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="box">
+            <div class="box-head"><span class="box-title">유입 채널</span></div>
+            <div class="box-body">
+              <div style="height:240px;position:relative;"><canvas id="channelChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 5: 기능별 관심도 + 평균 체류/스크롤 -->
+        <div class="rev-grid">
+          <div class="box">
+            <div class="box-head"><span class="box-title">기능별 관심도</span></div>
+            <div class="box-body" style="padding:0;">
+              <table class="year-table">
+                <thead><tr><th>기능</th><th>카드 클릭</th><th>모달 탐색</th></tr></thead>
+                <tbody id="rt-features"><tr><td colspan="3" class="empty">불러오는 중...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="box">
+            <div class="box-head"><span class="box-title">평균 체류 · 스크롤 깊이</span></div>
+            <div class="box-body">
+              <div style="display:flex;flex-direction:column;gap:18px;padding:14px 4px;">
+                <div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">평균 체류 시간</div>
+                  <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.02em;" id="rt-avg-dwell">—</div>
+                </div>
+                <div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">평균 스크롤 깊이</div>
+                  <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.02em;" id="rt-avg-scroll">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -601,6 +698,8 @@ async function loadStats(btn) {
     if (!_statsData) throw new Error('no data');
     renderStats();
     _statsLoaded = true;
+    // 실시간 운영 모니터도 함께 로드
+    loadAnalytics();
   } catch (e) {
     console.error('[loadStats] 실패:', e);
     alert('통계 데이터 로드 실패: ' + (e.message || ''));
@@ -611,8 +710,136 @@ async function loadStats(btn) {
 
 function setStatsPeriod(period) {
   _statsPeriod = period;
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+  // 활성 사용자 개요 토글만 — 실시간 모니터(.rt-period)는 별도
+  document.querySelectorAll('.period-btn:not(.rt-period)').forEach(b => b.classList.toggle('active', b.dataset.period === period));
   if (_statsData) renderStats();
+}
+
+// ── 실시간 운영 모니터 — 자체 분석 ──
+let _rtDays = 1;          // 기본 오늘
+let channelChart = null;
+
+async function loadAnalytics() {
+  try {
+    const d = await apiFetch('/api/admin/stats/analytics?days=' + _rtDays);
+    if (!d || !d.ok) throw new Error('no data');
+    renderAnalytics(d);
+  } catch (e) {
+    console.error('[loadAnalytics] 실패:', e);
+  }
+}
+
+function setRtPeriod(days, btn) {
+  _rtDays = days;
+  document.querySelectorAll('.rt-period').forEach(b => b.classList.toggle('active', b === btn));
+  loadAnalytics();
+}
+
+function fmtDuration(seconds) {
+  if (!seconds || seconds <= 0) return '—';
+  if (seconds < 60) return seconds + '초';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}분 ${s}초` : `${m}분`;
+}
+
+function fmtPagePath(path) {
+  if (!path) return '/';
+  if (path === '/') return '/ (홈)';
+  if (path.startsWith('/api/')) return path;
+  return path;
+}
+
+function renderAnalytics(d) {
+  // 기간 라벨
+  const label = d.days === 1 ? '오늘' : `최근 ${d.days}일`;
+  document.getElementById('rt-range-label').textContent = label;
+
+  // KPI 1
+  document.getElementById('rt-visitors').textContent = (d.kpi.visitors || 0).toLocaleString();
+  document.getElementById('rt-signups').textContent = (d.kpi.signups || 0).toLocaleString();
+  document.getElementById('rt-pageviews').textContent = (d.kpi.pageviews || 0).toLocaleString();
+  document.getElementById('rt-conversion-rate').textContent = (d.kpi.conversionRate || 0).toFixed(2) + '%';
+
+  // KPI 2: Funnel
+  const f = d.funnel || {};
+  const visitors = d.kpi.visitors || 0;
+  const cardClick = f.cardClick || 0;
+  const modalExplore = f.modalExplore || 0;
+  const signups = f.signups || 0;
+  const r1 = visitors > 0 ? (cardClick / visitors * 100).toFixed(1) : '0.0';
+  const r2 = cardClick > 0 ? (modalExplore / cardClick * 100).toFixed(1) : '0.0';
+  const r3 = visitors > 0 ? (signups / visitors * 100).toFixed(2) : '0.00';
+  const step = (label, num, sub) => `
+    <div style="flex:1;min-width:140px;background:var(--gray050);border-radius:10px;padding:14px;text-align:center;">
+      <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;">${label}</div>
+      <div style="font-size:24px;font-weight:900;color:var(--text);margin-top:6px;letter-spacing:-.02em;">${num.toLocaleString()}</div>
+      ${sub ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${sub}</div>` : ''}
+    </div>`;
+  const arrow = `<div style="font-size:18px;color:var(--gray300);font-weight:700;">→</div>`;
+  document.getElementById('rt-funnel').innerHTML =
+    step('방문자', visitors, '') + arrow +
+    step('카드 클릭', cardClick, r1 + '%') + arrow +
+    step('모달 탐색', modalExplore, r2 + '%') + arrow +
+    step('가입 완료', signups, r3 + '%');
+
+  // KPI 3: 페이지별
+  const pages = d.pages || [];
+  const ptbody = document.getElementById('rt-pages');
+  if (!pages.length) ptbody.innerHTML = '<tr><td colspan="4" class="empty">데이터 없음</td></tr>';
+  else ptbody.innerHTML = pages.map(p => `
+    <tr>
+      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.page_path}">${fmtPagePath(p.page_path)}</td>
+      <td>${(p.visits || 0).toLocaleString()}</td>
+      <td>${fmtDuration(p.avg_dwell)}</td>
+      <td><span style="font-weight:700;color:${(p.bounce_rate || 0) > 50 ? '#dc2626' : 'var(--text)'};">${(p.bounce_rate || 0).toFixed(1)}%</span></td>
+    </tr>
+  `).join('');
+
+  // KPI 4: 유입 채널 차트
+  const channels = d.channels || [];
+  const canvas = document.getElementById('channelChart');
+  if (channelChart) channelChart.destroy();
+  if (channels.length && canvas) {
+    const palette = ['#1a6bff', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#06b6d4', '#64748b', '#0f172a'];
+    channelChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: channels.map(c => c.channel),
+        datasets: [{
+          data: channels.map(c => c.sessions),
+          backgroundColor: channels.map((_, i) => palette[i % palette.length]),
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 12 } } },
+          tooltip: { callbacks: { label: ctx => '  ' + ctx.label + ': ' + ctx.raw + '세션' } }
+        }
+      }
+    });
+  } else if (canvas) {
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // KPI 5: 기능별 + 평균
+  const features = d.features || [];
+  const ftbody = document.getElementById('rt-features');
+  if (!features.length) ftbody.innerHTML = '<tr><td colspan="3" class="empty">데이터 없음</td></tr>';
+  else ftbody.innerHTML = features.map(f => `
+    <tr>
+      <td>${f.feat}</td>
+      <td>${(f.clicks || 0).toLocaleString()}</td>
+      <td>${(f.exploreCount || 0).toLocaleString()}</td>
+    </tr>
+  `).join('');
+
+  const e = d.engagement || {};
+  document.getElementById('rt-avg-dwell').textContent = fmtDuration(e.avgDwell);
+  document.getElementById('rt-avg-scroll').textContent = (e.avgScroll || 0) + '%';
 }
 
 function _changePct(now, prev) {

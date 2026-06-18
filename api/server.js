@@ -589,6 +589,91 @@ app.get('/api/revenue', adminAuth, (req, res) => {
   res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, nextMonthEstimate, nextMonthCount, nextMonthBreakdown, nextMonthList, yearly, monthly, monthlyByYear, selectedYear: year });
 });
 
+// ── 실시간 운영 모니터 — 자체 수집 데이터(visits/events) 기반 5개 KPI ──
+// 2026-06-18 추가. days 파라미터로 기간 필터 (기본 7일).
+app.get('/api/admin/stats/analytics', adminAuth, (req, res) => {
+  const days = Math.max(1, Math.min(90, parseInt(req.query.days) || 7));
+  const since = `datetime('now', '+9 hours', '-${days} days')`;
+
+  // KPI 1: 방문자 / 신규 가입자 / 페이지뷰 / 전환율
+  const visitors = db.prepare(`SELECT COUNT(DISTINCT session_id) as v FROM visits WHERE visited_at >= ${since}`).get()?.v || 0;
+  const pageviews = db.prepare(`SELECT COUNT(*) as v FROM visits WHERE visited_at >= ${since}`).get()?.v || 0;
+  const signups = db.prepare(`SELECT COUNT(*) as v FROM subscribers WHERE created_at >= ${since}`).get()?.v || 0;
+  const conversionRate = visitors > 0 ? Math.round(signups / visitors * 10000) / 100 : 0;
+
+  // KPI 2: Funnel (카드 클릭 → 모달 탐색 → 가입)
+  const cardClickSessions = db.prepare(`SELECT COUNT(DISTINCT session_id) as v FROM events WHERE event_name='feat_card_click' AND occurred_at >= ${since}`).get()?.v || 0;
+  const tabSwitchSessions = db.prepare(`SELECT COUNT(DISTINCT session_id) as v FROM events WHERE event_name='feat_modal_tab_switch' AND occurred_at >= ${since}`).get()?.v || 0;
+
+  // KPI 3: 페이지별 이탈률 + 체류 시간
+  const pages = db.prepare(`
+    SELECT page_path,
+           COUNT(*) as visits,
+           ROUND(AVG(dwell_seconds)) as avg_dwell,
+           ROUND(SUM(CASE WHEN dwell_seconds < 10 THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100, 1) as bounce_rate
+    FROM visits
+    WHERE visited_at >= ${since}
+    GROUP BY page_path
+    ORDER BY visits DESC
+    LIMIT 10
+  `).all();
+
+  // KPI 4: 유입 채널 (UTM 우선, 없으면 referer 도메인 매칭)
+  const channels = db.prepare(`
+    SELECT
+      CASE
+        WHEN utm_source IS NOT NULL AND utm_source <> '' THEN utm_source
+        WHEN referer IS NULL OR referer = '' THEN '직접 방문'
+        WHEN referer LIKE '%naver.com%' OR referer LIKE '%naver.%' THEN '네이버'
+        WHEN referer LIKE '%google.%' THEN '구글'
+        WHEN referer LIKE '%daum.%' THEN '다음'
+        WHEN referer LIKE '%kakao.%' THEN '카카오'
+        WHEN referer LIKE '%instagram%' THEN '인스타그램'
+        WHEN referer LIKE '%youtube%' THEN '유튜브'
+        WHEN referer LIKE '%facebook%' THEN '페이스북'
+        WHEN referer LIKE '%motiphysio%' THEN '모티피지오 사내'
+        ELSE '기타'
+      END as channel,
+      COUNT(DISTINCT session_id) as sessions
+    FROM visits
+    WHERE visited_at >= ${since}
+    GROUP BY channel
+    ORDER BY sessions DESC
+  `).all();
+
+  // KPI 5-a: 기능별 관심도 (feat_card_click)
+  const featClicks = db.prepare(`
+    SELECT json_extract(event_props, '$.feat_key') as feat, COUNT(*) as clicks, COUNT(DISTINCT session_id) as sessions
+    FROM events
+    WHERE event_name = 'feat_card_click' AND occurred_at >= ${since} AND event_props IS NOT NULL
+    GROUP BY feat
+    ORDER BY clicks DESC
+  `).all().filter(r => r.feat);
+  const featExplores = db.prepare(`
+    SELECT json_extract(event_props, '$.feat_key') as feat, COUNT(*) as switches
+    FROM events
+    WHERE event_name = 'feat_modal_tab_switch' AND occurred_at >= ${since} AND event_props IS NOT NULL
+    GROUP BY feat
+  `).all();
+  const exploreMap = Object.fromEntries(featExplores.map(r => [r.feat, r.switches]));
+  const features = featClicks.map(f => ({ ...f, exploreCount: exploreMap[f.feat] || 0 }));
+
+  // KPI 5-b: 평균 체류·스크롤
+  const avgDwell = db.prepare(`SELECT ROUND(AVG(dwell_seconds)) as v FROM visits WHERE visited_at >= ${since} AND dwell_seconds > 0`).get()?.v || 0;
+  const avgScroll = db.prepare(`SELECT ROUND(AVG(scroll_max)) as v FROM visits WHERE visited_at >= ${since} AND scroll_max > 0`).get()?.v || 0;
+
+  res.json({
+    ok: true,
+    days,
+    kpi: { visitors, pageviews, signups, conversionRate },
+    funnel: { cardClick: cardClickSessions, modalExplore: tabSwitchSessions, signups },
+    pages,
+    channels,
+    features,
+    engagement: { avgDwell, avgScroll },
+  });
+});
+
 // 활성 사용자 개요 (일/월/년 단위 KPI + 추세 + 시간대별 가입)
 app.get('/api/admin/active-overview', adminAuth, (req, res) => {
   // 현재 활성 (공통)
