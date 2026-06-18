@@ -316,4 +316,21 @@ function scheduleDbBackup() {
   console.log('DB 백업 cron 시작 (매일 03:30 KST · 30일 retention · backups/ 디렉토리)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, chargeSubscriber, processDueBillings };
+// ── Analytics 데이터 90일 retention 정리 — 2026-06-18 추가 ──
+function scheduleAnalyticsCleanup() {
+  cron.schedule('0 4 * * *', () => {
+    try {
+      const cutoff = `datetime('now', '+9 hours', '-90 days')`;
+      const v = db.prepare(`DELETE FROM visits WHERE visited_at < ${cutoff}`).run();
+      const e = db.prepare(`DELETE FROM events WHERE occurred_at < ${cutoff}`).run();
+      if (v.changes > 0 || e.changes > 0) {
+        console.log(`[Analytics 정리 ✓] visits ${v.changes}건 / events ${e.changes}건 삭제 (90일 retention)`);
+      }
+    } catch (err) {
+      console.error('[Analytics 정리 실패]', err.message);
+    }
+  }, { timezone: 'Asia/Seoul' });
+  console.log('Analytics 정리 cron 시작 (매일 04:00 KST · 90일 retention)');
+}
+
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, chargeSubscriber, processDueBillings };

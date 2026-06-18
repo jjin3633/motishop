@@ -3196,6 +3196,7 @@
     if (typeof gtag === 'function') {
       gtag('event', 'feat_card_click', { feat_key: featKey });
     }
+    if (typeof trackEvent === 'function') trackEvent('feat_card_click', { feat_key: featKey });
     openFeatModal(featKey);
   }
 
@@ -3291,6 +3292,7 @@
     if (typeof gtag === 'function') {
       gtag('event', 'feat_modal_tab_switch', { feat_key: _featKey, tab });
     }
+    if (typeof trackEvent === 'function') trackEvent('feat_modal_tab_switch', { feat_key: _featKey, tab });
   }
 
   // 시나리오 셀 렌더 — 모든 슬라이드 공통: bgImg(셀 크기 결정) + overlay + content(텍스트)
@@ -3535,6 +3537,111 @@
       observer.observe(el);
     });
   });
+</script>
+
+<!-- ── 자체 분석(Analytics) — 2026-06-18 추가 ── -->
+<script>
+(function() {
+  function getSessionId() {
+    try {
+      let sid = sessionStorage.getItem('ms_sid');
+      if (!sid) {
+        const bytes = new Uint8Array(16);
+        (window.crypto || window.msCrypto).getRandomValues(bytes);
+        sid = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        sessionStorage.setItem('ms_sid', sid);
+      }
+      return sid;
+    } catch (e) {
+      return 'anon-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    }
+  }
+  function getUtm() {
+    try {
+      const u = new URLSearchParams(location.search);
+      return {
+        utm_source: u.get('utm_source') || null,
+        utm_medium: u.get('utm_medium') || null,
+        utm_campaign: u.get('utm_campaign') || null,
+      };
+    } catch (e) {
+      return { utm_source: null, utm_medium: null, utm_campaign: null };
+    }
+  }
+
+  const SID = getSessionId();
+  const PAGE_PATH = location.pathname || '/';
+  let VISIT_ID = null;
+  const startTime = Date.now();
+  let maxScroll = 0;
+
+  function post(url, body, useBeacon) {
+    try {
+      const data = JSON.stringify(body);
+      if (useBeacon && navigator.sendBeacon) {
+        const blob = new Blob([data], { type: 'application/json' });
+        return navigator.sendBeacon(url, blob);
+      }
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: data,
+        keepalive: !!useBeacon,
+      }).catch(function() {});
+    } catch (e) { /* silent */ }
+  }
+
+  fetch('/api/track/visit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({
+      session_id: SID,
+      page_path: PAGE_PATH,
+      referer: document.referrer || null,
+    }, getUtm())),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d && d.ok && d.visit_id) VISIT_ID = d.visit_id; })
+    .catch(function() {});
+
+  function updateScroll() {
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight <= 0) return;
+    const pct = Math.min(100, Math.round((window.scrollY / docHeight) * 100));
+    if (pct > maxScroll) maxScroll = pct;
+  }
+  window.addEventListener('scroll', updateScroll, { passive: true });
+
+  setInterval(function() {
+    if (!VISIT_ID) return;
+    post('/api/track/update', {
+      visit_id: VISIT_ID,
+      scroll_max: maxScroll,
+      dwell_seconds: Math.floor((Date.now() - startTime) / 1000),
+    });
+  }, 10000);
+
+  window.addEventListener('beforeunload', function() {
+    if (!VISIT_ID) return;
+    post('/api/track/update', {
+      visit_id: VISIT_ID,
+      scroll_max: maxScroll,
+      dwell_seconds: Math.floor((Date.now() - startTime) / 1000),
+      exited: true,
+    }, true);
+  });
+
+  // 전역 헬퍼 — 다른 코드에서 이벤트 발송
+  window.trackEvent = function(name, props) {
+    if (!name) return;
+    post('/api/track/event', {
+      session_id: SID,
+      event_name: name,
+      event_props: props || null,
+      page_path: PAGE_PATH,
+    });
+  };
+})();
 </script>
 </body>
 </html>

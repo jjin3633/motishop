@@ -246,4 +246,41 @@ try {
 // 운영 오픈 정리 마이그레이션은 2026-05-06 1회 실행 후 영구 제거 (실수로 재발 방지)
 // 결과: 1건 삭제 (풀림스킨앤바디 id=9). 이후 가입자는 절대 삭제하지 않음.
 
+// ── 자체 분석(Analytics) 테이블 — 2026-06-18 추가 ──
+// 운영 데이터(subscribers, billing_logs 등) 와 격리됨. FK 없음. 안전.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS visits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    page_path TEXT NOT NULL,
+    referer TEXT,
+    utm_source TEXT,
+    utm_medium TEXT,
+    utm_campaign TEXT,
+    user_agent TEXT,
+    ip_hash TEXT,
+    visited_at TEXT NOT NULL,
+    scroll_max INTEGER DEFAULT 0,
+    dwell_seconds INTEGER DEFAULT 0,
+    exited_at TEXT
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_visits_session ON visits(session_id)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_visits_path ON visits(page_path)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_visits_at ON visits(visited_at)`); } catch(e) {}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    event_props TEXT,
+    page_path TEXT,
+    occurred_at TEXT NOT NULL
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_events_name ON events(event_name)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id)`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_events_at ON events(occurred_at)`); } catch(e) {}
+
 module.exports = db;

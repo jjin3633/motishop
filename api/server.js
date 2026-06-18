@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 const { sendSMS } = require('./sms');
 
@@ -80,6 +80,15 @@ const paymentActionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, msg: '요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.' },
+});
+// Analytics(자체 추적) — 사용자 활동 수집. 운영 데이터와 격리됨. 실패해도 UX 영향 X.
+const trackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,  // 분당 120건. 정상 사용자(체류·스크롤·클릭 합쳐 분당 20~30건) 여유분 포함
+  standardHeaders: false,
+  legacyHeaders: false,
+  message: { ok: false },
+  skip: () => false,
 });
 
 // ── 기능 가격표 ──
@@ -189,6 +198,98 @@ function genTempPw() {
   const nums = String(Math.floor(1000 + Math.random() * 9000));
   return l1 + l2 + nums;
 }
+
+// ── Analytics(자체 추적) 헬퍼 + 3개 라우트 — 2026-06-18 추가 ──
+// 운영 데이터(subscribers, billing_logs)와 완전 격리. 실패해도 UX 영향 없음.
+function hashIp(ip) {
+  const salt = process.env.ANALYTICS_SALT || 'motishop-analytics-2026';
+  return crypto.createHash('sha256').update(String(ip || '') + salt).digest('hex').slice(0, 16);
+}
+function isBot(ua) {
+  if (!ua) return false;
+  return /bot|crawler|spider|slurp|mediapartners|adsbot|googlebot|bingbot|yandex|duckduck/i.test(ua);
+}
+
+// 1) 페이지 진입 → visits 행 생성, visit_id 반환
+app.post('/api/track/visit', trackLimiter, (req, res) => {
+  try {
+    const { session_id, page_path, referer, utm_source, utm_medium, utm_campaign } = req.body || {};
+    if (!session_id || !page_path) return res.json({ ok: false });
+    const ua = req.headers['user-agent'] || '';
+    if (isBot(ua)) return res.json({ ok: true, skipped: 'bot' });
+    const result = db.prepare(`
+      INSERT INTO visits (session_id, page_path, referer, utm_source, utm_medium, utm_campaign, user_agent, ip_hash, visited_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
+    `).run(
+      String(session_id).slice(0, 64),
+      String(page_path).slice(0, 200),
+      referer ? String(referer).slice(0, 500) : null,
+      utm_source ? String(utm_source).slice(0, 100) : null,
+      utm_medium ? String(utm_medium).slice(0, 100) : null,
+      utm_campaign ? String(utm_campaign).slice(0, 100) : null,
+      String(ua).slice(0, 500),
+      hashIp(req.ip),
+    );
+    res.json({ ok: true, visit_id: result.lastInsertRowid });
+  } catch (e) {
+    console.error('[track/visit]', e.message);
+    res.json({ ok: false });
+  }
+});
+
+// 2) 스크롤·체류·이탈 업데이트 (10초마다 + beforeunload)
+app.post('/api/track/update', trackLimiter, (req, res) => {
+  try {
+    const { visit_id, scroll_max, dwell_seconds, exited } = req.body || {};
+    if (!visit_id) return res.json({ ok: false });
+    const updates = [];
+    const params = [];
+    if (typeof scroll_max === 'number') {
+      updates.push('scroll_max = MAX(scroll_max, ?)');
+      params.push(Math.min(100, Math.max(0, Math.floor(scroll_max))));
+    }
+    if (typeof dwell_seconds === 'number') {
+      updates.push('dwell_seconds = ?');
+      params.push(Math.min(86400, Math.max(0, Math.floor(dwell_seconds))));
+    }
+    if (exited) updates.push(`exited_at = datetime('now', '+9 hours')`);
+    if (!updates.length) return res.json({ ok: true });
+    params.push(visit_id);
+    db.prepare(`UPDATE visits SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[track/update]', e.message);
+    res.json({ ok: false });
+  }
+});
+
+// 3) 이벤트 (클릭, 탭 전환, funnel 단계 등)
+app.post('/api/track/event', trackLimiter, (req, res) => {
+  try {
+    const { session_id, event_name, event_props, page_path } = req.body || {};
+    if (!session_id || !event_name) return res.json({ ok: false });
+    const ua = req.headers['user-agent'] || '';
+    if (isBot(ua)) return res.json({ ok: true, skipped: 'bot' });
+    let propsStr = null;
+    if (event_props) {
+      try { propsStr = typeof event_props === 'string' ? event_props.slice(0, 1000) : JSON.stringify(event_props).slice(0, 1000); }
+      catch { propsStr = null; }
+    }
+    db.prepare(`
+      INSERT INTO events (session_id, event_name, event_props, page_path, occurred_at)
+      VALUES (?, ?, ?, ?, datetime('now', '+9 hours'))
+    `).run(
+      String(session_id).slice(0, 64),
+      String(event_name).slice(0, 100),
+      propsStr,
+      page_path ? String(page_path).slice(0, 200) : null,
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[track/event]', e.message);
+    res.json({ ok: false });
+  }
+});
 
 // 약관 동의 기록 — 법적 분쟁 시 증거로 활용
 const TERMS_VERSION = '2026-04-27';  // 약관 텍스트 변경 시 갱신
@@ -1463,6 +1564,7 @@ _safeStart('scheduleHealthCheck', scheduleHealthCheck);
 _safeStart('scheduleAutoDelete', scheduleAutoDelete);
 _safeStart('scheduleSolapiBalance', scheduleSolapiBalance);
 _safeStart('scheduleDbBackup', scheduleDbBackup);
+_safeStart('scheduleAnalyticsCleanup', scheduleAnalyticsCleanup);
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);
