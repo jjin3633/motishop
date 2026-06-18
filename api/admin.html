@@ -298,6 +298,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       <button class="tab" onclick="switchTab('revenue',this)">수익 현황</button>
       <button class="tab" onclick="switchTab('logs',this)">결제 로그</button>
       <button class="tab" onclick="switchTab('stats',this)">통계</button>
+      <button class="tab" onclick="switchTab('monitor',this)">운영 모니터링</button>
     </div>
 
     <!-- ── 가입자 목록 ── -->
@@ -523,97 +524,98 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
         <div style="height:240px;position:relative;"><canvas id="hourlySignupChart"></canvas></div>
       </div>
 
-      <!-- ── 실시간 운영 모니터 (자체 분석) — 2026-06-18 추가 ── -->
-      <div style="margin-top:36px;padding-top:28px;border-top:2px solid var(--gray100);">
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
-          <div style="font-size:18px;font-weight:800;color:var(--text);">실시간 운영 모니터</div>
-          <div style="font-size:12px;color:var(--text-muted);">자체 수집 데이터 기반 · GA4 독립</div>
-        </div>
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;">방문 · 전환 · 유입 · 이탈 · 기능 관심도를 한눈에</div>
+    </div>
 
-        <!-- 기간 필터 -->
-        <div class="toolbar" style="margin-bottom:14px;gap:12px;flex-wrap:wrap;">
-          <div class="period-toggle">
-            <button class="period-btn rt-period active" data-days="1" onclick="setRtPeriod(1, this)">오늘</button>
-            <button class="period-btn rt-period" data-days="7" onclick="setRtPeriod(7, this)">7일</button>
-            <button class="period-btn rt-period" data-days="30" onclick="setRtPeriod(30, this)">30일</button>
-          </div>
-          <span id="rt-range-label" style="font-size:12px;color:var(--text-muted);"></span>
-          <div class="toolbar-right"><button class="btn-sm primary" onclick="loadAnalytics()">새로고침</button></div>
-        </div>
+    <!-- ── 운영 모니터링 (자체 분석) — 2026-06-18 추가 ── -->
+    <div class="panel" id="panel-monitor">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
+        <div style="font-size:18px;font-weight:800;color:var(--text);">실시간 운영 모니터</div>
+        <div style="font-size:12px;color:var(--text-muted);">자체 수집 데이터 기반 · GA4 독립</div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;">방문 · 전환 · 유입 · 이탈 · 기능 관심도를 한눈에</div>
 
-        <!-- KPI 1: 방문자 / 가입자 / PV / 전환율 -->
-        <div class="top-stats" style="margin-bottom:14px;">
-          <div class="stat-card">
-            <div class="stat-label">방문자 (Unique)</div>
-            <div class="stat-num" id="rt-visitors">—</div>
-            <div class="stat-sub" id="rt-visitors-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">서로 다른 세션 수</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">신규 가입자</div>
-            <div class="stat-num" id="rt-signups">—</div>
-            <div class="stat-sub" id="rt-signups-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">기간 내 신규 가입</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">전체 페이지뷰</div>
-            <div class="stat-num" id="rt-pageviews">—</div>
-            <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">page load 합</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">방문 → 가입 전환율</div>
-            <div class="stat-num" id="rt-conversion-rate">—</div>
-            <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">신규 / 방문자</div>
-          </div>
+      <!-- 기간 필터 -->
+      <div class="toolbar" style="margin-bottom:14px;gap:12px;flex-wrap:wrap;">
+        <div class="period-toggle">
+          <button class="period-btn rt-period active" data-days="1" onclick="setRtPeriod(1, this)">오늘</button>
+          <button class="period-btn rt-period" data-days="7" onclick="setRtPeriod(7, this)">7일</button>
+          <button class="period-btn rt-period" data-days="30" onclick="setRtPeriod(30, this)">30일</button>
         </div>
+        <span id="rt-range-label" style="font-size:12px;color:var(--text-muted);"></span>
+        <div class="toolbar-right"><button class="btn-sm primary" onclick="loadAnalytics()">새로고침</button></div>
+      </div>
 
-        <!-- KPI 2: Funnel -->
-        <div class="stat-card" style="margin-bottom:14px;">
-          <div class="stat-label" style="margin-bottom:14px;">카드 클릭 → 모달 탐색 → 가입 funnel</div>
-          <div id="rt-funnel" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--text-muted);">불러오는 중...</div>
+      <!-- KPI 1: 방문자 / 가입자 / PV / 전환율 -->
+      <div class="top-stats" style="margin-bottom:14px;">
+        <div class="stat-card">
+          <div class="stat-label">방문자 (Unique)</div>
+          <div class="stat-num" id="rt-visitors">—</div>
+          <div class="stat-sub" id="rt-visitors-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">서로 다른 세션 수</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">신규 가입자</div>
+          <div class="stat-num" id="rt-signups">—</div>
+          <div class="stat-sub" id="rt-signups-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">기간 내 신규 가입</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">전체 페이지뷰</div>
+          <div class="stat-num" id="rt-pageviews">—</div>
+          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">page load 합</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">방문 → 가입 전환율</div>
+          <div class="stat-num" id="rt-conversion-rate">—</div>
+          <div class="stat-sub" style="font-size:11px;color:var(--text-muted);margin-top:4px;">신규 / 방문자</div>
+        </div>
+      </div>
 
-        <!-- KPI 3 + 4: 페이지별 이탈률 + 유입 채널 -->
-        <div class="rev-grid" style="margin-bottom:14px;">
-          <div class="box">
-            <div class="box-head"><span class="box-title">페이지별 이탈률 · 체류</span></div>
-            <div class="box-body" style="padding:0;">
-              <table class="year-table">
-                <thead><tr><th>페이지</th><th>방문</th><th>평균 체류</th><th>이탈률</th></tr></thead>
-                <tbody id="rt-pages"><tr><td colspan="4" class="empty">불러오는 중...</td></tr></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="box">
-            <div class="box-head"><span class="box-title">유입 채널</span></div>
-            <div class="box-body">
-              <div style="height:240px;position:relative;"><canvas id="channelChart"></canvas></div>
-            </div>
+      <!-- KPI 2: Funnel -->
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label" style="margin-bottom:14px;">카드 클릭 → 모달 탐색 → 가입 funnel</div>
+        <div id="rt-funnel" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--text-muted);">불러오는 중...</div>
+      </div>
+
+      <!-- KPI 3 + 4: 페이지별 이탈률 + 유입 채널 -->
+      <div class="rev-grid" style="margin-bottom:14px;">
+        <div class="box">
+          <div class="box-head"><span class="box-title">페이지별 이탈률 · 체류</span></div>
+          <div class="box-body" style="padding:0;">
+            <table class="year-table">
+              <thead><tr><th>페이지</th><th>방문</th><th>평균 체류</th><th>이탈률</th></tr></thead>
+              <tbody id="rt-pages"><tr><td colspan="4" class="empty">불러오는 중...</td></tr></tbody>
+            </table>
           </div>
         </div>
-
-        <!-- KPI 5: 기능별 관심도 + 평균 체류/스크롤 -->
-        <div class="rev-grid">
-          <div class="box">
-            <div class="box-head"><span class="box-title">기능별 관심도</span></div>
-            <div class="box-body" style="padding:0;">
-              <table class="year-table">
-                <thead><tr><th>기능</th><th>카드 클릭</th><th>모달 탐색</th></tr></thead>
-                <tbody id="rt-features"><tr><td colspan="3" class="empty">불러오는 중...</td></tr></tbody>
-              </table>
-            </div>
+        <div class="box">
+          <div class="box-head"><span class="box-title">유입 채널</span></div>
+          <div class="box-body">
+            <div style="height:240px;position:relative;"><canvas id="channelChart"></canvas></div>
           </div>
-          <div class="box">
-            <div class="box-head"><span class="box-title">평균 체류 · 스크롤 깊이</span></div>
-            <div class="box-body">
-              <div style="display:flex;flex-direction:column;gap:18px;padding:14px 4px;">
-                <div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">평균 체류 시간</div>
-                  <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.02em;" id="rt-avg-dwell">—</div>
-                </div>
-                <div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">평균 스크롤 깊이</div>
-                  <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.02em;" id="rt-avg-scroll">—</div>
-                </div>
+        </div>
+      </div>
+
+      <!-- KPI 5: 기능별 관심도 + 평균 체류/스크롤 -->
+      <div class="rev-grid">
+        <div class="box">
+          <div class="box-head"><span class="box-title">기능별 관심도</span></div>
+          <div class="box-body" style="padding:0;">
+            <table class="year-table">
+              <thead><tr><th>기능</th><th>카드 클릭</th><th>모달 탐색</th></tr></thead>
+              <tbody id="rt-features"><tr><td colspan="3" class="empty">불러오는 중...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="box">
+          <div class="box-head"><span class="box-title">평균 체류 · 스크롤 깊이</span></div>
+          <div class="box-body">
+            <div style="display:flex;flex-direction:column;gap:18px;padding:14px 4px;">
+              <div>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">평균 체류 시간</div>
+                <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.02em;" id="rt-avg-dwell">—</div>
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">평균 스크롤 깊이</div>
+                <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.02em;" id="rt-avg-scroll">—</div>
               </div>
             </div>
           </div>
@@ -682,6 +684,7 @@ function switchTab(name, el) {
   document.getElementById('panel-' + name).classList.add('active');
   // 탭별 lazy load
   if (name === 'stats' && !_statsLoaded) loadStats();
+  if (name === 'monitor') loadAnalytics();
 }
 
 // ── 통계 (활성 사용자 개요) — 일/월/년 토글 ──
@@ -698,8 +701,6 @@ async function loadStats(btn) {
     if (!_statsData) throw new Error('no data');
     renderStats();
     _statsLoaded = true;
-    // 실시간 운영 모니터도 함께 로드
-    loadAnalytics();
   } catch (e) {
     console.error('[loadStats] 실패:', e);
     alert('통계 데이터 로드 실패: ' + (e.message || ''));
