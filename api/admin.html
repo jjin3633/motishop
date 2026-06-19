@@ -720,6 +720,14 @@ function setStatsPeriod(period) {
 let _rtDays = 1;          // 기본 오늘
 let channelChart = null;
 
+// XSS 방지 — page_path/feat/channel 같은 사용자 영향 데이터를 HTML 렌더 전 escape
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;'
+  })[c]);
+}
+
 async function loadAnalytics() {
   try {
     const d = await apiFetch('/api/admin/stats/analytics?days=' + _rtDays);
@@ -790,7 +798,7 @@ function renderAnalytics(d) {
   if (!pages.length) ptbody.innerHTML = '<tr><td colspan="4" class="empty">데이터 없음</td></tr>';
   else ptbody.innerHTML = pages.map(p => `
     <tr>
-      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.page_path}">${fmtPagePath(p.page_path)}</td>
+      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(p.page_path)}">${escapeHtml(fmtPagePath(p.page_path))}</td>
       <td>${(p.visits || 0).toLocaleString()}</td>
       <td>${fmtDuration(p.avg_dwell)}</td>
       <td><span style="font-weight:700;color:${(p.bounce_rate || 0) > 50 ? '#dc2626' : 'var(--text)'};">${(p.bounce_rate || 0).toFixed(1)}%</span></td>
@@ -832,7 +840,7 @@ function renderAnalytics(d) {
   if (!features.length) ftbody.innerHTML = '<tr><td colspan="3" class="empty">데이터 없음</td></tr>';
   else ftbody.innerHTML = features.map(f => `
     <tr>
-      <td>${f.feat}</td>
+      <td>${escapeHtml(f.feat)}</td>
       <td>${(f.clicks || 0).toLocaleString()}</td>
       <td>${(f.exploreCount || 0).toLocaleString()}</td>
     </tr>
