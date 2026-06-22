@@ -320,25 +320,38 @@ function scheduleDbBackup() {
 function scheduleSitemapUpdate() {
   const fs = require('fs');
   const path = require('path');
-  // 루트의 sitemap.xml 위치 — api/ 폴더 기준 상위
-  const SITEMAP_PATH = path.join(__dirname, '..', 'sitemap.xml');
+
+  // 운영(/var/www/motishop) 우선, 없으면 로컬(repo 루트) fallback
+  function findSitemapPath() {
+    if (process.env.SITEMAP_PATH) return process.env.SITEMAP_PATH;
+    const candidates = [
+      '/var/www/motishop/sitemap.xml',
+      path.join(__dirname, '..', 'sitemap.xml'),
+    ];
+    return candidates.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
+  }
 
   const updateLastmod = () => {
+    const SITEMAP_PATH = findSitemapPath();
+    if (!SITEMAP_PATH) {
+      console.warn('[sitemap] 파일 위치 못 찾음 — 후보 경로 모두 없음');
+      return;
+    }
     try {
-      if (!fs.existsSync(SITEMAP_PATH)) return;
-      const today = kstDateOnly();  // YYYY-MM-DD
+      const today = kstDateOnly();
       const content = fs.readFileSync(SITEMAP_PATH, 'utf8');
       const updated = content.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
       if (updated !== content) {
         fs.writeFileSync(SITEMAP_PATH, updated, 'utf8');
-        console.log(`[sitemap 갱신 ✓] lastmod → ${today}`);
+        console.log(`[sitemap 갱신 ✓] ${SITEMAP_PATH} lastmod → ${today}`);
+      } else {
+        console.log(`[sitemap] 이미 최신: ${SITEMAP_PATH}`);
       }
     } catch (e) {
-      console.error('[sitemap 갱신 실패]', e.message);
+      console.error(`[sitemap 갱신 실패] ${SITEMAP_PATH}: ${e.message}`);
     }
   };
 
-  // 매일 자정(KST) 갱신 + 서버 시작 시 1회 즉시 갱신
   cron.schedule('0 0 * * *', updateLastmod, { timezone: 'Asia/Seoul' });
   updateLastmod();
   console.log('sitemap 갱신 cron 시작 (매일 00:00 KST · 시작 시 1회 즉시 갱신)');
