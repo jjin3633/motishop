@@ -1273,6 +1273,7 @@ document.querySelectorAll('#resubModal input').forEach(inp => {
 
 async function submitResub() {
   clearResubErr();
+  const errEl = document.getElementById('resubErr');
 
   if (resubFeats.size === 0) { showResubErr('구독할 기능을 하나 이상 선택해주세요.'); return; }
 

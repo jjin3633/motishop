@@ -18,8 +18,17 @@ function genMoid() {
 
 function addPeriod(dateStr, billingType) {
   const d = new Date(dateStr);
-  if (billingType === 'monthly') d.setMonth(d.getMonth() + 1);
-  else d.setFullYear(d.getFullYear() + 1);
+  if (billingType === 'monthly') {
+    // 월말 롤오버 안전 처리 — 1/31 + 1month = 3/3 같은 자동 보정 방지
+    // 31일 가입자는 2월에 마지막 날(28/29)로 clamp → 짝수 달 결제 누락 방지
+    const targetDay = d.getDate();
+    d.setDate(1);                           // 일 먼저 1로 → 월 증가 시 over-flow 방지
+    d.setMonth(d.getMonth() + 1);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(targetDay, lastDay));
+  } else {
+    d.setFullYear(d.getFullYear() + 1);
+  }
   return kstDateOnly(d);
 }
 
