@@ -768,6 +768,20 @@
       gap: 18px;
       box-sizing: border-box;
     }
+    .feat-scenario-disclaimer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 14px;
+      z-index: 3;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, .45);
+      letter-spacing: .01em;
+      padding: 0 20px;
+      pointer-events: none;
+    }
     .feat-scenario-emoji {
       font-size: 60px;
       line-height: 1;
@@ -2600,9 +2614,6 @@
       <div class="feat-modal-track" id="featModalTrack"></div>
     </div>
     <div class="feat-modal-dots" id="featModalDots"></div>
-    <div class="feat-modal-disclaimer" style="margin-top:18px;padding:14px 20px 0;border-top:1px solid rgba(255,255,255,.1);text-align:center;font-size:11.5px;line-height:1.5;color:rgba(255,255,255,.45);letter-spacing:.01em;">
-      본 정보는 의료 진단·치료를 대체하지 않으며, 참고용입니다.
-    </div>
   </div>
 </div>
 
@@ -3404,10 +3415,15 @@
       `;
     }
 
+    const disclaimer = i === 0
+      ? `<div class="feat-scenario-disclaimer">본 정보는 의료 진단·치료를 대체하지 않으며, 참고용입니다.</div>`
+      : '';
+
     return `<div class="feat-modal-cell feat-scenario-cell" data-feat="${_featKey}">
       ${bg}
       ${overlay}
       <div class="feat-scenario-content">${content}</div>
+      ${disclaimer}
     </div>`;
   }
 
