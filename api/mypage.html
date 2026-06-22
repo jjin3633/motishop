@@ -1339,7 +1339,6 @@ document.querySelectorAll('#resubModal input').forEach(inp => {
 
 async function submitResub() {
   clearResubErr();
-  const errEl = document.getElementById('resubErr');
 
   if (resubFeats.size === 0) { showResubErr('구독할 기능을 하나 이상 선택해주세요.'); return; }
 
@@ -1393,13 +1392,13 @@ async function submitResub() {
     });
     const data = await res.json();
     if (data.resultCode !== '0000') {
-      errEl.textContent = '카드 등록 실패: ' + (data.resultMsg || '카드 정보를 확인해주세요.');
+      showResubErr('카드 등록 실패: ' + (data.resultMsg || '카드 정보를 확인해주세요.'));
       btn.textContent = '카드 등록'; btn.disabled = false;
       return;
     }
     billKey = data.billKey || '';
   } catch (e) {
-    errEl.textContent = '카드 등록 중 네트워크 오류가 발생했습니다.';
+    showResubErr('카드 등록 중 네트워크 오류가 발생했습니다.');
     btn.textContent = '카드 등록'; btn.disabled = false;
     return;
   }
@@ -1424,12 +1423,12 @@ async function submitResub() {
       return;
     } else {
       track('resubscribe_failed', { reason: (data.msg || '').slice(0, 100), result_code: data.resultCode || '' });
-      errEl.textContent = data.msg || '재구독 처리 중 오류가 발생했습니다.';
+      showResubErr(data.msg || '재구독 처리 중 오류가 발생했습니다.');
       btn.textContent = '카드 등록'; btn.disabled = false;
     }
   } catch (e) {
     track('resubscribe_failed', { reason: 'NETWORK_ERROR' });
-    errEl.textContent = '서버 오류가 발생했습니다. 담당자에게 문의해주세요.';
+    showResubErr('서버 오류가 발생했습니다. 담당자에게 문의해주세요.');
     btn.textContent = '카드 등록'; btn.disabled = false;
   }
 }

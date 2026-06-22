@@ -2963,12 +2963,29 @@
         // 약관 동의 키 수집 (DB에 동의 시점·약관 키별로 기록 — 법적 증거)
         const termsAgreed = ['모티샵서비스이용약관', '전자금융거래기본약관', '자동결제이용약관', '개인정보수집이용', '개인정보제3자제공'];
 
-        // 구독 DB 저장
-        fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company, name, phone, businessNumber, features: feats, billingType, billKey, moid, amount, termsAgreed })
-        }).catch(e => console.error('subscribe API 오류:', e));
+        // 구독 DB 저장 — 응답 기다린 후 성공 화면. 실패 시 좀비 빌키 방지
+        let subscribeOk = false;
+        let subscribeMsg = '';
+        try {
+          const subRes = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company, name, phone, businessNumber, features: feats, billingType, billKey, moid, amount, termsAgreed })
+          });
+          const subData = await subRes.json().catch(() => ({}));
+          subscribeOk = subRes.ok && subData.ok;
+          subscribeMsg = subData.msg || '';
+        } catch (e) {
+          console.error('subscribe API 오류:', e);
+          subscribeMsg = e.message || 'NETWORK_ERROR';
+        }
+        if (!subscribeOk) {
+          track('signup_db_failed', { reason: (subscribeMsg || '').slice(0, 100) });
+          alert('가입 처리에 실패했어요. 카드는 등록됐지만 구독 정보 저장에 실패했습니다.\n\n원인: ' + (subscribeMsg || '서버 오류') + '\n\n다시 시도하거나 070-4365-7740으로 문의해주세요.');
+          btn.textContent = '카드 등록하기';
+          btn.disabled = false;
+          return;
+        }
 
         // GA4 전환 이벤트 — 가입 완료
         track('signup_complete', {
