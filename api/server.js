@@ -952,10 +952,37 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
       .run(id, log.moid, refundAmount, refundReason, result.resultCode, result.resultMsg || '', 'admin');
     notifySlack(`💸 환불 처리: ${sub.company} (id=${id}) / ${refundAmount.toLocaleString()}원 — ${refundReason}`);
-    // 회원에게 환불 통보 SMS
-    const refundText = `[Moti Shop] ${sub.company}님, ${refundAmount.toLocaleString()}원 환불 처리되었어요.\n카드사 정책에 따라 영업일 기준 3~7일 후 입금됩니다.\n문의: 070-4365-7740`;
+
+    // 전액 환불 시 자동 해지 + 즉시 기능 박탈 (2026-06-22 사장님 결정)
+    // 부분 환불은 서비스 유지 (운영자 의도)
+    let autoCancelled = false;
+    if (!isPartial && sub.status !== 'cancelled') {
+      const todayKst = kstDateOnly();
+      db.prepare(`UPDATE subscribers SET
+        status='cancelled',
+        cancelled_at = datetime('now', '+9 hours'),
+        next_billing_date = ?,
+        billkey_deleted = 1,
+        failed_count = 0,
+        last_failed_at = NULL
+        WHERE id = ?`).run(todayKst, id);
+      // InnoPay 빌키 삭제 (best-effort)
+      if (sub.bill_key) {
+        const { deleteBillKey } = require('./innopay');
+        deleteBillKey({ billKey: sub.bill_key, userId: sub.phone })
+          .then(r => console.log(`[환불자동해지 빌키삭제 ${r.ok ? '✓' : '✗'}] ${sub.company} ${r.resultCode || ''}`))
+          .catch(e => console.error('[환불자동해지 빌키삭제 오류]', e.message));
+      }
+      autoCancelled = true;
+      notifySlack(`👋 환불 자동 해지: ${sub.company} (id=${id}) — 전액 환불로 즉시 종료`);
+    }
+
+    // 회원에게 환불 통보 SMS — 자동 해지 여부에 따라 문구 분기
+    const refundText = autoCancelled
+      ? `[Moti Shop] ${sub.company}님, ${refundAmount.toLocaleString()}원 환불 처리되었어요.\n전액 환불로 구독이 즉시 종료되었어요.\n카드사 정책에 따라 영업일 3~7일 후 입금됩니다.\n문의: 070-4365-7740`
+      : `[Moti Shop] ${sub.company}님, ${refundAmount.toLocaleString()}원 환불 처리되었어요.\n카드사 정책에 따라 영업일 기준 3~7일 후 입금됩니다.\n문의: 070-4365-7740`;
     sendSMS({ to: sub.phone, text: refundText, subject: '[Moti Shop] 환불 처리 완료' }).catch(e => console.error('[환불 SMS 실패]', e.message));
-    return res.json({ ok: true, resultMsg: result.resultMsg, refundedAmount: refundAmount, totalRefunded: alreadyRefunded + refundAmount });
+    return res.json({ ok: true, resultMsg: result.resultMsg, refundedAmount: refundAmount, totalRefunded: alreadyRefunded + refundAmount, autoCancelled });
   }
 
   // 환불 timeout/네트워크 오류 (#11) — PG 측 실제 상태 알 수 없음 → PENDING 보존, 같은 결제 추가 환불 시도 차단
@@ -1230,7 +1257,8 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
 app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(req.subscriberId);
   db.prepare(`UPDATE subscribers SET status='cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id=?`).run(req.subscriberId);
-  db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(req.subscriberId);
+  // 해지 후에도 마이페이지 접근 유지 (조회·환불 신청·재구독 등 안전한 액션만 가능)
+  // 강제 로그아웃 제거 — 회원 UX 개선 + 재구독 흐름 자연스러움 (2026-06-22 사장님 결정)
   if (sub) {
     notifySlack(`👋 해지(셀프): ${sub.company} (id=${sub.id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
 
