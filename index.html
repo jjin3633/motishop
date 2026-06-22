@@ -34,6 +34,7 @@
     {
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": "https://shop.motiphysio.com/#organization",
       "name": "모티샵",
       "alternateName": ["Moti Shop", "MotiShop"],
       "url": "https://shop.motiphysio.com/",
@@ -62,14 +63,12 @@
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
+      "@id": "https://shop.motiphysio.com/#website",
       "name": "모티샵",
       "alternateName": "Moti Shop",
       "url": "https://shop.motiphysio.com/",
       "inLanguage": "ko-KR",
-      "publisher": {
-        "@type": "Organization",
-        "name": "(주)엠지솔루션스"
-      }
+      "publisher": { "@id": "https://shop.motiphysio.com/#organization" }
     },
     {
       "@context": "https://schema.org",
@@ -114,13 +113,13 @@
       "@type": "ItemList",
       "name": "모티샵 구독 상품",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "item": { "@type": "Product", "name": "모아레", "description": "모티피지오 자세 분석 기능 - 모아레 무늬 측정", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "17900", "highPrice": "23900", "priceCurrency": "KRW", "offerCount": 2 } } },
-        { "@type": "ListItem", "position": 2, "item": { "@type": "Product", "name": "3D 신경·림프·장기", "description": "3D 해부학 시각화 — 신경·림프·장기 구조 분석", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "29900", "highPrice": "35900", "priceCurrency": "KRW", "offerCount": 2 } } },
-        { "@type": "ListItem", "position": 3, "item": { "@type": "Product", "name": "척추 세부 분석", "description": "척추 정렬·곡률 세부 측정", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "39900", "highPrice": "47900", "priceCurrency": "KRW", "offerCount": 2 } } },
-        { "@type": "ListItem", "position": 4, "item": { "@type": "Product", "name": "손실키 분석", "description": "신체 손실키(체형 변화) 정밀 측정", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "65900", "highPrice": "79900", "priceCurrency": "KRW", "offerCount": 2 } } },
-        { "@type": "ListItem", "position": 5, "item": { "@type": "Product", "name": "안면 비대칭·여백·탄력", "description": "안면 비대칭·여백·피부 탄력 분석", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "23900", "highPrice": "29900", "priceCurrency": "KRW", "offerCount": 2 } } },
-        { "@type": "ListItem", "position": 6, "item": { "@type": "Product", "name": "ALL IN ONE LITE", "description": "모티피지오 핵심 기능 묶음 (라이트 번들)", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "74900", "highPrice": "89900", "priceCurrency": "KRW", "offerCount": 2 } } },
-        { "@type": "ListItem", "position": 7, "item": { "@type": "Product", "name": "ALL IN ONE", "description": "모티피지오 전 기능 풀 번들", "brand": { "@type": "Brand", "name": "모티피지오" }, "offers": { "@type": "AggregateOffer", "lowPrice": "89900", "highPrice": "107900", "priceCurrency": "KRW", "offerCount": 2 } } }
+        { "@type": "ListItem", "position": 1, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-moire", "name": "모아레", "description": "모티피지오 자세 분석 기능 - 모아레 무늬 측정", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#features", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "17900", "highPrice": "23900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } },
+        { "@type": "ListItem", "position": 2, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-nerve", "name": "3D 신경·림프·장기", "description": "3D 해부학 시각화 — 신경·림프·장기 구조 분석", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#features", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "29900", "highPrice": "35900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } },
+        { "@type": "ListItem", "position": 3, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-spine", "name": "척추 세부 분석", "description": "척추 정렬·곡률 세부 측정", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#features", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "39900", "highPrice": "47900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } },
+        { "@type": "ListItem", "position": 4, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-lossheight", "name": "손실키 분석", "description": "신체 손실키(체형 변화) 정밀 측정", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#features", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "65900", "highPrice": "79900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } },
+        { "@type": "ListItem", "position": 5, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-face", "name": "안면 비대칭·여백·탄력", "description": "안면 비대칭·여백·피부 탄력 분석", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#features", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "23900", "highPrice": "29900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } },
+        { "@type": "ListItem", "position": 6, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-aio-lite", "name": "ALL IN ONE LITE", "description": "모티피지오 핵심 기능 묶음 (라이트 번들)", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#pricing", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "74900", "highPrice": "89900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } },
+        { "@type": "ListItem", "position": 7, "item": { "@type": "Product", "@id": "https://shop.motiphysio.com/#product-aio", "name": "ALL IN ONE", "description": "모티피지오 전 기능 풀 번들", "image": "https://shop.motiphysio.com/assets/og-image.png", "url": "https://shop.motiphysio.com/#pricing", "brand": { "@id": "https://shop.motiphysio.com/#organization" }, "offers": { "@type": "AggregateOffer", "lowPrice": "89900", "highPrice": "107900", "priceCurrency": "KRW", "offerCount": 2, "availability": "https://schema.org/InStock" } } }
       ]
     },
     {
