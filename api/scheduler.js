@@ -316,6 +316,34 @@ function scheduleDbBackup() {
   console.log('DB 백업 cron 시작 (매일 03:30 KST · 30일 retention · backups/ 디렉토리)');
 }
 
+// ── sitemap.xml lastmod 자동 갱신 — 2026-06-19 추가 (SEO) ──
+function scheduleSitemapUpdate() {
+  const fs = require('fs');
+  const path = require('path');
+  // 루트의 sitemap.xml 위치 — api/ 폴더 기준 상위
+  const SITEMAP_PATH = path.join(__dirname, '..', 'sitemap.xml');
+
+  const updateLastmod = () => {
+    try {
+      if (!fs.existsSync(SITEMAP_PATH)) return;
+      const today = kstDateOnly();  // YYYY-MM-DD
+      const content = fs.readFileSync(SITEMAP_PATH, 'utf8');
+      const updated = content.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
+      if (updated !== content) {
+        fs.writeFileSync(SITEMAP_PATH, updated, 'utf8');
+        console.log(`[sitemap 갱신 ✓] lastmod → ${today}`);
+      }
+    } catch (e) {
+      console.error('[sitemap 갱신 실패]', e.message);
+    }
+  };
+
+  // 매일 자정(KST) 갱신 + 서버 시작 시 1회 즉시 갱신
+  cron.schedule('0 0 * * *', updateLastmod, { timezone: 'Asia/Seoul' });
+  updateLastmod();
+  console.log('sitemap 갱신 cron 시작 (매일 00:00 KST · 시작 시 1회 즉시 갱신)');
+}
+
 // ── Analytics 데이터 90일 retention 정리 — 2026-06-18 추가 ──
 function scheduleAnalyticsCleanup() {
   cron.schedule('0 4 * * *', () => {
@@ -333,4 +361,4 @@ function scheduleAnalyticsCleanup() {
   console.log('Analytics 정리 cron 시작 (매일 04:00 KST · 90일 retention)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, chargeSubscriber, processDueBillings };
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, chargeSubscriber, processDueBillings };

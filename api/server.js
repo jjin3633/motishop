@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 const { sendSMS } = require('./sms');
 
@@ -1650,6 +1650,7 @@ _safeStart('scheduleAutoDelete', scheduleAutoDelete);
 _safeStart('scheduleSolapiBalance', scheduleSolapiBalance);
 _safeStart('scheduleDbBackup', scheduleDbBackup);
 _safeStart('scheduleAnalyticsCleanup', scheduleAnalyticsCleanup);
+_safeStart('scheduleSitemapUpdate', scheduleSitemapUpdate);
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);
