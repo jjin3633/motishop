@@ -517,7 +517,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
   <div class="modal">
     <h3 id="featChangeTitle">기능을 변경하시겠습니까?</h3>
     <p id="featChangeDesc" style="white-space:pre-line;"></p>
-    <div style="background:var(--gray50); border:1px solid var(--gray100); border-radius:10px; padding:14px; margin-bottom:16px; font-size:13px;">
+    <div style="background:var(--gray50); border:1px solid var(--gray100); border-radius:10px; padding:14px; margin-bottom:12px; font-size:13px;">
       <div style="display:flex; justify-content:space-between; padding:4px 0;">
         <span style="color:var(--gray600);">현재 결제액</span>
         <span style="font-weight:700;" id="featChangeBefore">—</span>
@@ -531,8 +531,20 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
         <span style="font-weight:700;" id="featChangeDate">—</span>
       </div>
     </div>
-    <p style="font-size:12px; color:var(--gray400); margin-top:-4px; margin-bottom:14px; line-height:1.6;">
-      ⓘ 변경 사항은 다음 결제일부터 반영됩니다. 무료 체험은 최초 가입일 기준 30일이며, 기능 추가에는 별도 체험이 적용되지 않습니다.
+    <!-- 기능 추가 시 일할 계산 즉시 결제 안내 (preview 결과로 동적 채워짐) -->
+    <div id="prorateInfo" style="display:none; background:#eff8ff; border:1px solid #b9dcff; border-radius:10px; padding:14px; margin-bottom:12px; font-size:13px;">
+      <div style="font-weight:700; color:var(--blue); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+        <span>지금 결제될 금액</span>
+      </div>
+      <div id="prorateDetail" style="font-size:12.5px; color:var(--gray600); line-height:1.75; margin-bottom:10px;"></div>
+      <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid #b9dcff; align-items:baseline;">
+        <span style="font-weight:700;">즉시 결제</span>
+        <span style="font-weight:900; color:var(--blue); font-size:18px;" id="prorateAmount">—</span>
+      </div>
+      <div style="margin-top:8px; font-size:11.5px; color:var(--gray400); line-height:1.5;" id="prorateFooter"></div>
+    </div>
+    <p style="font-size:12px; color:var(--gray400); margin-top:0; margin-bottom:14px; line-height:1.6;" id="featChangeFootNote">
+      ⓘ 변경 사항은 다음 결제일부터 반영됩니다.
     </p>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeFeatChange()">취소</button>
@@ -1030,7 +1042,7 @@ function calcAmount(features, billingType) {
   return features.reduce((sum, f) => sum + (prices[f] || 0), 0);
 }
 
-function openFeatChange(action, featKey, newFeatures) {
+async function openFeatChange(action, featKey, newFeatures) {
   const s = currentSubscriber;
   const newAmount = calcAmount(newFeatures, s.billing_type);
   const isAdd = action === 'add';
@@ -1040,11 +1052,19 @@ function openFeatChange(action, featKey, newFeatures) {
     ? `'${featLbl}' 추가 구독`
     : `'${featLbl}' 해지`;
   document.getElementById('featChangeDesc').textContent = isAdd
-    ? `다음 결제일부터 '${featLbl}' 기능이 추가됩니다.`
+    ? `'${featLbl}' 기능을 추가합니다.`
     : `'${featLbl}' 기능이 다음 결제일부터 청구되지 않습니다.`;
   document.getElementById('featChangeBefore').textContent = `${fmt(s.charge_amount)}원`;
   document.getElementById('featChangeAfter').textContent = `${fmt(newAmount)}원`;
   document.getElementById('featChangeDate').textContent = (s.next_billing_date||'').slice(0,10);
+
+  // 일할 결제 미리보기 정보 영역 — 기본은 숨김
+  const proInfo = document.getElementById('prorateInfo');
+  const proFoot = document.getElementById('featChangeFootNote');
+  proInfo.style.display = 'none';
+  proFoot.textContent = isAdd
+    ? 'ⓘ 추가 기능 결제 정보를 불러오는 중...'
+    : 'ⓘ 해지 기능은 다음 결제일까지 이용 가능합니다.';
 
   const btn = document.getElementById('featChangeConfirmBtn');
   btn.textContent = isAdd ? '추가하기' : '해지하기';
@@ -1053,6 +1073,33 @@ function openFeatChange(action, featKey, newFeatures) {
   pendingFeatures = newFeatures;
   document.getElementById('featChangeModal').classList.add('open');
   lockBody();
+
+  // 기능 추가 시 일할 미리보기 조회 + 상세 표시
+  if (isAdd) {
+    try {
+      const preview = await apiFetch('/api/mypage/preview-feature-add', {
+        method: 'POST', body: JSON.stringify({ features: newFeatures }),
+      });
+      if (preview && preview.ok && preview.immediateCharge) {
+        const labels = (preview.addedFeatures || []).map(featLabel).join(', ');
+        document.getElementById('prorateDetail').innerHTML =
+          `추가 기능: <strong style="color:var(--text);">${labels}</strong><br>` +
+          `1개월 금액: <strong>${fmt(preview.addedPrice)}원</strong><br>` +
+          `결제 주기 남은 기간: <strong>${preview.daysRemaining}일 / ${preview.cycleDays}일</strong><br>` +
+          `<span style="color:var(--gray400);">계산식: ${fmt(preview.addedPrice)}원 × (${preview.daysRemaining}/${preview.cycleDays}일) = ${fmt(preview.prorateAmount)}원</span>`;
+        document.getElementById('prorateAmount').textContent = `${fmt(preview.prorateAmount)}원`;
+        document.getElementById('prorateFooter').innerHTML =
+          `다음 결제일 (${(preview.nextBillingDate||'').slice(0,10)})부터는 전체 ${fmt(preview.newAmount)}원이 청구됩니다.`;
+        proInfo.style.display = 'block';
+        proFoot.textContent = 'ⓘ 추가 기능은 즉시 활성화되며, 등록 카드로 일할 금액이 결제됩니다.';
+      } else {
+        // trial 등 즉시 결제 없는 경우 — 안내만
+        proFoot.textContent = 'ⓘ 다음 결제일에 변경된 기능 구성으로 청구됩니다.';
+      }
+    } catch (e) {
+      proFoot.textContent = 'ⓘ 결제 정보를 불러오지 못했습니다. 진행 시 즉시 일할 결제될 수 있어요.';
+    }
+  }
 }
 function closeFeatChange() {
   document.getElementById('featChangeModal').classList.remove('open');
@@ -1062,8 +1109,15 @@ function closeFeatChange() {
 async function confirmFeatChange() {
   if (!pendingFeatures) return;
   const f = pendingFeatures;
-  closeFeatChange();
-  await updateFeatures(f);
+  const btn = document.getElementById('featChangeConfirmBtn');
+  const orig = btn.textContent;
+  btn.textContent = '처리 중...';
+  btn.disabled = true;
+  const ok = await updateFeatures(f);
+  btn.textContent = orig;
+  btn.disabled = false;
+  if (ok) closeFeatChange();
+  // 실패 시 모달 유지 (다시 시도 가능)
 }
 
 async function cancelFeat(featKey) {
@@ -1090,7 +1144,7 @@ async function updateFeatures(features) {
   const data = await apiFetch('/api/mypage/update-features', {
     method: 'POST', body: JSON.stringify({ features })
   });
-  if (data.ok) {
+  if (data && data.ok) {
     currentSubscriber.features = data.features;
     currentSubscriber.charge_amount = data.charge_amount;
     renderStatusPeriod(currentSubscriber);
@@ -1102,8 +1156,20 @@ async function updateFeatures(features) {
       direction: data.charge_amount > beforeAmt ? 'upgrade' : (data.charge_amount < beforeAmt ? 'downgrade' : 'swap'),
     });
     renderFeatList();
+    // 일할 결제 발생 시 영수증 안내
+    if (data.prorate) {
+      const p = data.prorate;
+      alert(`기능이 추가되었어요.\n\n즉시 결제: ${fmt(p.prorateAmount)}원\n(${p.daysRemaining}일분, ${p.cycleDays}일 주기 기준)\n\n다음 결제일(${(p.nextBillingDate||'').slice(0,10)})부터는 전체 ${fmt(data.charge_amount)}원이 청구됩니다.`);
+    }
+    return true;
   } else {
-    alert(data.msg || '오류가 발생했습니다.');
+    // 결제 실패 별도 안내 (resultCode/resultMsg 있을 때)
+    if (data && (data.resultCode || data.resultMsg)) {
+      alert(`기능 추가를 위한 결제에 실패했어요.\n\n[${data.resultCode || 'ERR'}] ${data.resultMsg || ''}\n\n카드 정보를 확인하고 다시 시도해주세요.\n문의: 070-4365-7740`);
+    } else {
+      alert((data && data.msg) || '오류가 발생했습니다.');
+    }
+    return false;
   }
 }
 

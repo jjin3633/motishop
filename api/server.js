@@ -528,15 +528,31 @@ app.get('/api/revenue', adminAuth, (req, res) => {
   const thisMonth = kstYearMonth();
   const thisYear  = kstYear();
 
-  const thisMonthTotal = db.prepare(
+  // 매출 = 성공 결제(billing_logs) - 환불(refunds) — 라벨 "전체 결제 - 환불"과 일치하도록 수정
+  // 환불은 refunded_at 기준 (해당 달에 빼기 — cash-flow 관점)
+  const thisMonthGross = db.prepare(
     `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00') AND strftime('%Y-%m',billed_at)=?`
   ).get(thisMonth)?.v || 0;
-  const thisYearTotal = db.prepare(
+  const thisMonthRefunds = db.prepare(
+    `SELECT COALESCE(SUM(amount),0) as v FROM refunds WHERE result_code='2001' AND strftime('%Y-%m',refunded_at)=?`
+  ).get(thisMonth)?.v || 0;
+  const thisMonthTotal = Math.max(0, thisMonthGross - thisMonthRefunds);
+
+  const thisYearGross = db.prepare(
     `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00') AND strftime('%Y',billed_at)=?`
   ).get(thisYear)?.v || 0;
-  const allTimeTotal = db.prepare(
+  const thisYearRefunds = db.prepare(
+    `SELECT COALESCE(SUM(amount),0) as v FROM refunds WHERE result_code='2001' AND strftime('%Y',refunded_at)=?`
+  ).get(thisYear)?.v || 0;
+  const thisYearTotal = Math.max(0, thisYearGross - thisYearRefunds);
+
+  const allTimeGross = db.prepare(
     `SELECT COALESCE(SUM(amount),0) as v FROM billing_logs WHERE result_code IN ('0000','00')`
   ).get()?.v || 0;
+  const allTimeRefunds = db.prepare(
+    `SELECT COALESCE(SUM(amount),0) as v FROM refunds WHERE result_code='2001'`
+  ).get()?.v || 0;
+  const allTimeTotal = Math.max(0, allTimeGross - allTimeRefunds);
 
   // 다음 달 예상 수익 — 해지/빌키삭제 제외, active + trial 중 다음달 결제 예정인 사람들의 charge_amount 합
   const nextMonthWhere = `
@@ -1411,8 +1427,8 @@ app.post('/api/mypage/update-card', paymentActionLimiter, mypageAuth, async (req
   res.json({ ok: true, next_billing_date: sub.next_billing_date });
 });
 
-// 기능 추가/해지
-app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
+// 기능 추가/해지 — 2026-06-22 변경: 기능 추가 시 일할 계산하여 즉시 결제
+app.post('/api/mypage/update-features', mypageAuth, async (req, res) => {
   let { features } = req.body;
   if (!features || !Array.isArray(features) || features.length === 0)
     return res.status(400).json({ ok: false, msg: '기능을 하나 이상 선택해주세요.' });
@@ -1422,16 +1438,12 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
     return res.status(403).json({ ok: false, msg: '해지된 계정은 변경할 수 없습니다.' });
   const prices = FEATURE_PRICES[sub.billing_type] || FEATURE_PRICES.monthly;
 
-  // 가격표 sync 검증 — features 키와 가격표 일치 안 하면 0원 결제 양산 위험 → 차단
   const unknownFeats = features.filter(f => !(f in prices));
   if (unknownFeats.length > 0) {
     notifySlack(`🔴 알 수 없는 기능 키: ${unknownFeats.join(', ')} (subscriber_id=${req.subscriberId}) — 가격표 동기화 점검 필요`);
     return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
   }
 
-  // 묶음 상품 자동 변경 전면 차단 (양방향)
-  // 묶음 가입자는 다른 묶음·개별 기능으로의 자동 전환 불가 — 변경 원하면 해지 후 재가입
-  // (개별 기능 가입자 → 묶음 업그레이드는 허용)
   const oldFeatures = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
   const oldBundle = getBundle(oldFeatures);
   const newBundle = getBundle(features);
@@ -1444,7 +1456,7 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
 
   let newAmount;
   if (newBundle) {
-    features = [newBundle];  // 번들은 단독 (다른 항목 강제 제거)
+    features = [newBundle];
     newAmount = prices[newBundle];
   } else {
     newAmount = features.reduce((sum, f) => sum + prices[f], 0);
@@ -1453,8 +1465,53 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
     return res.status(400).json({ ok: false, msg: '결제액 계산 실패 — 운영자에게 문의해주세요.' });
   }
 
+  // 추가된 기능 식별 (제거는 일할 환불 X — 정책: 다음 결제일까지 사용 가능)
+  const oldSet = new Set(oldFeatures);
+  const addedFeatures = features.filter(f => !oldSet.has(f));
+  // active 구독자가 기능 추가 시에만 즉시 일할 결제 (trial은 결제 0원이라 스킵)
+  const shouldChargeNow = addedFeatures.length > 0 && sub.status === 'active';
+
+  let prorateInfo = null;
+  if (shouldChargeNow) {
+    if (!sub.bill_key || sub.billkey_deleted) {
+      return res.status(400).json({ ok: false, msg: '카드 정보가 없거나 만료되었습니다. 카드 정보 갱신 후 다시 시도해주세요.' });
+    }
+    const addedPrice = addedFeatures.reduce((sum, f) => sum + prices[f], 0);
+    const todayKst = kstDateOnly();
+    const nextDate = sub.next_billing_date;
+    const daysRemaining = Math.max(1, Math.ceil((new Date(nextDate + 'T00:00:00+09:00') - new Date(todayKst + 'T00:00:00+09:00')) / 86400000));
+    const cycleDays = sub.billing_type === 'annual' ? 365 : 30;
+    const prorateAmount = Math.max(100, Math.round(addedPrice * daysRemaining / cycleDays));  // 최소 100원 (PG 정책)
+
+    const { chargeWithRetry } = require('./innopay');
+    const moid = todayKst.replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000);
+    const chargeResult = await chargeWithRetry({
+      billKey: sub.bill_key,
+      moid,
+      amount: prorateAmount,
+      goodsName: '모티샵 구독',
+      buyerName: sub.name,
+      userId: sub.phone,
+    });
+    const tid = (chargeResult.raw && (chargeResult.raw.tid || chargeResult.raw.pgTid || chargeResult.raw.transSeq)) || '';
+    db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(req.subscriberId, moid, prorateAmount, chargeResult.resultCode || 'ERR', chargeResult.resultMsg || '', tid);
+
+    if (!chargeResult.ok) {
+      notifySlack(`🔴 기능 추가 결제 실패: ${sub.company} (id=${sub.id}) — ${addedFeatures.join(', ')} / ${prorateAmount.toLocaleString()}원 / ${chargeResult.resultCode} ${chargeResult.resultMsg}`);
+      return res.status(502).json({
+        ok: false,
+        msg: '기능 추가를 위한 결제에 실패했습니다. 카드 정보를 확인하고 다시 시도해주세요.',
+        resultCode: chargeResult.resultCode,
+        resultMsg: chargeResult.resultMsg,
+      });
+    }
+
+    notifySlack(`💳 기능 추가 일할 결제: ${sub.company} (id=${sub.id}) — ${addedFeatures.join(', ')} / ${prorateAmount.toLocaleString()}원 (${daysRemaining}일/${cycleDays}일)`);
+    prorateInfo = { addedFeatures, addedPrice, daysRemaining, cycleDays, prorateAmount, nextBillingDate: nextDate };
+  }
+
   const featStr = features.join(', ');
-  // 변경 이력 기록 (실제 변경된 경우에만)
   if (sub.features !== featStr || sub.charge_amount !== newAmount) {
     db.prepare(`INSERT INTO subscriber_changes
       (subscriber_id, change_type, before_features, after_features, before_amount, after_amount)
@@ -1464,8 +1521,47 @@ app.post('/api/mypage/update-features', mypageAuth, (req, res) => {
   db.prepare(`UPDATE subscribers SET features=?, charge_amount=? WHERE id=?`)
     .run(featStr, newAmount, req.subscriberId);
 
-  console.log(`[기능변경] ${sub.company} → ${featStr} / ${newAmount}원`);
-  res.json({ ok: true, features: featStr, charge_amount: newAmount });
+  console.log(`[기능변경] ${sub.company} → ${featStr} / ${newAmount}원${prorateInfo ? ` (일할 ${prorateInfo.prorateAmount}원 결제)` : ''}`);
+  res.json({ ok: true, features: featStr, charge_amount: newAmount, prorate: prorateInfo });
+});
+
+// 일할 계산 견적 — 모달에 상세 안내 표시용 (실제 결제 X)
+app.post('/api/mypage/preview-feature-add', mypageAuth, (req, res) => {
+  const { features } = req.body;
+  if (!features || !Array.isArray(features) || features.length === 0) {
+    return res.status(400).json({ ok: false, msg: '기능 선택 없음' });
+  }
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (!sub || sub.status === 'cancelled') return res.status(403).json({ ok: false, msg: '해지된 계정' });
+  const prices = FEATURE_PRICES[sub.billing_type] || FEATURE_PRICES.monthly;
+  const oldFeatures = (sub.features || '').split(',').map(f => f.trim()).filter(Boolean);
+  const oldSet = new Set(oldFeatures);
+  const addedFeatures = features.filter(f => !oldSet.has(f) && f in prices);
+
+  if (addedFeatures.length === 0 || sub.status !== 'active') {
+    // 추가가 없거나 trial이면 일할 결제 없음 — 다음 결제일에 새 금액
+    const newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+    return res.json({ ok: true, immediateCharge: false, newAmount, nextBillingDate: sub.next_billing_date });
+  }
+
+  const addedPrice = addedFeatures.reduce((sum, f) => sum + prices[f], 0);
+  const todayKst = kstDateOnly();
+  const daysRemaining = Math.max(1, Math.ceil((new Date(sub.next_billing_date + 'T00:00:00+09:00') - new Date(todayKst + 'T00:00:00+09:00')) / 86400000));
+  const cycleDays = sub.billing_type === 'annual' ? 365 : 30;
+  const prorateAmount = Math.max(100, Math.round(addedPrice * daysRemaining / cycleDays));
+  const newAmount = features.reduce((sum, f) => sum + (prices[f] || 0), 0);
+
+  res.json({
+    ok: true,
+    immediateCharge: true,
+    addedFeatures,
+    addedPrice,           // 추가된 기능 1개월 전체 금액
+    daysRemaining,        // 다음 결제일까지 남은 일수
+    cycleDays,            // 결제 주기 일수 (월=30, 연=365)
+    prorateAmount,        // 즉시 결제될 일할 금액
+    nextBillingDate: sub.next_billing_date,
+    newAmount,            // 다음 결제일 청구액 (변경 후 전체)
+  });
 });
 
 // 구독 유형 변경 (월↔연)
