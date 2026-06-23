@@ -694,7 +694,10 @@ app.get('/api/revenue', adminAuth, (req, res) => {
 // 2026-06-18 추가. days 파라미터로 기간 필터 (기본 7일).
 app.get('/api/admin/stats/analytics', adminAuth, (req, res) => {
   const days = Math.max(1, Math.min(90, parseInt(req.query.days) || 7));
-  const since = `datetime('now', '+9 hours', '-${days} days')`;
+  // "오늘"(days=1)은 오늘 자정(KST) ~ 지금. 그 외는 지금 ~ N일 전.
+  const since = days === 1
+    ? `datetime('now', '+9 hours', 'start of day')`
+    : `datetime('now', '+9 hours', '-${days} days')`;
 
   // KPI 1: 방문자 / 신규 가입자 / 페이지뷰 / 전환율
   const visitors = db.prepare(`SELECT COUNT(DISTINCT session_id) as v FROM visits WHERE visited_at >= ${since}`).get()?.v || 0;
