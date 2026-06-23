@@ -130,6 +130,7 @@ async function refundBillKey({ tid, amount, reason, partial = false, svcCd = '01
 
 /**
  * 재시도 래퍼 (일시적 오류 대응)
+ * 2026-06-23: timeout 후 InnoPay 측 이미 승인됐을 가능성 → 재시도 전 거래 조회로 이중청구 차단
  */
 async function chargeWithRetry(params, { maxAttempts = 2, delayMs = 2000 } = {}) {
   let last;
@@ -138,7 +139,26 @@ async function chargeWithRetry(params, { maxAttempts = 2, delayMs = 2000 } = {})
     if (last.ok) return last;
     // 네트워크 오류만 재시도. 이노페이의 승인 거절(잔액부족 등)은 재시도 금지.
     if (last.resultCode !== 'ERR') return last;
-    if (i < maxAttempts - 1) await new Promise(r => setTimeout(r, delayMs));
+    if (i < maxAttempts - 1) {
+      // 재시도 전 PG 측 거래 상태 조회 — 이미 승인됐으면 재시도 안 함 (이중청구 차단)
+      if (cfg.INNOPAY_MERCHANT_KEY && params.moid) {
+        try {
+          const q = await queryTransactionByMoid(params.moid);
+          if (q.ok && q.data) {
+            // 거래가 존재하고 성공 상태면 그 결과를 반환 (재시도 X)
+            const d = q.data;
+            const resCode = d.resultCode || d.RES_CD || d.payResultCd || '';
+            if (resCode === '0000' || resCode === '00') {
+              console.log(`[chargeWithRetry] moid=${params.moid} 이미 승인됨 — 재시도 차단 (이중청구 방지)`);
+              return { ok: true, resultCode: resCode, resultMsg: d.resultMsg || 'recovered from timeout', raw: d };
+            }
+          }
+        } catch (e) {
+          console.error('[chargeWithRetry queryTxn 오류]', e.message);
+        }
+      }
+      await new Promise(r => setTimeout(r, delayMs));
+    }
   }
   return last;
 }

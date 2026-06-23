@@ -420,7 +420,8 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 <div class="modal-overlay" id="cancelModal" onclick="if(event.target===this)closeCancelModal()">
   <div class="modal">
     <h3>구독을 해지하시겠습니까?</h3>
-    <p>해지 후에는 다음 결제일부터 청구되지 않습니다. 현재 체험/구독 중인 기능은 기간이 끝날 때까지 유지됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+    <p>해지 후에는 다음 결제일부터 청구되지 않습니다. 현재 체험/구독 중인 기능은 기간이 끝날 때까지 유지됩니다.</p>
+    <p style="font-size:12.5px; color:var(--gray400); margin-top:10px; line-height:1.6;">⚠️ 해지 30일 후 개인정보보호법에 따라 결제·구독 이력이 자동 삭제됩니다. 그 전까지는 마이페이지에서 다시 구독하실 수 있어요.</p>
     <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">언제든 마이페이지에서 다시 구독을 시작할 수 있습니다.</p>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeCancelModal()">취소</button>
@@ -766,13 +767,18 @@ async function showApp() {
   renderBillingSwitch();
 
   // URL ?action=update-card → 카드 갱신 모달 자동 오픈 (결제 실패 SMS 링크용)
-  if (s.status !== 'cancelled') {
-    const params = new URLSearchParams(location.search);
-    if (params.get('action') === 'update-card') {
+  const params = new URLSearchParams(location.search);
+  if (params.get('action') === 'update-card') {
+    if (s.status === 'cancelled') {
+      // 이미 자동 해지된 회원 — 카드 갱신 불가, 재구독 모달 안내
+      setTimeout(() => {
+        alert('자동 해지된 계정입니다.\n카드 정보를 갱신하려면 먼저 다시 구독해주세요.');
+        if (typeof openResubModal === 'function') openResubModal();
+      }, 200);
+    } else {
       setTimeout(() => openUpdateCardModal(), 200);
-      // URL 정리 (새로고침 시 다시 열리지 않도록)
-      history.replaceState({}, '', location.pathname);
     }
+    history.replaceState({}, '', location.pathname);
   }
 
   // 결제 내역 — row 클릭 시 상세 모달

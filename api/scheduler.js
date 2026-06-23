@@ -155,13 +155,25 @@ function runBillingPass() {
 }
 
 async function processDueBillings() {
+  // 시작 시 자기 pid의 stale lock 자체 정리 (이전 크래시로 남은 락)
+  try {
+    db.prepare(`DELETE FROM scheduler_locks WHERE name = 'billing' AND pid = ?`).run(process.pid);
+  } catch (e) { /* ignore */ }
+
   // 동시 실행 방지 (multi-instance 환경 대비) — 5분 이상 묵은 lock은 stale로 간주
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const lockResult = db.prepare(`
-    INSERT INTO scheduler_locks (name, locked_at, pid) VALUES ('billing', datetime('now'), ?)
-    ON CONFLICT(name) DO UPDATE SET locked_at = datetime('now'), pid = excluded.pid
-    WHERE locked_at < ?
-  `).run(process.pid, fiveMinAgo);
+  let lockResult;
+  try {
+    lockResult = db.prepare(`
+      INSERT INTO scheduler_locks (name, locked_at, pid) VALUES ('billing', datetime('now'), ?)
+      ON CONFLICT(name) DO UPDATE SET locked_at = datetime('now'), pid = excluded.pid
+      WHERE locked_at < ?
+    `).run(process.pid, fiveMinAgo);
+  } catch (e) {
+    // UNIQUE 충돌 또는 기타 DB 오류 — 다른 인스턴스가 잡고 있다고 보고 스킵
+    console.warn(`[스케줄러] 락 획득 실패 — 스킵 (${e.message})`);
+    return;
+  }
 
   if (lockResult.changes === 0) {
     console.warn('[스케줄러] 다른 인스턴스가 이미 실행 중 — 스킵');
@@ -174,7 +186,9 @@ async function processDueBillings() {
       await chargeSubscriber(sub);
     }
   } finally {
-    db.prepare(`DELETE FROM scheduler_locks WHERE name = 'billing' AND pid = ?`).run(process.pid);
+    try {
+      db.prepare(`DELETE FROM scheduler_locks WHERE name = 'billing' AND pid = ?`).run(process.pid);
+    } catch (e) { console.error('[스케줄러] 락 해제 실패', e.message); }
   }
 }
 
@@ -197,6 +211,41 @@ function scheduleHealthCheck() {
     }
   }, { timezone: 'Asia/Seoul' });
   console.log('헬스체크 자가 모니터 시작 (5분 간격)');
+}
+
+// 자동 탈퇴 24시간 전 사전 안내 SMS — 개인정보보호법 22조 사전 통지 의무
+// 매일 새벽 2시 KST 실행 (자동 탈퇴는 3시) — cancelled_at < now-29days AND >= now-30days
+function scheduleAutoDeletePreNotice() {
+  cron.schedule('0 2 * * *', async () => {
+    try {
+      const targets = db.prepare(`
+        SELECT id, company, name, phone FROM subscribers
+        WHERE status = 'cancelled'
+          AND cancelled_at IS NOT NULL
+          AND cancelled_at < datetime('now', '+9 hours', '-29 days')
+          AND cancelled_at >= datetime('now', '+9 hours', '-30 days')
+      `).all();
+
+      if (!targets.length) return;
+
+      for (const t of targets) {
+        const smsText = `[Moti Shop] ${t.company}님, 해지하신 지 30일이 되어 내일 새벽 결제·구독 이력이 자동 삭제됩니다.\n다시 구독을 원하시면 오늘 안에 마이페이지에서 가능해요.\n삭제 후에는 신규 가입으로 새 계정이 만들어집니다.\nhttps://shop.motiphysio.com/mypage`;
+        try {
+          const r = await sendSMS({ to: t.phone, text: smsText, subject: '[Moti Shop] 데이터 자동 삭제 24시간 전 안내' });
+          console.log(`[자동삭제 사전안내 SMS] ${t.company} → ok=${r.ok} ${r.resultCode || ''} ${r.resultMsg || ''}`);
+          if (!r.ok) notifySlack(`⚠️ 자동삭제 사전안내 SMS 실패: ${t.company} (id=${t.id}) — ${r.resultCode} ${r.resultMsg}`);
+        } catch (e) {
+          console.error('[자동삭제 사전안내 SMS 예외]', e.message);
+          notifySlack(`🔴 자동삭제 사전안내 SMS 예외: ${t.company} (id=${t.id}) — ${e.message}`);
+        }
+      }
+      notifySlack(`📢 자동 삭제 24h 전 사전 안내 SMS ${targets.length}건 발송`);
+    } catch (e) {
+      console.error('[자동삭제 사전안내 cron 오류]', e);
+      notifySlack(`🔴 자동삭제 사전안내 cron 예외: ${e.message}`);
+    }
+  }, { timezone: 'Asia/Seoul' });
+  console.log('자동 삭제 사전 안내 cron 시작 (매일 02:00 KST · 30일 경과 직전 회원에게 SMS)');
 }
 
 // 자동 탈퇴 — 해지 후 30일 경과한 가입자의 개인정보 완전 삭제
@@ -383,4 +432,4 @@ function scheduleAnalyticsCleanup() {
   console.log('Analytics 정리 cron 시작 (매일 04:00 KST · 90일 retention)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, chargeSubscriber, processDueBillings };
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleAutoDeletePreNotice, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, chargeSubscriber, processDueBillings, addPeriod };

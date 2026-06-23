@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleAutoDeletePreNotice, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, addPeriod } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 const { sendSMS } = require('./sms');
 
@@ -432,11 +432,8 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
         return res.status(502).json({ ok: false, msg: '결제 실패: ' + (chargeResult.resultMsg || '카드 정보를 확인해주세요.'), resultCode: chargeResult.resultCode });
       }
 
-      // 4) 결제 성공 — 다음 결제일 계산 (오늘 + 1개월/1년)
-      const next = new Date();
-      if (billingType === 'monthly') next.setMonth(next.getMonth() + 1);
-      else next.setFullYear(next.getFullYear() + 1);
-      const nextBilling = kstDateOnly(next);
+      // 4) 결제 성공 — 다음 결제일 계산 (scheduler addPeriod 사용 — 월말 clamp + KST 일관)
+      const nextBilling = addPeriod(kstDateOnly(), billingType);
 
       // 5) 변경 이력 + 가입자 정보 갱신 (status='active', 결제·체험 리셋)
       db.prepare(`INSERT INTO subscriber_changes
@@ -444,11 +441,12 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
         VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
         .run(existing.id, existing.features, features, existing.billing_type, billingType, existing.charge_amount, chargeAmount);
 
+      // trial_start 갱신 — 재가입은 새 가입 사이클 (어드민 상세 표시 정확성)
       db.prepare(`UPDATE subscribers SET
         company=?, name=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
-        next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
+        trial_start=?, next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
         WHERE id=?`)
-        .run(company, name, cleanBizNum, features, billingType, billKey, newMoid, chargeAmount, nextBilling, existing.id);
+        .run(company, name, cleanBizNum, features, billingType, billKey, newMoid, chargeAmount, kstDateOnly(), nextBilling, existing.id);
 
       saveTermsConsent(existing.id, termsAgreed, req);
       console.log(`[재가입 ✓ 결제완료] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);
@@ -787,13 +785,21 @@ app.get('/api/admin/active-overview', adminAuth, (req, res) => {
   const trialCount = activeBreak.find(r => r.status === 'trial')?.count || 0;
   const activeCount = activeBreak.find(r => r.status === 'active')?.count || 0;
 
-  const mau = db.prepare(`
+  // 기존 mau (결제·변경 발생자 기준 — '활성 계정'으로 라벨 변경)
+  const activeAccounts30d = db.prepare(`
     SELECT COUNT(DISTINCT subscriber_id) as v FROM (
       SELECT subscriber_id FROM billing_logs WHERE billed_at >= datetime('now', '+9 hours', '-30 days')
       UNION
       SELECT subscriber_id FROM subscriber_changes WHERE changed_at >= datetime('now', '+9 hours', '-30 days')
     )
   `).get().v;
+
+  // 진짜 MAU — 자체 분석 visits 테이블 기반 (최근 30일 unique session_id)
+  // 회원 식별 X (방문자 익명). 실제 사용 활성도 지표.
+  const mau = db.prepare(`
+    SELECT COUNT(DISTINCT session_id) as v FROM visits
+    WHERE visited_at >= datetime('now', '+9 hours', '-30 days')
+  `).get()?.v || 0;
 
   // ── 헬퍼: 기간 KPI (signups, payments-success-count, payments-total, cancels, refunds-amount)
   const periodKpi = (whereClause) => ({
@@ -941,7 +947,7 @@ app.get('/api/admin/active-overview', adminAuth, (req, res) => {
 
   res.json({
     now: {
-      activeNow, trialCount, activeCount, mau,
+      activeNow, trialCount, activeCount, mau, activeAccounts30d,
       mrr, arr, arpu,
       trialConversionRate,
       trialConvDenominator: trialConv.denominator,
@@ -974,7 +980,7 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
 
   // 회원에게 해지 안내 SMS — 어드민이 명시적으로 요청한 경우만 (notify=true)
   if (notify) {
-    const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
+    const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n30일 후에는 개인정보보호법에 따라 모든 데이터가 자동 삭제됩니다.\n그 전까지는 언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
     sendSMS({ to: sub.phone, text: cancelText, subject: '[Moti Shop] 구독 해지 완료' }).then(r => {
       console.log(`[해지 SMS(어드민)] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
       if (!r.ok) notifySlack(`⚠️ 해지 SMS 실패(어드민): ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
@@ -1054,6 +1060,15 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
     partial: isPartial,
   });
 
+  // 설정 미완료 케이스 명확한 안내 (운영자에게 .env 점검 요청)
+  if (result.resultCode === 'NO_PWD') {
+    notifySlack(`🔴 환불 차단: INNOPAY_CANCEL_PWD 미설정 — EC2 .env 점검 필요 (${sub.company} id=${id})`);
+    return res.status(503).json({ ok: false, msg: '환불 비밀번호가 서버에 설정되지 않았습니다. 운영자에게 문의해주세요 (.env: INNOPAY_CANCEL_PWD)', resultCode: 'NO_PWD' });
+  }
+  if (result.resultCode === 'NO_TID') {
+    return res.status(400).json({ ok: false, msg: '거래번호(TID)가 없어 자동 환불 불가. InnoPay 가맹점 페이지에서 직접 환불해주세요.', resultCode: 'NO_TID' });
+  }
+
   if (result.ok) {
     db.prepare(`INSERT INTO refunds (subscriber_id, moid, amount, reason, result_code, result_msg, refunded_by) VALUES (?, ?, ?, ?, ?, ?, ?)`)
       .run(id, log.moid, refundAmount, refundReason, result.resultCode, result.resultMsg || '', 'admin');
@@ -1072,12 +1087,17 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
         failed_count = 0,
         last_failed_at = NULL
         WHERE id = ?`).run(todayKst, id);
-      // InnoPay 빌키 삭제 (best-effort)
+      // InnoPay 빌키 삭제 — await로 결과 확인 (best-effort 였던 거 보강)
       if (sub.bill_key) {
-        const { deleteBillKey } = require('./innopay');
-        deleteBillKey({ billKey: sub.bill_key, userId: sub.phone })
-          .then(r => console.log(`[환불자동해지 빌키삭제 ${r.ok ? '✓' : '✗'}] ${sub.company} ${r.resultCode || ''}`))
-          .catch(e => console.error('[환불자동해지 빌키삭제 오류]', e.message));
+        try {
+          const { deleteBillKey } = require('./innopay');
+          const dr = await deleteBillKey({ billKey: sub.bill_key, userId: sub.phone });
+          console.log(`[환불자동해지 빌키삭제 ${dr.ok ? '✓' : '✗'}] ${sub.company} ${dr.resultCode || ''} ${dr.resultMsg || ''}`);
+          if (!dr.ok) notifySlack(`⚠️ 환불자동해지 빌키삭제 실패: ${sub.company} (id=${id}) — ${dr.resultCode} ${dr.resultMsg}`);
+        } catch (e) {
+          console.error('[환불자동해지 빌키삭제 예외]', e.message);
+          notifySlack(`🔴 환불자동해지 빌키삭제 예외: ${sub.company} (id=${id}) — ${e.message}`);
+        }
       }
       autoCancelled = true;
       notifySlack(`👋 환불 자동 해지: ${sub.company} (id=${id}) — 전액 환불로 즉시 종료`);
@@ -1348,6 +1368,7 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
   if (newPw.length < 6) return res.status(400).json({ ok: false, msg: '비밀번호는 6자 이상이어야 합니다.' });
 
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
   if (!verifyPw(currentPw, sub.pw_salt, sub.pw_hash))
     return res.status(401).json({ ok: false, msg: '현재 비밀번호가 올바르지 않습니다.' });
 
@@ -1362,14 +1383,15 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
 
 app.post('/api/mypage/cancel', mypageAuth, async (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id = ?`).get(req.subscriberId);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
   db.prepare(`UPDATE subscribers SET status='cancelled', cancelled_at = datetime('now', '+9 hours') WHERE id=?`).run(req.subscriberId);
   // 해지 후에도 마이페이지 접근 유지 (조회·환불 신청·재구독 등 안전한 액션만 가능)
   // 강제 로그아웃 제거 — 회원 UX 개선 + 재구독 흐름 자연스러움 (2026-06-22 사장님 결정)
   if (sub) {
     notifySlack(`👋 해지(셀프): ${sub.company} (id=${sub.id}, ${maskName(sub.name)}) — ${(sub.charge_amount||0).toLocaleString()}원/${sub.billing_type}`);
 
-    // 회원에게 해지 확인 SMS (분쟁 방지 + 안심)
-    const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
+    // 회원에게 해지 확인 SMS (분쟁 방지 + 개인정보보호법 22조 파기 사전 통지)
+    const cancelText = `[Moti Shop] ${sub.company}님, 구독이 정상적으로 해지되었어요.\n\n이후 결제는 발생하지 않으며, 구독·결제 이력은 30일간 보관됩니다.\n30일 후에는 개인정보보호법에 따라 모든 데이터가 자동 삭제됩니다.\n그 전까지는 언제든 마이페이지에서 다시 구독하실 수 있어요.\nhttps://shop.motiphysio.com/mypage`;
     sendSMS({ to: sub.phone, text: cancelText, subject: '[Moti Shop] 구독 해지 완료' }).then(r => {
       console.log(`[해지 SMS] ${sub.company} → ${maskPhone(sub.phone)} / ok=${r.ok} / ${r.resultCode || ''} ${r.resultMsg || ''}`);
       if (!r.ok) notifySlack(`⚠️ 해지 SMS 실패: ${sub.company} (id=${sub.id}) — ${r.resultCode} ${r.resultMsg}`);
@@ -1459,11 +1481,8 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
     return res.status(502).json({ ok: false, msg: '결제 실패: ' + (result.resultMsg || '카드 정보를 확인해주세요.'), resultCode: result.resultCode });
   }
 
-  // 다음 결제일 = today + 1개월/1년
-  const next = new Date();
-  if (billingType === 'monthly') next.setMonth(next.getMonth() + 1);
-  else next.setFullYear(next.getFullYear() + 1);
-  const nextBilling = kstDateOnly(next);
+  // 다음 결제일 = today + 1개월/1년 (scheduler addPeriod 사용 — 월말 clamp + KST 일관)
+  const nextBilling = addPeriod(kstDateOnly(), billingType);
 
   // 변경 이력 기록
   db.prepare(`INSERT INTO subscriber_changes
@@ -1471,11 +1490,11 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
     VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
     .run(req.subscriberId, sub.features, featStr, sub.billing_type, billingType, sub.charge_amount, chargeAmount);
 
-  // 가입자 정보 갱신 (재구독 시 명의 변경 가능)
+  // 가입자 정보 갱신 (재구독 시 명의 변경 가능 + trial_start 갱신 — 새 사이클 시작)
   db.prepare(`UPDATE subscribers SET
     features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?, business_number=?,
-    next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL
-    WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextBiz, nextBilling, req.subscriberId);
+    trial_start=?, next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
+    WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextBiz, kstDateOnly(), nextBilling, req.subscriberId);
 
   console.log(`[재구독 ✓] ${sub.company} / ${featStr} / ${chargeAmount}원 / 다음: ${nextBilling}`);
   notifySlack(`🔁 재구독: ${sub.company} (id=${sub.id}) / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);
@@ -1626,7 +1645,7 @@ app.post('/api/mypage/update-features', paymentActionLimiter, mypageAuth, async 
         });
       }
 
-      // 결제 성공 — billing_logs + subscriber_changes + subscribers 원자적 처리 (트랜잭션)
+      // 결제 성공 — billing_logs + subscriber_changes(features + prorate_charge) + subscribers 원자적 처리
       const tx = db.transaction(() => {
         db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
           .run(req.subscriberId, moid, prorateAmount, chargeResult.resultCode, chargeResult.resultMsg || '', tid);
@@ -1635,6 +1654,10 @@ app.post('/api/mypage/update-features', paymentActionLimiter, mypageAuth, async 
             (subscriber_id, change_type, before_features, after_features, before_amount, after_amount)
             VALUES (?, 'features', ?, ?, ?, ?)`).run(req.subscriberId, sub.features, featStr, sub.charge_amount, newAmount);
         }
+        // 일할 결제 별도 이력 기록 (어드민 추적 + 회계 감사 용)
+        db.prepare(`INSERT INTO subscriber_changes
+          (subscriber_id, change_type, before_features, after_features, before_amount, after_amount)
+          VALUES (?, 'prorate_charge', ?, ?, ?, ?)`).run(req.subscriberId, sub.features, addedFeatures.join(', '), 0, prorateAmount);
         db.prepare(`UPDATE subscribers SET features=?, charge_amount=? WHERE id=?`)
           .run(featStr, newAmount, req.subscriberId);
       });
@@ -1942,6 +1965,7 @@ const _safeStart = (name, fn) => {
 };
 _safeStart('scheduleBilling', scheduleBilling);
 _safeStart('scheduleHealthCheck', scheduleHealthCheck);
+_safeStart('scheduleAutoDeletePreNotice', scheduleAutoDeletePreNotice);
 _safeStart('scheduleAutoDelete', scheduleAutoDelete);
 _safeStart('scheduleSolapiBalance', scheduleSolapiBalance);
 _safeStart('scheduleDbBackup', scheduleDbBackup);

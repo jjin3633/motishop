@@ -867,7 +867,7 @@ function renderStats() {
 
   // KPI 1: 활성 회원 (고정)
   document.getElementById('kpi-active').textContent = data.now.activeNow;
-  document.getElementById('kpi-active-sub').textContent = `체험 ${data.now.trialCount} · 구독 ${data.now.activeCount} · MAU ${data.now.mau}`;
+  document.getElementById('kpi-active-sub').textContent = `체험 ${data.now.trialCount} · 구독 ${data.now.activeCount} · 활성계정30d ${data.now.activeAccounts30d} · 방문자30d ${data.now.mau}`;
 
   // 비즈니스 메트릭 (토글 무관)
   document.getElementById('kpi-mrr').innerHTML = `${fmt(data.now.mrr)}<small style="font-size:0.85em;color:var(--text-sub);font-weight:600;"> 원</small>`;
