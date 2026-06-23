@@ -101,6 +101,11 @@ const trackLimiter = rateLimit({
 });
 
 // ── 기능 가격표 ──
+// 중요: monthly/annual 값은 모두 "월 환산 단가"입니다.
+//   - monthly 구독: 매월 monthly[key]원 청구
+//   - annual 구독: 연 1회에 annual[key] × 12원 청구 (연 할인된 월 단가의 12개월치)
+// 예: 모아레 annual=17900 → 연간 총액 214,800원 청구 (월 17,900원 환산 × 12)
+// 가격표 변경 시 mypage.html FEATURE_PRICES도 동기화 필요 (2026-06-23 사장님 확정)
 const FEATURE_PRICES = {
   monthly: {
     '모아레': 23900,
@@ -420,33 +425,33 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
         userId: cleanPhone,
       });
 
-      // 2) 결제 결과 billing_logs 기록 (성공·실패 모두)
       const tid = (chargeResult.raw && (chargeResult.raw.tid || chargeResult.raw.pgTid || chargeResult.raw.transSeq || chargeResult.raw.tno)) || '';
-      db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
-        .run(existing.id, newMoid, chargeAmount, chargeResult.resultCode || 'ERR', chargeResult.resultMsg || '', tid);
 
-      // 3) 결제 실패 시 — 가입 미완료 (status 변경 X, 502 반환)
+      // 결제 실패 시 — billing_logs에만 기록, status 변경 X (가입 미완료)
       if (!chargeResult.ok) {
+        db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+          .run(existing.id, newMoid, chargeAmount, chargeResult.resultCode || 'ERR', chargeResult.resultMsg || '', tid);
         console.error(`[재가입 결제 실패] id=${existing.id} ${company} / ${chargeResult.resultCode} ${chargeResult.resultMsg}`);
         notifySlack(`🔴 재가입 결제 실패(신청폼): ${company} (id=${existing.id}, ${maskName(name)}) — ${chargeResult.resultCode} ${chargeResult.resultMsg}`);
         return res.status(502).json({ ok: false, msg: '결제 실패: ' + (chargeResult.resultMsg || '카드 정보를 확인해주세요.'), resultCode: chargeResult.resultCode });
       }
 
-      // 4) 결제 성공 — 다음 결제일 계산 (scheduler addPeriod 사용 — 월말 clamp + KST 일관)
+      // 결제 성공 — billing_logs + subscriber_changes + subscribers UPDATE 원자적 트랜잭션
       const nextBilling = addPeriod(kstDateOnly(), billingType);
-
-      // 5) 변경 이력 + 가입자 정보 갱신 (status='active', 결제·체험 리셋)
-      db.prepare(`INSERT INTO subscriber_changes
-        (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
-        VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
-        .run(existing.id, existing.features, features, existing.billing_type, billingType, existing.charge_amount, chargeAmount);
-
-      // trial_start 갱신 — 재가입은 새 가입 사이클 (어드민 상세 표시 정확성)
-      db.prepare(`UPDATE subscribers SET
-        company=?, name=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
-        trial_start=?, next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
-        WHERE id=?`)
-        .run(company, name, cleanBizNum, features, billingType, billKey, newMoid, chargeAmount, kstDateOnly(), nextBilling, existing.id);
+      const tx = db.transaction(() => {
+        db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+          .run(existing.id, newMoid, chargeAmount, chargeResult.resultCode, chargeResult.resultMsg || '', tid);
+        db.prepare(`INSERT INTO subscriber_changes
+          (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
+          VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
+          .run(existing.id, existing.features, features, existing.billing_type, billingType, existing.charge_amount, chargeAmount);
+        db.prepare(`UPDATE subscribers SET
+          company=?, name=?, business_number=?, features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?,
+          trial_start=?, next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
+          WHERE id=?`)
+          .run(company, name, cleanBizNum, features, billingType, billKey, newMoid, chargeAmount, kstDateOnly(), nextBilling, existing.id);
+      });
+      tx();
 
       saveTermsConsent(existing.id, termsAgreed, req);
       console.log(`[재가입 ✓ 결제완료] id=${existing.id} ${company} / ${maskName(name)} / ${billingType} / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);
@@ -468,10 +473,17 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
     `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, serverMoid, chargeAmount, trialStart, nextBillingDate, hash, salt);
 
     if (r.changes === 0) {
-      // 동시 race로 다른 요청이 먼저 INSERT 함 — 그 row 반환 (멱등 응답)
-      const dup = db.prepare(`SELECT id FROM subscribers WHERE phone = ?`).get(cleanPhone);
+      // 동시 race로 다른 요청이 먼저 INSERT 함 — 실제 DB 값을 SELECT해서 응답 (값 일치 보장)
+      const dup = db.prepare(`SELECT id, trial_start, next_billing_date FROM subscribers WHERE phone = ?`).get(cleanPhone);
       console.log(`[가입 race 차단] phone=${maskPhone(cleanPhone)} → 기존 id=${dup?.id} 반환`);
-      return res.json({ ok: true, trialStart, nextBillingDate, reactivated: false, subscriberId: dup?.id, raceBlocked: true });
+      return res.json({
+        ok: true,
+        trialStart: dup?.trial_start || trialStart,
+        nextBillingDate: dup?.next_billing_date || nextBillingDate,
+        reactivated: false,
+        subscriberId: dup?.id,
+        raceBlocked: true,
+      });
     }
 
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
@@ -1476,28 +1488,30 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
   });
 
   const tid = (result.raw && (result.raw.tid || result.raw.pgTid || result.raw.transSeq || result.raw.tno)) || '';
-  db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(req.subscriberId, newMoid, chargeAmount, result.resultCode || 'ERR', result.resultMsg || '', tid);
 
+  // 결제 실패 시 — billing_logs에만 기록, status 변경 X
   if (!result.ok) {
+    db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(req.subscriberId, newMoid, chargeAmount, result.resultCode || 'ERR', result.resultMsg || '', tid);
     notifySlack(`🔴 재구독 결제 실패: ${sub.company} (id=${sub.id}) — ${result.resultCode} ${result.resultMsg}`);
     return res.status(502).json({ ok: false, msg: '결제 실패: ' + (result.resultMsg || '카드 정보를 확인해주세요.'), resultCode: result.resultCode });
   }
 
-  // 다음 결제일 = today + 1개월/1년 (scheduler addPeriod 사용 — 월말 clamp + KST 일관)
+  // 결제 성공 — billing_logs + subscriber_changes + subscribers UPDATE 원자적 트랜잭션
   const nextBilling = addPeriod(kstDateOnly(), billingType);
-
-  // 변경 이력 기록
-  db.prepare(`INSERT INTO subscriber_changes
-    (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
-    VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
-    .run(req.subscriberId, sub.features, featStr, sub.billing_type, billingType, sub.charge_amount, chargeAmount);
-
-  // 가입자 정보 갱신 (재구독 시 명의 변경 가능 + trial_start 갱신 — 새 사이클 시작)
-  db.prepare(`UPDATE subscribers SET
-    features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?, business_number=?,
-    trial_start=?, next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
-    WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextBiz, kstDateOnly(), nextBilling, req.subscriberId);
+  const tx = db.transaction(() => {
+    db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(req.subscriberId, newMoid, chargeAmount, result.resultCode, result.resultMsg || '', tid);
+    db.prepare(`INSERT INTO subscriber_changes
+      (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
+      VALUES (?, 'reactivate', ?, ?, ?, ?, ?, ?)`)
+      .run(req.subscriberId, sub.features, featStr, sub.billing_type, billingType, sub.charge_amount, chargeAmount);
+    db.prepare(`UPDATE subscribers SET
+      features=?, billing_type=?, bill_key=?, moid=?, charge_amount=?, business_number=?,
+      trial_start=?, next_billing_date=?, status='active', billkey_deleted=0, notified_7d=0, notified_1d=0, cancelled_at=NULL, failed_count=0, last_failed_at=NULL
+      WHERE id=?`).run(featStr, billingType, billKey, newMoid, chargeAmount, nextBiz, kstDateOnly(), nextBilling, req.subscriberId);
+  });
+  tx();
 
   console.log(`[재구독 ✓] ${sub.company} / ${featStr} / ${chargeAmount}원 / 다음: ${nextBilling}`);
   notifySlack(`🔁 재구독: ${sub.company} (id=${sub.id}) / ${chargeAmount.toLocaleString()}원 / 다음: ${nextBilling}`);

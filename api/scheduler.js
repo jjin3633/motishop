@@ -39,16 +39,17 @@ function daysFromToday(dateStr) {
 }
 
 async function chargeSubscriber(sub) {
-  // 멱등성: 같은 가입자 + 결제예정일 조합으로 이미 성공한 결제가 있으면 스킵
-  const today = kstDateOnly();
+  // 멱등성: 같은 가입자 + 같은 결제 사이클(next_billing_date)에 이미 성공한 결제가 있으면 스킵
+  // 2026-06-23: cycle_date 컬럼 기반 멱등성 — 크래시·자정 경계에도 안전
+  const cycleDate = sub.next_billing_date;
   const dup = db.prepare(`
     SELECT id FROM billing_logs
-    WHERE subscriber_id = ? AND result_code = '0000'
-      AND DATE(billed_at) = DATE(?)
+    WHERE subscriber_id = ? AND result_code IN ('0000','00')
+      AND cycle_date = ?
     LIMIT 1
-  `).get(sub.id, today + ' 00:00:00');
+  `).get(sub.id, cycleDate);
   if (dup) {
-    console.log(`[스킵] ${sub.company} — 오늘 이미 성공 결제 존재 (log_id=${dup.id})`);
+    console.log(`[스킵] ${sub.company} — cycle ${cycleDate} 이미 성공 결제 존재 (log_id=${dup.id})`);
     return;
   }
 
@@ -60,32 +61,40 @@ async function chargeSubscriber(sub) {
     amount: sub.charge_amount,
     goodsName: '모티샵 구독',
     buyerName: sub.name,
-    userId: sub.phone,  // 등록 시점과 동일한 userId (phone)
+    userId: sub.phone,
   });
 
-  // 모든 결과 로그 기록 (성공/실패/재시도) — tid는 환불 시 필요 (InnoPay cancelApi)
   const tid = (result.raw && (result.raw.tid || result.raw.pgTid || result.raw.transSeq || result.raw.tno)) || '';
-  db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq) VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(sub.id, moid, sub.charge_amount, result.resultCode || 'ERR', result.resultMsg || '', tid);
 
   if (result.ok) {
+    // 성공 — billing_logs INSERT + subscribers UPDATE를 원자적 트랜잭션으로 처리
+    // 크래시 시 둘 다 rollback → 다음 cron에서 cycle_date 멱등성으로 재처리 안전
     const next = addPeriod(sub.next_billing_date, sub.billing_type);
-    // 낙관적 잠금: 결제 진행 중 사용자가 해지했다면 cancelled 상태 유지 (active로 복귀 X)
-    const upd = db.prepare(`
-      UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0, failed_count = 0, last_failed_at = NULL
-      WHERE id = ? AND status IN ('trial','active')
-    `).run(next, sub.id);
-    if (upd.changes === 0) {
-      // 결제는 성공했는데 해지 race — 환불 필요할 수 있음, Slack 경보
+    const txResult = db.transaction(() => {
+      db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq, cycle_date) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .run(sub.id, moid, sub.charge_amount, result.resultCode, result.resultMsg || '', tid, cycleDate);
+      // 낙관적 잠금: 결제 진행 중 사용자가 해지했다면 cancelled 상태 유지
+      const upd = db.prepare(`
+        UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0, failed_count = 0, last_failed_at = NULL
+        WHERE id = ? AND status IN ('trial','active')
+      `).run(next, sub.id);
+      return upd.changes;
+    })();
+
+    if (txResult === 0) {
       console.warn(`[⚠ 결제성공-해지race] ${sub.company} (id=${sub.id}) — 결제 후 해지 발견. 환불 검토 필요`);
       notifySlack(`⚠️ 결제·해지 race: ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원 결제 직전에 해지됨. 환불 검토 필요 (moid=${moid})`);
     } else {
       console.log(`[✓ 결제성공] ${sub.company} / ${sub.charge_amount.toLocaleString()}원 → 다음: ${next}`);
     }
   } else {
-    // 실패 카운트 증가
-    const newCount = (sub.failed_count || 0) + 1;
-    db.prepare(`UPDATE subscribers SET failed_count = ?, last_failed_at = datetime('now', '+9 hours') WHERE id = ?`).run(newCount, sub.id);
+    // 실패 — billing_logs에 실패 로그 (cycle_date 포함, 향후 통계용)
+    db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq, cycle_date) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(sub.id, moid, sub.charge_amount, result.resultCode || 'ERR', result.resultMsg || '', tid, cycleDate);
+
+    // failed_count atomic increment (메모리 값 race 방지) — RETURNING으로 갱신된 값 확인
+    const fc = db.prepare(`UPDATE subscribers SET failed_count = COALESCE(failed_count,0) + 1, last_failed_at = datetime('now', '+9 hours') WHERE id = ? RETURNING failed_count`).get(sub.id);
+    const newCount = fc?.failed_count || ((sub.failed_count || 0) + 1);
 
     console.error(`[✗ 결제실패 ${newCount}회 연속] ${sub.company} / ${result.resultCode} ${result.resultMsg}`);
     notifySlack(`🔴 결제실패 (${newCount}회 연속): ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원\n사유: ${result.resultCode} ${result.resultMsg}`);

@@ -48,6 +48,10 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_7d INTEGER DEFAULT 0`
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN notified_1d INTEGER DEFAULT 0`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN billkey_deleted INTEGER DEFAULT 0`); } catch(e) {}
 try { db.exec(`ALTER TABLE billing_logs ADD COLUMN trans_seq TEXT`); } catch(e) {}
+// cycle_date: 정기 결제 사이클 식별자 (sub.next_billing_date 시점) — 멱등성 키
+// scheduler.chargeSubscriber만 채움. 재가입·일할 결제 등은 NULL (cycle 아님)
+try { db.exec(`ALTER TABLE billing_logs ADD COLUMN cycle_date TEXT`); } catch(e) {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_billing_cycle ON billing_logs(subscriber_id, cycle_date)`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN email TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN business_number TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN cancelled_at TEXT`); } catch(e) {}
