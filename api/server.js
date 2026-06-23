@@ -42,8 +42,9 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
 
-// 본문 파싱 — webhook 서명 검증 위해 rawBody 캡처
+// 본문 파싱 — webhook 서명 검증 위해 rawBody 캡처 + 사이즈 제한 (대용량 페이로드 차단)
 app.use(express.json({
+  limit: '64kb',  // 정상 가입·결제·track 페이로드는 모두 < 8kb. 여유분 8배
   verify: (req, _res, buf) => { req.rawBody = buf; },
 }));
 
@@ -83,6 +84,11 @@ const paymentActionLimiter = rateLimit({
 });
 // 일할 결제 in-flight 잠금 — 같은 가입자가 동시에 update-features 호출하면 중복 결제 차단
 const updateFeaturesInFlight = new Set();
+
+// 어드민 인증 brute-force 카운터 (IP별 실패 횟수)
+const adminAuthFailures = new Map();  // ip → { count, firstAt }
+const ADMIN_AUTH_WINDOW_MS = 15 * 60 * 1000;
+const ADMIN_AUTH_MAX_FAILURES = 20;
 
 // Analytics(자체 추적) — 사용자 활동 수집. 운영 데이터와 격리됨. 실패해도 UX 영향 X.
 const trackLimiter = rateLimit({
@@ -155,6 +161,17 @@ function kstYear(d = new Date()) {
 function hashPw(pw, salt) {
   return crypto.createHmac('sha256', salt).update(pw).digest('hex');
 }
+// timing-safe 해시 비교 (단순 !==는 미세 시간 차이로 비밀번호 추측 가능)
+function verifyPw(plainPw, salt, expectedHash) {
+  if (!plainPw || !salt || !expectedHash) return false;
+  const computed = hashPw(String(plainPw), salt);
+  if (computed.length !== expectedHash.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash));
+  } catch (e) {
+    return false;
+  }
+}
 function genSalt() {
   return crypto.randomBytes(16).toString('hex');
 }
@@ -173,17 +190,44 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── InnoPay 결제 노티 콜백 (이중 통지 — payAutoCardBill 응답과 cross-check용) ──
-// InnoPay 운영 환경에서 별도 등록 시 활성화. 보안: PG_IP 화이트리스트 + moid 매칭으로 검증
-app.post('/api/innopay/noti', (req, res) => {
+// 인증: rate-limit + (선택) PG IP 화이트리스트 + moid 일치 검증
+// 외부 임의 POST로 payment_notis 부풀림 방지 (2026-06-23 보강)
+const innopayNotiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,  // 분당 30회 (정상 노티는 결제 1건당 1회. 30회면 봇 차단)
+  standardHeaders: false,
+  legacyHeaders: false,
+  message: { ok: false },
+});
+app.post('/api/innopay/noti', innopayNotiLimiter, (req, res) => {
   const payload = req.body || {};
+
+  // 1) IP 화이트리스트 (cfg.INNOPAY_NOTI_IPS 설정 시에만 검증 — 미설정이면 skip)
+  const allowedIps = (cfg.INNOPAY_NOTI_IPS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (allowedIps.length > 0 && !allowedIps.includes(req.ip)) {
+    console.warn(`[노티 거부] 허용 안 된 IP: ${req.ip}`);
+    notifySlack(`⚠️ /api/innopay/noti 허용 안 된 IP 시도: ${req.ip}`);
+    return res.status(403).type('text/plain').send('FORBIDDEN');
+  }
+
+  // 2) moid 일치 검증 — billing_logs에 존재하는 moid만 허용 (임의 moid 부풀림 차단)
+  const moid = String(payload.moid || '').slice(0, 64);
+  if (!moid) {
+    return res.status(400).type('text/plain').send('NO_MOID');
+  }
+  const matched = db.prepare(`SELECT id FROM billing_logs WHERE moid = ? LIMIT 1`).get(moid);
+  if (!matched) {
+    console.warn(`[노티 거부] 미매칭 moid: ${moid}`);
+    return res.status(404).type('text/plain').send('NO_MATCH');
+  }
+
   try {
     db.prepare(`INSERT INTO payment_notis (moid, trans_seq, result_code, result_msg, raw_payload) VALUES (?, ?, ?, ?, ?)`)
-      .run(payload.moid || '', payload.transSeq || payload.tno || '', payload.resultCode || '', payload.resultMsg || '', JSON.stringify(payload).slice(0, 4000));
-    console.log(`[노티] moid=${payload.moid} code=${payload.resultCode}`);
+      .run(moid, String(payload.transSeq || payload.tno || '').slice(0, 64), String(payload.resultCode || '').slice(0, 16), String(payload.resultMsg || '').slice(0, 200), JSON.stringify(payload).slice(0, 4000));
+    console.log(`[노티] moid=${moid} code=${payload.resultCode}`);
   } catch (e) {
     console.error('[노티 저장 실패]', e.message);
   }
-  // InnoPay 명세에 따라 보통 "OK" 문자열로 200 응답
   res.status(200).type('text/plain').send('OK');
 });
 
@@ -308,11 +352,17 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
 }
 
 app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
-  const { company, name, phone, businessNumber, features, billingType, billKey, moid, amount, termsAgreed } = req.body;
+  let { company, name, phone, businessNumber, features, billingType, billKey, amount, termsAgreed } = req.body;
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
   if (!['monthly', 'annual'].includes(billingType))
     return res.status(400).json({ ok: false, msg: 'billingType은 monthly 또는 annual' });
+
+  // 입력 정제 — 줄바꿈/제어문자 차단 (SMS 본문 위조·헤더 인젝션 방지) + 길이 제한
+  company = String(company).replace(/[\r\n\t]/g, ' ').trim().slice(0, 100);
+  name = String(name).replace(/[\r\n\t]/g, ' ').trim().slice(0, 50);
+  if (!company || !name) return res.status(400).json({ ok: false, msg: '회사명·이름이 비어있습니다.' });
+
   const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
 
   // 약관 동의 서버 검증 (정보통신망법·전자상거래법 — 분쟁 시 증거 보호)
@@ -357,7 +407,8 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
     if (existing) {
       // 재활성화 — 약관 정책: 무료 체험 미적용 + 즉시 결제 (마이페이지 재구독과 동일 흐름)
       const { chargeWithRetry } = require('./innopay');
-      const newMoid = moid || (kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000));
+      // moid는 서버에서 항상 새로 생성 (클라이언트 신뢰 X — 재사용·충돌 방지)
+      const newMoid = kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000);
 
       // 1) 즉시 결제 시도
       const chargeResult = await chargeWithRetry({
@@ -405,17 +456,18 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
       return res.json({ ok: true, charge_amount: chargeAmount, next_billing_date: nextBilling, reactivated: true, subscriberId: existing.id });
     }
 
-    // 신규 가입 — 임시 비밀번호 생성
+    // 신규 가입 — 임시 비밀번호 + moid 서버 재생성 (클라이언트 신뢰 X)
     const tempPw = genTempPw();
     const salt = genSalt();
     const hash = hashPw(tempPw, salt);
+    const serverMoid = kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000);
 
     // INSERT OR IGNORE — 더블클릭 등 race로 동시 INSERT가 들어와도 phone UNIQUE 제약에 의해 한 건만 통과
     const r = db.prepare(`
       INSERT OR IGNORE INTO subscribers
         (company, name, phone, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, moid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+    `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, serverMoid, chargeAmount, trialStart, nextBillingDate, hash, salt);
 
     if (r.changes === 0) {
       // 동시 race로 다른 요청이 먼저 INSERT 함 — 그 row 반환 (멱등 응답)
@@ -444,9 +496,41 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
 // ── 관리자 페이지 ──
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
+// adminAuth — brute-force 카운트 + timing-safe 비교 (단순 === 비교는 timing leak)
 function adminAuth(req, res, next) {
-  if (req.headers['x-admin-pw'] === cfg.ADMIN_PW) return next();
-  res.status(403).json({ ok: false, msg: 'Forbidden' });
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+
+  // 윈도우 지난 항목 정리
+  const rec = adminAuthFailures.get(ip);
+  if (rec && now - rec.firstAt > ADMIN_AUTH_WINDOW_MS) {
+    adminAuthFailures.delete(ip);
+  }
+  const cur = adminAuthFailures.get(ip);
+  if (cur && cur.count >= ADMIN_AUTH_MAX_FAILURES) {
+    return res.status(429).json({ ok: false, msg: '어드민 인증 시도가 너무 많습니다. 15분 후 다시 시도해주세요.' });
+  }
+
+  const sent = String(req.headers['x-admin-pw'] || '');
+  const expected = String(cfg.ADMIN_PW || '');
+  const recordFailure = () => {
+    if (cur) cur.count++;
+    else adminAuthFailures.set(ip, { count: 1, firstAt: now });
+  };
+
+  if (!expected || !sent || sent.length !== expected.length) {
+    recordFailure();
+    return res.status(403).json({ ok: false, msg: 'Forbidden' });
+  }
+  let ok = false;
+  try { ok = crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(expected)); } catch (e) { ok = false; }
+  if (!ok) {
+    recordFailure();
+    return res.status(403).json({ ok: false, msg: 'Forbidden' });
+  }
+  // 성공 — 실패 카운트 리셋
+  adminAuthFailures.delete(ip);
+  next();
 }
 
 app.get('/api/subscribers', adminAuth, (req, res) => {
@@ -1071,7 +1155,8 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
     if (!r.ok) notifySlack(`⚠️ 비번재발급 SMS 실패: ${sub.company} (id=${id}) — ${r.resultCode} ${r.resultMsg}`);
   }).catch(e => console.error('[SMS 발송 실패]', e.message));
 
-  res.json({ ok: true, tempPassword: tempPw, smsSent: true });
+  // 임시비번은 SMS로만 전달 (응답·로그·어드민 화면에 평문 노출 금지)
+  res.json({ ok: true, smsSent: true });
 });
 
 // 관리자 — 기능 활성화 안내 SMS (서버에서 셀프 활성화 처리 후 회원에게 통보)
@@ -1187,8 +1272,7 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
   if (!sub) return res.status(401).json({ ok: false, msg: AUTH_FAIL_MSG });
   if (!sub.pw_hash) return res.status(401).json({ ok: false, msg: '비밀번호가 설정되지 않았습니다. 고객센터(070-4365-7740)로 문의해주세요.' });
 
-  const hash = hashPw(password, sub.pw_salt);
-  if (hash !== sub.pw_hash) return res.status(401).json({ ok: false, msg: AUTH_FAIL_MSG });
+  if (!verifyPw(password, sub.pw_salt, sub.pw_hash)) return res.status(401).json({ ok: false, msg: AUTH_FAIL_MSG });
 
   // 해지 상태도 로그인 허용 — 마이페이지에서 이력 확인 + 재구독 가능
   const token = genToken();
@@ -1264,7 +1348,7 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
   if (newPw.length < 6) return res.status(400).json({ ok: false, msg: '비밀번호는 6자 이상이어야 합니다.' });
 
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
-  if (hashPw(currentPw, sub.pw_salt) !== sub.pw_hash)
+  if (!verifyPw(currentPw, sub.pw_salt, sub.pw_hash))
     return res.status(401).json({ ok: false, msg: '현재 비밀번호가 올바르지 않습니다.' });
 
   const salt = genSalt();

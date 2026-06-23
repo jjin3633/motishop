@@ -557,6 +557,13 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
 let sessionToken = sessionStorage.getItem('moti_token');
 let currentSubscriber = null;
 const fmt = n => Number(n||0).toLocaleString();
+// XSS 방지 — innerHTML 보간 시 사용자 영향 데이터(InnoPay result_msg·환불 사유 등) escape
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;'
+  })[c]);
+}
 
 // key = DB에 저장되는 내부값 (절대 변경 X — 기존 가입자 데이터 호환)
 // label = 화면 표시 명칭 (없으면 key 그대로 사용)
@@ -846,7 +853,7 @@ function openPaymentDetail(logId) {
             <span class="pd-refund-tag" style="background:${tagColor}1f;color:${tagColor};">${tagText}</span>
           </div>
           <div class="pd-refund-meta">${(r.refunded_at||'').slice(0,16).replace('T',' ')}</div>
-          ${r.reason ? `<div class="pd-refund-reason">${r.reason}</div>` : ''}
+          ${r.reason ? `<div class="pd-refund-reason">${escapeHtml(r.reason)}</div>` : ''}
         </div>`;
       }).join('')}
     </div>
@@ -868,7 +875,7 @@ function openPaymentDetail(logId) {
       <div class="pd-info-row"><span class="pd-info-label">결제 일시</span><span class="pd-info-value">${billedAt}</span></div>
       <div class="pd-info-row"><span class="pd-info-label">결제 수단</span><span class="pd-info-value">자동 결제 (등록 카드)</span></div>
       <div class="pd-info-row"><span class="pd-info-label">거래 번호</span><span class="pd-info-value pd-mono">${log.moid || '-'}</span></div>
-      ${!isOk && log.result_msg ? `<div class="pd-info-row"><span class="pd-info-label">실패 사유</span><span class="pd-info-value" style="color:#ef4444;">${log.result_msg}</span></div>` : ''}
+      ${!isOk && log.result_msg ? `<div class="pd-info-row"><span class="pd-info-label">실패 사유</span><span class="pd-info-value" style="color:#ef4444;">${escapeHtml(log.result_msg)}</span></div>` : ''}
     </div>
     ${refundsHTML}
     <div class="pd-footer">

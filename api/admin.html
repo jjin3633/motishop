@@ -1741,7 +1741,7 @@ async function resetPw(id, name) {
     body: JSON.stringify({ id })
   }).then(r => r.json());
   if (data.ok) {
-    prompt(`재발급 완료. 아래 임시 비밀번호를 ${name} 원장님께 전달해주세요.\n(Ctrl+C로 복사)`, data.tempPassword);
+    alert(`재발급 완료. 임시 비밀번호는 ${name} 원장님께 SMS로 발송되었어요.\n어드민 화면·로그에는 노출되지 않습니다.`);
     loadSubscribers();
   } else {
     alert('오류가 발생했습니다: ' + (data.msg || ''));
