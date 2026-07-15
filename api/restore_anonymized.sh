@@ -23,11 +23,17 @@ echo "[1/5] 현재 DB 안전 백업 → $SNAPSHOT"
 cp "$DB" "$SNAPSHOT"
 echo "    ✓ 백업 완료 ($(du -h "$SNAPSHOT" | cut -f1))"
 
-# 2) 가장 오래된 6/7 백업 압축 해제
+# 2) 가장 오래된 백업 파일 자동 감지 후 압축 해제
+OLDEST_BACKUP=$(ls -t ~/motishop-api/backups/motishop-*.db.gz 2>/dev/null | tail -1)
+if [ -z "$OLDEST_BACKUP" ]; then
+  echo "❌ 백업 파일이 없습니다. ~/motishop-api/backups/ 확인 필요"
+  exit 1
+fi
 echo ""
-echo "[2/5] 6/7 백업 압축 해제 → $BACKUP_DB"
-gunzip -c ~/motishop-api/backups/motishop-2026-06-07.db.gz > "$BACKUP_DB"
-echo "    ✓ 압축 해제 완료"
+echo "[2/5] 가장 오래된 백업 압축 해제"
+echo "    소스: $OLDEST_BACKUP"
+gunzip -c "$OLDEST_BACKUP" > "$BACKUP_DB"
+echo "    ✓ 압축 해제 완료 (→ $BACKUP_DB)"
 
 # 3) 삭제된 회원 개수 미리 확인
 DELETED_COUNT=$(sqlite3 "$DB" "ATTACH '$BACKUP_DB' AS bkp; SELECT COUNT(*) FROM bkp.subscribers WHERE id NOT IN (SELECT id FROM main.subscribers);")
