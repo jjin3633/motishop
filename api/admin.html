@@ -1584,7 +1584,8 @@ async function loadRevenue(year) {
 
   const monthData = d.monthlyByYear;
   const allMonths = Array.from({length:12}, (_,i) => selectedYear + '-' + String(i+1).padStart(2,'0'));
-  const amountMap = Object.fromEntries(monthData.map(r => [r.month, r.total]));
+  // 차트는 결제 원금(r.total)이 아니라 수익(r.net = 결제 - 환불) 기준으로 표시
+  const amountMap = Object.fromEntries(monthData.map(r => [r.month, r.net || Math.max(0, r.total - (r.refunds || 0))]));
   const amounts = allMonths.map(m => amountMap[m] || 0);
   const labels  = allMonths.map(m => m.slice(5) + '월');
 
