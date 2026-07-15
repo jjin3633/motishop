@@ -167,13 +167,15 @@ tr:hover td { background:var(--gray50); }
 .year-table tr:last-child td { border-bottom:none; }
 .year-table tr.selected td { background:rgba(26,107,255,.06); }
 
-/* 월별 상세 5열 (월/건수/결제/환불/수익) — 컬럼 너비·정렬 명시 */
-#month-detail-table { table-layout:fixed; }
-#month-detail-table th:nth-child(1), #month-detail-table td:nth-child(1) { width:14%; }
-#month-detail-table th:nth-child(2), #month-detail-table td:nth-child(2) { width:12%; text-align:center; }
-#month-detail-table th:nth-child(3), #month-detail-table td:nth-child(3) { width:23%; text-align:right; }
-#month-detail-table th:nth-child(4), #month-detail-table td:nth-child(4) { width:23%; text-align:right; }
-#month-detail-table th:nth-child(5), #month-detail-table td:nth-child(5) { width:28%; text-align:right; }
+/* 월별 상세 5열 (월/건수/결제/환불/수익) — 컬럼 너비·정렬·최소폭 명시 */
+.month-detail { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#month-detail-table { table-layout: fixed !important; width: 100%; min-width: 480px; }
+#month-detail-table th, #month-detail-table td { padding: 8px 6px !important; font-size: 12px !important; }
+#month-detail-table th:nth-child(1), #month-detail-table td:nth-child(1) { width: 14% !important; text-align: left !important; }
+#month-detail-table th:nth-child(2), #month-detail-table td:nth-child(2) { width: 12% !important; text-align: center !important; }
+#month-detail-table th:nth-child(3), #month-detail-table td:nth-child(3) { width: 22% !important; text-align: right !important; }
+#month-detail-table th:nth-child(4), #month-detail-table td:nth-child(4) { width: 24% !important; text-align: right !important; }
+#month-detail-table th:nth-child(5), #month-detail-table td:nth-child(5) { width: 28% !important; text-align: right !important; font-weight: 700; }
 .year-row { cursor:pointer; }
 .year-row:hover td { background:var(--gray50); }
 .year-num { font-size:16px; font-weight:900; color:var(--text); }
