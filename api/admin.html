@@ -422,7 +422,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
             <div class="month-detail" id="month-detail-wrap">
               <div class="month-detail-title">월별 상세 <span id="month-detail-year"></span></div>
               <table class="year-table" id="month-detail-table">
-                <thead><tr><th>월</th><th>건수</th><th>결제</th><th>환불</th><th>순매출</th></tr></thead>
+                <thead><tr><th>월</th><th>건수</th><th>결제</th><th>환불</th><th>수익</th></tr></thead>
                 <tbody id="tbody-monthly"></tbody>
               </table>
             </div>
@@ -1535,7 +1535,7 @@ async function loadRevenue(year) {
     const net = Math.max(0, (gross || 0) - (refunds || 0));
     el.innerHTML = bdRow('결제 원금', fmt(gross || 0) + '원')
       + bdRow('환불', '-' + fmt(refunds || 0) + '원', 'refund')
-      + bdRow('순매출', fmt(net) + '원');
+      + bdRow('수익', fmt(net) + '원');
   };
   setBd(document.getElementById('rev-month-bd'), d.thisMonthGross, d.thisMonthRefunds);
   setBd(document.getElementById('rev-year-bd'),  d.thisYearGross,  d.thisYearRefunds);
