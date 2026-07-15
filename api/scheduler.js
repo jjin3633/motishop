@@ -257,42 +257,67 @@ function scheduleAutoDeletePreNotice() {
   console.log('자동 삭제 사전 안내 cron 시작 (매일 02:00 KST · 30일 경과 직전 회원에게 SMS)');
 }
 
-// 자동 탈퇴 — 해지 후 30일 경과한 가입자의 개인정보 완전 삭제
-// 매일 새벽 3시 KST 실행. 약관(개인정보 보유 기간 30일) + 개인정보보호법 22조(파기) 준수
+// 자동 익명화 — 해지 후 30일 경과한 가입자의 개인정보만 마스킹 처리 (2026-07-14 정책 변경)
+// 완전 삭제 → 마스킹으로 변경 이유:
+//   1. 결제·환불·해지 이력·기능 해제 상태 등 운영 감사 데이터 보존 필요 (사장님 요청)
+//   2. 개인정보보호법 22조는 "복원 불가능한 익명화"도 파기로 인정
+// 마스킹 규칙:
+//   - name: 첫 글자만 남기고 나머지 * (예: "김**")
+//   - phone: 뒤 4자리만 (예: "010-****-1234")
+//   - business_number·email·bill_key: NULL
+//   - moid는 유지 (결제 추적용, 개인 식별 X)
+// 유지 이력: billing_logs, subscriber_changes, refunds, terms_consents, activation_logs, subscriber_memos
+// 삭제 이력: sessions (로그인 세션 무의미)
 function scheduleAutoDelete() {
   cron.schedule('0 3 * * *', () => {
     try {
-      // 30일 = 30 * 24 * 60 * 60 * 1000 = 2592000000ms
-      // SQLite datetime 비교: cancelled_at < datetime('now', '+9 hours', '-30 days')
       const targets = db.prepare(`
-        SELECT id, company, name FROM subscribers
+        SELECT id, company, name, phone FROM subscribers
         WHERE status = 'cancelled'
           AND cancelled_at IS NOT NULL
+          AND anonymized_at IS NULL
           AND cancelled_at < datetime('now', '+9 hours', '-30 days')
       `).all();
 
       if (!targets.length) return;
 
       const tx = db.transaction((rows) => {
-        const tables = ['sessions', 'billing_logs', 'subscriber_changes', 'terms_consents', 'refunds', 'payment_notis', 'activation_logs', 'subscriber_memos'];
         for (const r of rows) {
-          for (const t of tables) {
-            try { db.prepare(`DELETE FROM ${t} WHERE subscriber_id=?`).run(r.id); } catch (e) { /* 일부 테이블에 컬럼 없을 수 있음 */ }
-          }
-          db.prepare(`DELETE FROM subscribers WHERE id=?`).run(r.id);
+          // 개인정보 마스킹
+          const nameMasked = r.name && r.name.length > 0
+            ? r.name.charAt(0) + '*'.repeat(Math.max(1, r.name.length - 1))
+            : '익명';
+          const phoneDigits = String(r.phone || '').replace(/[^0-9]/g, '');
+          const phoneMasked = phoneDigits.length >= 4
+            ? '010-****-' + phoneDigits.slice(-4)
+            : '010-****-****';
+
+          db.prepare(`UPDATE subscribers SET
+            name = ?,
+            phone = ?,
+            business_number = NULL,
+            email = NULL,
+            bill_key = 'ANONYMIZED',
+            pw_hash = NULL,
+            pw_salt = NULL,
+            anonymized_at = datetime('now', '+9 hours')
+            WHERE id = ?`).run(nameMasked, phoneMasked, r.id);
+
+          // 세션만 삭제 (로그인 세션 무의미), 이력 테이블은 모두 유지
+          try { db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(r.id); } catch (e) {}
         }
       });
       tx(targets);
 
       const summary = targets.map(t => `${t.company}(id=${t.id})`).join(', ');
-      console.log(`[자동탈퇴] ${targets.length}건 완전 삭제: ${summary}`);
-      notifySlack(`🗑️ 자동 탈퇴 완료: 해지 후 30일 경과 ${targets.length}건 완전 삭제\n${summary}`);
+      console.log(`[자동익명화] ${targets.length}건 마스킹 처리: ${summary}`);
+      notifySlack(`🔒 자동 익명화 완료: 해지 후 30일 경과 ${targets.length}건 개인정보 마스킹\n${summary}`);
     } catch (e) {
-      console.error('[자동탈퇴 오류]', e);
-      notifySlack(`🔴 자동탈퇴 cron 예외: ${e.message}`);
+      console.error('[자동익명화 오류]', e);
+      notifySlack(`🔴 자동익명화 cron 예외: ${e.message}`);
     }
   }, { timezone: 'Asia/Seoul' });
-  console.log('자동 탈퇴 cron 시작 (매일 03:00 KST · 해지 후 30일 경과 가입자 완전 삭제)');
+  console.log('자동 익명화 cron 시작 (매일 03:00 KST · 해지 후 30일 경과 가입자 개인정보 마스킹)');
 }
 
 function scheduleBilling() {

@@ -57,6 +57,9 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN business_number TEXT`); } catc
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN cancelled_at TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN failed_count INTEGER DEFAULT 0`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN last_failed_at TEXT`); } catch(e) {}
+// 익명화 시각 — 해지 30일 후 개인정보 마스킹 처리된 시점 (2026-07-13 정책 변경)
+// 완전 삭제 대신 마스킹으로 이력·감사 데이터 보존 + 개인정보보호법 준수
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN anonymized_at TEXT`); } catch(e) {}
 
 // 변경 이력 테이블 (기능/구독유형 변경 추적)
 db.exec(`
