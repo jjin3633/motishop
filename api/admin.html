@@ -161,22 +161,27 @@ tr:hover td { background:var(--gray50); }
 .box-head span:last-child { font-size:12px; color:var(--text-muted); }
 .box-body { padding:20px; }
 
-.year-table { width:100%; border-collapse:collapse; }
-.year-table th { font-size:11px; color:var(--text-muted); font-weight:700; letter-spacing:.03em; text-transform:uppercase; padding:8px 12px; border-bottom:1px solid var(--gray100); text-align:left; background:var(--gray50); white-space:nowrap; }
-.year-table td { padding:10px 12px; border-bottom:1px solid var(--gray100); font-size:12.5px; color:var(--text); white-space:nowrap; }
+/* 테이블 공통 — 부모 폭 100% 강제 준수 (컬럼 %는 각 id별 개별 지정) */
+.year-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.year-table th { font-size:11px; color:var(--text-muted); font-weight:700; letter-spacing:.03em; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid var(--gray100); text-align:left; background:var(--gray50); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.year-table td { padding:10px 10px; border-bottom:1px solid var(--gray100); font-size:12.5px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .year-table tr:last-child td { border-bottom:none; }
 .year-table tr.selected td { background:rgba(26,107,255,.06); }
 
-/* 월별 상세 5열 (월/건수/결제/환불/수익) — 컨텐츠 기반 auto 너비 + 정렬만 */
-.month-detail { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-#month-detail-table th, #month-detail-table td { padding: 8px 14px; }
-#month-detail-table th:nth-child(2), #month-detail-table td:nth-child(2) { text-align: center; }
-#month-detail-table th:nth-child(3), #month-detail-table td:nth-child(3),
-#month-detail-table th:nth-child(4), #month-detail-table td:nth-child(4),
-#month-detail-table th:nth-child(5), #month-detail-table td:nth-child(5) { text-align: right; }
-#month-detail-table th:nth-child(5), #month-detail-table td:nth-child(5) { font-weight: 700; }
+/* 연도별 수익 4열 (연도 / 결제 건수 / 수익 / 전년 대비) */
+#yearly-table th:nth-child(1), #yearly-table td:nth-child(1) { width: 20%; }
+#yearly-table th:nth-child(2), #yearly-table td:nth-child(2) { width: 25%; }
+#yearly-table th:nth-child(3), #yearly-table td:nth-child(3) { width: 35%; text-align: right; }
+#yearly-table th:nth-child(4), #yearly-table td:nth-child(4) { width: 20%; text-align: right; }
 
-/* 카드 breakdown 잘림 방지 — 좁은 뷰포트 대응 */
+/* 월별 상세 5열 (월/건수/결제/환불/수익) */
+#month-detail-table th:nth-child(1), #month-detail-table td:nth-child(1) { width: 12%; }
+#month-detail-table th:nth-child(2), #month-detail-table td:nth-child(2) { width: 12%; text-align: center; }
+#month-detail-table th:nth-child(3), #month-detail-table td:nth-child(3) { width: 24%; text-align: right; }
+#month-detail-table th:nth-child(4), #month-detail-table td:nth-child(4) { width: 24%; text-align: right; }
+#month-detail-table th:nth-child(5), #month-detail-table td:nth-child(5) { width: 28%; text-align: right; font-weight: 700; }
+
+/* 카드 breakdown — 좁은 뷰포트 대응 */
 .rev-card .rev-breakdown { font-size: 11px; }
 .rev-card .rev-breakdown .row { white-space: nowrap; }
 .rev-card .rev-breakdown .val { flex-shrink: 0; }
@@ -417,7 +422,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
             <span style="font-size:12px;color:var(--gray400);">클릭하면 월별 상세</span>
           </div>
           <div class="box-body" style="padding:0;">
-            <table class="year-table">
+            <table class="year-table" id="yearly-table">
               <thead><tr><th>연도</th><th>결제 건수</th><th>수익</th><th>전년 대비</th></tr></thead>
               <tbody id="tbody-yearly"><tr><td colspan="4" class="empty">불러오는 중...</td></tr></tbody>
             </table>
