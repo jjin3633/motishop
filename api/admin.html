@@ -137,6 +137,15 @@ tr:hover td { background:var(--gray50); }
 .rev-card .amt small { font-size:14px; font-weight:500; color:var(--text-muted); margin-left:2px; }
 .rev-card.hl .amt small { color:rgba(255,255,255,.35); }
 .rev-card .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
+/* 결제/환불 3줄 breakdown */
+.rev-card .rev-breakdown { margin-top:10px; padding-top:8px; border-top:1px dashed var(--gray100); display:flex; flex-direction:column; gap:3px; font-size:11.5px; }
+.rev-card .rev-breakdown .row { display:flex; justify-content:space-between; color:var(--text-muted); }
+.rev-card .rev-breakdown .row .val { font-weight:600; color:var(--text); }
+.rev-card .rev-breakdown .row.refund .val { color:#dc2626; }
+.rev-card.hl .rev-breakdown { border-top-color:rgba(255,255,255,.15); }
+.rev-card.hl .rev-breakdown .row { color:rgba(255,255,255,.5); }
+.rev-card.hl .rev-breakdown .row .val { color:rgba(255,255,255,.85); }
+.rev-card.hl .rev-breakdown .row.refund .val { color:#fca5a5; }
 
 /* 통계 탭 — 일/월/년 토글 */
 .period-toggle { display:inline-flex; gap:4px; background:var(--gray100); border-radius:9px; padding:3px; }
@@ -364,6 +373,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
         <div class="rev-card">
           <div class="lbl">이번 달 수익</div>
           <div class="amt" id="rev-month">—<small>원</small></div>
+          <div class="rev-breakdown" id="rev-month-bd"></div>
           <div class="sub" id="rev-month-sub"></div>
         </div>
         <div class="rev-card">
@@ -374,12 +384,14 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
         <div class="rev-card">
           <div class="lbl">올해 누적 수익</div>
           <div class="amt" id="rev-year">—<small>원</small></div>
+          <div class="rev-breakdown" id="rev-year-bd"></div>
           <div class="sub" id="rev-year-sub"></div>
         </div>
         <div class="rev-card hl">
           <div class="lbl">전체 누적 수익</div>
           <div class="amt" id="rev-total">—<small>원</small></div>
-          <div class="sub">서비스 오픈 이후</div>
+          <div class="rev-breakdown" id="rev-total-bd"></div>
+          <div class="sub">서비스 오픈 이후 · 환불 차감</div>
         </div>
       </div>
 
@@ -410,7 +422,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
             <div class="month-detail" id="month-detail-wrap">
               <div class="month-detail-title">월별 상세 <span id="month-detail-year"></span></div>
               <table class="year-table" id="month-detail-table">
-                <thead><tr><th>월</th><th>건수</th><th>수익</th></tr></thead>
+                <thead><tr><th>월</th><th>건수</th><th>결제</th><th>환불</th><th>순매출</th></tr></thead>
                 <tbody id="tbody-monthly"></tbody>
               </table>
             </div>
@@ -1517,6 +1529,18 @@ async function loadRevenue(year) {
   document.getElementById('st-month').innerHTML = fmt(d.thisMonthTotal) + '<small>원</small>';
   document.getElementById('st-all').innerHTML   = fmt(d.allTimeTotal) + '<small>원</small>';
 
+  // 카드 breakdown (결제/환불/순매출 3줄) — A·B 옵션 적용 (2026-07-15)
+  const bdRow = (label, val, cls) => `<div class="row${cls ? ' ' + cls : ''}"><span>${label}</span><span class="val">${val}</span></div>`;
+  const setBd = (el, gross, refunds) => {
+    const net = Math.max(0, (gross || 0) - (refunds || 0));
+    el.innerHTML = bdRow('결제 원금', fmt(gross || 0) + '원')
+      + bdRow('환불', '-' + fmt(refunds || 0) + '원', 'refund')
+      + bdRow('순매출', fmt(net) + '원');
+  };
+  setBd(document.getElementById('rev-month-bd'), d.thisMonthGross, d.thisMonthRefunds);
+  setBd(document.getElementById('rev-year-bd'),  d.thisYearGross,  d.thisYearRefunds);
+  setBd(document.getElementById('rev-total-bd'), d.allTimeGross,   d.allTimeRefunds);
+
   // 연도별 테이블
   const yearly = d.yearly;
   const ytbody = document.getElementById('tbody-yearly');
@@ -1576,16 +1600,22 @@ async function loadRevenue(year) {
     }
   });
 
-  // 월별 상세 테이블
+  // 월별 상세 테이블 (결제/환불/순매출 3열) — 2026-07-15 확장
   const tbodyM = document.getElementById('tbody-monthly');
-  if (!monthData.length) { tbodyM.innerHTML = '<tr><td colspan="3" class="empty" style="padding:16px">결제 내역 없음</td></tr>'; }
+  if (!monthData.length) { tbodyM.innerHTML = '<tr><td colspan="5" class="empty" style="padding:16px">결제 내역 없음</td></tr>'; }
   else {
-    tbodyM.innerHTML = monthData.map(r => `
+    tbodyM.innerHTML = monthData.map(r => {
+      const refunds = r.refunds || 0;
+      const net = r.net || Math.max(0, r.total - refunds);
+      return `
       <tr>
         <td>${r.month.slice(5)}월</td>
         <td>${r.count}건</td>
-        <td class="fw700">${fmt(r.total)}원</td>
-      </tr>`).join('');
+        <td>${fmt(r.total)}원</td>
+        <td style="color:${refunds > 0 ? '#dc2626' : 'var(--text-muted)'};">${refunds > 0 ? '-' + fmt(refunds) : '0'}원</td>
+        <td class="fw700">${fmt(net)}원</td>
+      </tr>`;
+    }).join('');
   }
 }
 

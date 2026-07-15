@@ -693,13 +693,34 @@ app.get('/api/revenue', adminAuth, (req, res) => {
   `).all();
 
   const year = req.query.year || thisYear;
+  // 월별 결제 원금
   const monthlyByYear = db.prepare(`
     SELECT strftime('%Y-%m', billed_at) as month, SUM(amount) as total, COUNT(*) as count
     FROM billing_logs WHERE result_code IN ('0000','00') AND strftime('%Y', billed_at)=?
     GROUP BY month ORDER BY month ASC
   `).all(year);
+  // 월별 환불액 (refunded_at 기준)
+  const refundsByMonth = db.prepare(`
+    SELECT strftime('%Y-%m', refunded_at) as month, SUM(amount) as refunds
+    FROM refunds WHERE result_code='2001' AND strftime('%Y', refunded_at)=?
+    GROUP BY month
+  `).all(year);
+  const refundMap = Object.fromEntries(refundsByMonth.map(r => [r.month, r.refunds]));
+  // 월별 상세에 환불·순매출 병합
+  monthlyByYear.forEach(m => {
+    m.refunds = refundMap[m.month] || 0;
+    m.net = Math.max(0, m.total - m.refunds);
+  });
 
-  res.json({ thisMonthTotal, thisYearTotal, allTimeTotal, nextMonthEstimate, nextMonthCount, nextMonthBreakdown, nextMonthList, yearly, monthly, monthlyByYear, selectedYear: year });
+  res.json({
+    thisMonthTotal, thisYearTotal, allTimeTotal,
+    // 카드용 gross/refunds 분리 필드 (환불 차감 전후 명확화)
+    thisMonthGross, thisMonthRefunds,
+    thisYearGross, thisYearRefunds,
+    allTimeGross, allTimeRefunds,
+    nextMonthEstimate, nextMonthCount, nextMonthBreakdown, nextMonthList,
+    yearly, monthly, monthlyByYear, selectedYear: year,
+  });
 });
 
 // ── 실시간 운영 모니터 — 자체 수집 데이터(visits/events) 기반 5개 KPI ──
