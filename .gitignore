@@ -4,6 +4,9 @@ api/*.log
 api/*.db
 api/*.db-journal
 
+# 서버가 자동 갱신하는 파일 — 저장소에서 관리 X
+sitemap.xml
+
 # Secrets — 절대 commit 금지
 .env
 .env.*
