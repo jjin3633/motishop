@@ -142,10 +142,13 @@ tr:hover td { background:var(--gray50); }
 .rev-card .rev-breakdown .row { display:flex; justify-content:space-between; color:var(--text-muted); }
 .rev-card .rev-breakdown .row .val { font-weight:600; color:var(--text); }
 .rev-card .rev-breakdown .row.refund .val { color:#dc2626; }
+.rev-card .rev-breakdown .row.exvat .val { color:#0369a1; font-weight:800; }
+.vat-note-banner { background:rgba(3,105,161,.06); border:1px solid rgba(3,105,161,.15); color:#0369a1; padding:10px 14px; border-radius:8px; font-size:12px; margin-bottom:14px; line-height:1.5; font-weight:500; }
 .rev-card.hl .rev-breakdown { border-top-color:rgba(255,255,255,.15); }
 .rev-card.hl .rev-breakdown .row { color:rgba(255,255,255,.5); }
 .rev-card.hl .rev-breakdown .row .val { color:rgba(255,255,255,.85); }
 .rev-card.hl .rev-breakdown .row.refund .val { color:#fca5a5; }
+.rev-card.hl .rev-breakdown .row.exvat .val { color:#7dd3fc; font-weight:800; }
 
 /* 통계 탭 — 일/월/년 토글 */
 .period-toggle { display:inline-flex; gap:4px; background:var(--gray100); border-radius:9px; padding:3px; }
@@ -383,6 +386,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
 
     <!-- ── 수익 현황 ── -->
     <div class="panel" id="panel-revenue">
+      <div class="vat-note-banner">ⓘ 표시된 모든 금액은 <strong>부가세(VAT) 제외 금액</strong>입니다. 실제 결제액·환불·부가세는 카드 하단 breakdown에서 확인하실 수 있습니다.</div>
       <div class="rev-top">
         <div class="rev-card">
           <div class="lbl">이번 달 수익</div>
@@ -1510,6 +1514,9 @@ async function cancelSub(id, btn) {
 }
 
 // ── 수익 ──
+// VAT(10%) 제외 공급가액 헬퍼 — 큰 숫자·연도별·월별·차트는 부가세 제외로 표기 (2026-07-24)
+const exVat = n => Math.round((n || 0) / 1.1);
+
 async function loadRevenue(year) {
   year = year || selectedYear;
   const url = `/api/revenue?year=${year}`;
@@ -1521,10 +1528,10 @@ async function loadRevenue(year) {
     const n = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     return n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월';
   })();
-  document.getElementById('rev-month').innerHTML = fmt(d.thisMonthTotal) + '<small>원</small>';
-  document.getElementById('rev-next').innerHTML  = fmt(d.nextMonthEstimate || 0) + '<small>원</small>';
-  document.getElementById('rev-year').innerHTML  = fmt(d.thisYearTotal)  + '<small>원</small>';
-  document.getElementById('rev-total').innerHTML = fmt(d.allTimeTotal)   + '<small>원</small>';
+  document.getElementById('rev-month').innerHTML = fmt(exVat(d.thisMonthTotal)) + '<small>원</small>';
+  document.getElementById('rev-next').innerHTML  = fmt(exVat(d.nextMonthEstimate)) + '<small>원</small>';
+  document.getElementById('rev-year').innerHTML  = fmt(exVat(d.thisYearTotal))  + '<small>원</small>';
+  document.getElementById('rev-total').innerHTML = fmt(exVat(d.allTimeTotal))   + '<small>원</small>';
   document.getElementById('rev-month-sub').textContent = now.getFullYear() + '년 ' + (now.getMonth()+1) + '월';
   // 다음 달 카드 sub — breakdown 표시 (정기 N · 체험 N · 합 N건)
   const bd = d.nextMonthBreakdown || {};
@@ -1540,16 +1547,19 @@ async function loadRevenue(year) {
   if (Array.isArray(d.nextMonthList)) console.table(d.nextMonthList);
   console.groupEnd();
   document.getElementById('rev-year-sub').textContent  = now.getFullYear() + '년 합계';
-  document.getElementById('st-month').innerHTML = fmt(d.thisMonthTotal) + '<small>원</small>';
-  document.getElementById('st-all').innerHTML   = fmt(d.allTimeTotal) + '<small>원</small>';
+  document.getElementById('st-month').innerHTML = fmt(exVat(d.thisMonthTotal)) + '<small>원</small>';
+  document.getElementById('st-all').innerHTML   = fmt(exVat(d.allTimeTotal)) + '<small>원</small>';
 
-  // 카드 breakdown (결제/환불/순매출 3줄) — A·B 옵션 적용 (2026-07-15)
+  // 카드 breakdown 4줄: 결제(VAT 포함) / 환불 / 공급가액(VAT 제외) / 부가세 — 2026-07-24 B안 병기
   const bdRow = (label, val, cls) => `<div class="row${cls ? ' ' + cls : ''}"><span>${label}</span><span class="val">${val}</span></div>`;
   const setBd = (el, gross, refunds) => {
     const net = Math.max(0, (gross || 0) - (refunds || 0));
-    el.innerHTML = bdRow('결제 원금', fmt(gross || 0) + '원')
+    const exVat = Math.round(net / 1.1);
+    const vat = net - exVat;
+    el.innerHTML = bdRow('결제', fmt(gross || 0) + '원')
       + bdRow('환불', '-' + fmt(refunds || 0) + '원', 'refund')
-      + bdRow('수익', fmt(net) + '원');
+      + bdRow('공급가액', fmt(exVat) + '원', 'exvat')
+      + bdRow('부가세', fmt(vat) + '원');
   };
   setBd(document.getElementById('rev-month-bd'), d.thisMonthGross, d.thisMonthRefunds);
   setBd(document.getElementById('rev-year-bd'),  d.thisYearGross,  d.thisYearRefunds);
@@ -1571,7 +1581,7 @@ async function loadRevenue(year) {
       return `<tr class="year-row ${r.year===selectedYear?'selected':''}" onclick="selectYear('${r.year}')">
         <td><span class="year-num">${r.year}</span></td>
         <td>${r.count}건</td>
-        <td class="fw700">${fmt(r.total)}원</td>
+        <td class="fw700">${fmt(exVat(r.total))}원</td>
         <td>${growthHtml}</td>
       </tr>`;
     }).join('');
@@ -1584,8 +1594,8 @@ async function loadRevenue(year) {
 
   const monthData = d.monthlyByYear;
   const allMonths = Array.from({length:12}, (_,i) => selectedYear + '-' + String(i+1).padStart(2,'0'));
-  // 차트는 결제 원금(r.total)이 아니라 수익(r.net = 결제 - 환불) 기준으로 표시
-  const amountMap = Object.fromEntries(monthData.map(r => [r.month, r.net || Math.max(0, r.total - (r.refunds || 0))]));
+  // 차트는 부가세 제외 공급가액 기준 (2026-07-24 B안)
+  const amountMap = Object.fromEntries(monthData.map(r => [r.month, exVat(r.net || Math.max(0, r.total - (r.refunds || 0)))]));
   const amounts = allMonths.map(m => amountMap[m] || 0);
   const labels  = allMonths.map(m => m.slice(5) + '월');
 
@@ -1628,7 +1638,7 @@ async function loadRevenue(year) {
         <td>${r.count}건</td>
         <td>${fmt(r.total)}원</td>
         <td style="color:${refunds > 0 ? '#dc2626' : 'var(--text-muted)'};">${refunds > 0 ? '-' + fmt(refunds) : '0'}원</td>
-        <td class="fw700">${fmt(net)}원</td>
+        <td class="fw700">${fmt(exVat(net))}원</td>
       </tr>`;
     }).join('');
   }
