@@ -35,4 +35,6 @@ module.exports = {
   SOLAPI_API_KEY: process.env.SOLAPI_API_KEY || '',
   SOLAPI_API_SECRET: process.env.SOLAPI_API_SECRET || '',
   SOLAPI_FROM: process.env.SOLAPI_FROM || '',  // 사전 등록된 발신번호
+  // phone HMAC-SHA256 시크릿 (익명화 후 재가입 판별용 · 원본 phone 재식별 방지)
+  PHONE_HASH_SECRET: required('PHONE_HASH_SECRET'),
 };

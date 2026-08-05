@@ -183,6 +183,11 @@ function genSalt() {
 function genToken() {
   return crypto.randomBytes(32).toString('hex');
 }
+// phone HMAC-SHA256 (익명화 후 재가입 판별용) — cleanPhone(숫자만) 입력 기대
+function hashPhone(cleanPhone) {
+  if (!cleanPhone) return '';
+  return crypto.createHmac('sha256', cfg.PHONE_HASH_SECRET).update(String(cleanPhone)).digest('hex');
+}
 
 // ── 헬스체크 (UptimeRobot 등 외부 모니터링용) ──
 app.get('/api/health', (_req, res) => {
@@ -406,7 +411,13 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
   const chargeAmount = billingType === 'annual' ? monthlyAmount * 12 : monthlyAmount;
 
   // 동일 phone 기존 가입자 검색 → 있으면 재활성화, 없으면 신규
-  const existing = db.prepare(`SELECT * FROM subscribers WHERE phone = ? ORDER BY id DESC LIMIT 1`).get(cleanPhone);
+  // phone_hash 함께 매칭 (익명화 후 마스킹된 phone도 원본 hash로 판별 · 2026-08-05)
+  const phoneHash = hashPhone(cleanPhone);
+  const existing = db.prepare(`
+    SELECT * FROM subscribers
+    WHERE phone = ? OR (phone_hash IS NOT NULL AND phone_hash = ?)
+    ORDER BY id DESC LIMIT 1
+  `).get(cleanPhone, phoneHash);
 
   try {
     if (existing) {
@@ -466,11 +477,12 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
     const serverMoid = kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000);
 
     // INSERT OR IGNORE — 더블클릭 등 race로 동시 INSERT가 들어와도 phone UNIQUE 제약에 의해 한 건만 통과
+    // phone_hash 함께 저장 — 향후 익명화 후 재가입 판별용 (2026-08-05)
     const r = db.prepare(`
       INSERT OR IGNORE INTO subscribers
-        (company, name, phone, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, serverMoid, chargeAmount, trialStart, nextBillingDate, hash, salt);
+        (company, name, phone, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt, phone_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(company, name, cleanPhone, cleanBizNum, features, billingType, billKey, serverMoid, chargeAmount, trialStart, nextBillingDate, hash, salt, phoneHash);
 
     if (r.changes === 0) {
       // 동시 race로 다른 요청이 먼저 INSERT 함 — 실제 DB 값을 SELECT해서 응답 (값 일치 보장)
@@ -489,6 +501,30 @@ app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
     saveTermsConsent(r.lastInsertRowid, termsAgreed, req);
     console.log(`[신규 가입] id=${r.lastInsertRowid} ${company} / ${maskName(name)} / ${billingType} / 첫 결제일: ${nextBillingDate}`);
     notifySlack(`🎉 신규 가입: ${company} (id=${r.lastInsertRowid}, ${maskName(name)}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 기능: ${displayFeatures(features)} / 첫 결제: ${nextBillingDate}`);
+
+    // 뒷 4자리 매칭 알림 — 익명화된 회원과 뒷 4자리 일치 시 수동 확인 요청 (2026-08-05)
+    // phone_hash 판별 miss한 재가입 케이스(과거 익명화된 회원 · phone_hash 없음) 사후 감지용
+    const last4 = cleanPhone.slice(-4);
+    if (last4.length === 4) {
+      const suspicious = db.prepare(`
+        SELECT id, company, anonymized_at, cancelled_at
+        FROM subscribers
+        WHERE anonymized_at IS NOT NULL
+          AND phone LIKE ?
+          AND id != ?
+        ORDER BY anonymized_at DESC
+      `).all(`%-${last4}`, r.lastInsertRowid);
+      if (suspicious.length > 0) {
+        const list = suspicious.map(m =>
+          `- id=${m.id} ${m.company} (해지 ${(m.cancelled_at||'').slice(0,10)} · 익명화 ${(m.anonymized_at||'').slice(0,10)})`
+        ).join('\n');
+        notifySlack(
+          `⚠️ 뒷번호 4자리 매칭 신규 가입: ${company} (id=${r.lastInsertRowid}, 뒷4자리=${last4})\n` +
+          `기존 익명화 회원 ${suspicious.length}건과 뒷4자리 동일:\n${list}\n\n` +
+          `※ 우연일 수도·재가입일 수도 → 수동 확인 부탁드립니다.`
+        );
+      }
+    }
 
     // 임시 비밀번호 SMS 발송 (솔라피)
     const smsText = `[Moti Shop] ${company} ${name}님, 가입을 환영해요.\n\n마이페이지 로그인 정보 안내드립니다.\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호를 변경하고, 마이페이지에서 구독 중인 기능을 확인해보세요!\nhttps://shop.motiphysio.com/mypage`;
