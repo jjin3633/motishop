@@ -359,14 +359,14 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       <div class="toolbar">
         <input type="text" id="search" placeholder="🔍  업체명 · 원장님 이름 검색" oninput="filterSubscribers()" />
         <select id="filter-status" onchange="filterSubscribers()">
-          <option value="" selected>전체 상태</option>
-          <option value="active_or_trial">활성 가입자</option>
+          <option value="">전체 상태</option>
+          <option value="active_or_trial" selected>활성 가입자</option>
           <option value="trial">체험 중</option>
           <option value="active">구독 중</option>
           <option value="cancelled">해지</option>
         </select>
         <select id="filter-billing" onchange="filterSubscribers()">
-          <option value="">전체 타입</option>
+          <option value="" selected>전체 타입</option>
           <option value="monthly">월구독</option>
           <option value="annual">연구독</option>
           <option value="coupon">🎟️ 쿠폰</option>
