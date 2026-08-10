@@ -339,11 +339,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
       </div>
     </div>
 
-    <!-- 해지 상태 — 재구독 박스 (status='cancelled'일 때만 표시) -->
+    <!-- 해지 상태 — 재구독 박스 (status='cancelled' OR 쿠폰 카드 미등록일 때 표시) -->
     <div class="resub-box" id="resubBox" style="display:none;">
-      <h3>구독이 해지되었습니다</h3>
-      <p>이전 결제 이력과 변경 내역은 그대로 보관됩니다.<br>같은 카드 또는 다른 카드를 등록하시면 즉시 다시 구독을 시작할 수 있어요.</p>
-      <button class="btn-resub" onclick="openResubModal()">다시 구독하기</button>
+      <h3 id="resubTitle">구독이 해지되었습니다</h3>
+      <p id="resubDesc">이전 결제 이력과 변경 내역은 그대로 보관됩니다.<br>같은 카드 또는 다른 카드를 등록하시면 즉시 다시 구독을 시작할 수 있어요.</p>
+      <button class="btn-resub" onclick="openResubModal()" id="resubBtn">다시 구독하기</button>
     </div>
 
     <!-- 구독 기능 관리 -->
@@ -782,10 +782,29 @@ async function showApp() {
   badge.className = 'status-badge ' + cls;
   badge.textContent = txt;
 
+  // 쿠폰 회원 판별 (카드 미등록 상태)
+  const isCouponMember = s.billing_type === 'coupon' || (s.bill_key && String(s.bill_key).startsWith('COUPON_'));
+  const isCouponCardless = isCouponMember && s.bill_key && String(s.bill_key).startsWith('COUPON_');
+
   if (s.status === 'cancelled') {
+    // 해지·쿠폰 만료 모두 재구독 박스 노출 (submitResub에서 케이스 분기)
     document.getElementById('cancelBtn').style.display = 'none';
     document.getElementById('resubBox').style.display = 'block';
     document.getElementById('updateCardBtn').style.display = 'none';
+    if (isCouponMember) {
+      document.getElementById('resubTitle').textContent = '🎟️ 쿠폰 기간이 만료되었습니다';
+      document.getElementById('resubDesc').innerHTML = '카드를 등록하시면 즉시 유료 회원으로 전환되며, 등록한 기능을 계속 사용하실 수 있어요.';
+      document.getElementById('resubBtn').textContent = '카드 등록하고 계속 사용하기';
+    }
+  } else if (isCouponCardless) {
+    // 쿠폰 활성 · 카드 미등록 → 예약 결제 카드 등록 UI 노출
+    document.getElementById('cancelBtn').style.display = 'none';
+    document.getElementById('resubBox').style.display = 'block';
+    document.getElementById('updateCardBtn').style.display = 'none';
+    const expiry = (s.next_billing_date || '').slice(0,10);
+    document.getElementById('resubTitle').textContent = '🎟️ 지금 카드 등록하면 만료 후 자동으로 이어져요';
+    document.getElementById('resubDesc').innerHTML = `쿠폰 기간(<strong>${expiry}</strong>)이 끝나면 등록한 카드로 자동 결제되어 유료 회원으로 전환됩니다. 지금 등록해도 쿠폰 무료 기간은 그대로 유지돼요.`;
+    document.getElementById('resubBtn').textContent = '카드 등록하기 (예약 결제)';
   } else {
     document.getElementById('resubBox').style.display = 'none';
     document.getElementById('updateCardBtn').style.display = '';
@@ -1448,13 +1467,29 @@ async function submitResub() {
     return;
   }
 
-  // 2) 서버에 재구독 + 즉시 결제 요청
+  // 2) 케이스 분기 — 쿠폰 활성(카드 미등록) 회원은 예약 결제 · 그 외는 즉시 결제
+  const isCouponActiveCardless =
+    currentSubscriber?.status === 'active' &&
+    currentSubscriber?.billing_type === 'coupon' &&
+    currentSubscriber?.bill_key &&
+    String(currentSubscriber.bill_key).startsWith('COUPON_');
+
   try {
-    const data = await apiFetch('/api/mypage/resubscribe', {
+    const endpoint = isCouponActiveCardless ? '/api/mypage/coupon-register-card' : '/api/mypage/resubscribe';
+    // resubscribe: Array 필수 · coupon-register-card: 문자열 처리 (양쪽 다 호환되도록 케이스 분기)
+    const featurePayload = isCouponActiveCardless ? features.join(', ') : features;
+    const data = await apiFetch(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ features, billingType: resubBilling, billKey, moid, amount, ownerType: resubOwner, businessNumber: isBiz ? idNum : '' }),
+      body: JSON.stringify({ features: featurePayload, billingType: resubBilling, billKey, moid, amount, ownerType: resubOwner, businessNumber: isBiz ? idNum : '' }),
     });
     if (data.ok) {
+      if (isCouponActiveCardless) {
+        // 예약 결제 등록 완료 (실제 결제는 만료일)
+        track('coupon_card_registered', { amount: data.chargeAmount, expiry: data.expiryDate });
+        alert(`✓ 카드 등록 완료!\n\n쿠폰 만료일(${data.expiryDate})에 ${fmt(data.chargeAmount)}원이 자동 결제됩니다.\n그때까지는 쿠폰 무료 기간이 그대로 유지돼요.`);
+        location.reload();
+        return;
+      }
       track('resubscribed', {
         amount: data.charge_amount,
         billing_type: resubBilling,

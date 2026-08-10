@@ -326,6 +326,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       <button class="tab" onclick="switchTab('logs',this)">결제 로그</button>
       <button class="tab" onclick="switchTab('stats',this)">통계</button>
       <button class="tab" onclick="switchTab('monitor',this)">운영 모니터링</button>
+      <button class="tab" onclick="switchTab('coupons',this)">🎟️ 쿠폰</button>
     </div>
 
     <!-- ── 가입자 목록 ── -->
@@ -655,6 +656,33 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       </div>
     </div>
 
+    <!-- ── 쿠폰 관리 ── -->
+    <div class="panel" id="panel-coupons">
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <div class="stat-card" style="background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.2);"><div class="lbl">전체 쿠폰</div><div class="val" id="cp-total">—</div></div>
+        <div class="stat-card"><div class="lbl">사용됨</div><div class="val" id="cp-used">—</div></div>
+        <div class="stat-card"><div class="lbl">미사용</div><div class="val" id="cp-unused">—</div></div>
+        <div class="stat-card"><div class="lbl">쿠폰 회원 (활성)</div><div class="val" id="cp-active">—</div></div>
+        <div class="stat-card"><div class="lbl">🎯 유료 전환</div><div class="val" id="cp-converted">—</div></div>
+      </div>
+      <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+        <select id="cp-filter" onchange="renderCouponList()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--gray100);font-size:13px;font-family:inherit;background:white;">
+          <option value="">전체</option>
+          <option value="used">사용됨</option>
+          <option value="unused">미사용</option>
+        </select>
+        <div style="font-size:12px;color:var(--text-muted);margin-left:auto;">💡 "리셋"은 해당 쿠폰을 미사용 상태로 되돌리고 연결된 회원을 익명화합니다</div>
+      </div>
+      <div class="box">
+        <div class="box-body" style="padding:0;">
+          <table class="year-table" id="coupons-table">
+            <thead><tr><th style="width:22%;text-align:left;padding:10px 16px;">쿠폰 코드</th><th style="width:12%;">상태</th><th style="width:28%;text-align:left;">사용 회원</th><th style="width:20%;">사용 시각</th><th style="width:18%;">작업</th></tr></thead>
+            <tbody id="tbody-coupons"><tr><td colspan="5" class="empty" style="padding:20px;">불러오는 중...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -717,6 +745,51 @@ function switchTab(name, el) {
   // 탭별 lazy load
   if (name === 'stats' && !_statsLoaded) loadStats();
   if (name === 'monitor') loadAnalytics();
+  if (name === 'coupons') loadCoupons();
+}
+
+// ── 쿠폰 관리 ──
+let _couponsData = { coupons: [] };
+async function loadCoupons() {
+  try {
+    const [stats, list] = await Promise.all([
+      apiFetch('/api/admin/coupons/stats'),
+      apiFetch('/api/admin/coupons'),
+    ]);
+    if (stats) {
+      document.getElementById('cp-total').textContent = stats.total;
+      document.getElementById('cp-used').textContent = stats.used;
+      document.getElementById('cp-unused').textContent = stats.unused;
+      document.getElementById('cp-active').textContent = stats.activeCoupon;
+      document.getElementById('cp-converted').textContent = stats.convertedToPaid;
+    }
+    _couponsData = list || { coupons: [] };
+    renderCouponList();
+  } catch (e) { console.error('[쿠폰 로드 실패]', e); }
+}
+
+function renderCouponList() {
+  const filter = document.getElementById('cp-filter').value;
+  const rows = _couponsData.coupons.filter(c => {
+    if (filter === 'used') return c.used;
+    if (filter === 'unused') return !c.used;
+    return true;
+  });
+  const tbody = document.getElementById('tbody-coupons');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty" style="padding:20px;">해당 쿠폰이 없습니다</td></tr>'; return; }
+  tbody.innerHTML = rows.map(c => {
+    const status = c.used
+      ? '<span style="display:inline-block;padding:3px 8px;border-radius:6px;background:rgba(251,191,36,.15);color:#b45309;font-size:11px;font-weight:700;">사용됨</span>'
+      : '<span style="display:inline-block;padding:3px 8px;border-radius:6px;background:rgba(34,197,94,.1);color:#16a34a;font-size:11px;font-weight:700;">미사용</span>';
+    const subInfo = c.subscriber
+      ? `<div style="font-size:12px;">${esc(c.subscriber.company)} · ${esc(c.subscriber.name)}<div style="font-size:11px;color:var(--text-muted);">id=${c.subscriber.id} · ${c.subscriber.status}${c.subscriber.cardRegistered ? ' · 💳 카드 등록' : ''}</div></div>`
+      : '<span style="color:var(--text-muted);font-size:12px;">—</span>';
+    const usedAt = c.used_at ? `<span style="font-size:11px;color:var(--text-muted);">${c.used_at.slice(0,16)}</span>` : '—';
+    const action = c.used
+      ? `<button onclick="resetCoupon('${c.code}')" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">리셋</button>`
+      : '<span style="color:var(--text-muted);font-size:11px;">—</span>';
+    return `<tr><td style="padding:12px 16px;text-align:left;font-weight:700;">${c.display}</td><td>${status}</td><td style="text-align:left;padding:12px 16px;">${subInfo}</td><td>${usedAt}</td><td>${action}</td></tr>`;
+  }).join('');
 }
 
 // ── 통계 (활성 사용자 개요) — 일/월/년 토글 ──
@@ -1419,12 +1492,14 @@ async function loadCouponStats() {
 
 async function resetCoupon(code) {
   const display = code.replace(/fromtheground(\d+)/, 'From The Ground $1');
-  if (!confirm(`쿠폰 "${display}"을 리셋합니다.\n\n연결된 테스트 회원은 즉시 익명화 처리됩니다.\n진행하시겠습니까?`)) return;
+  if (!confirm(`쿠폰 "${display}"을 리셋합니다.\n\n연결된 회원은 즉시 익명화 처리됩니다.\n진행하시겠습니까?`)) return;
   try {
     const r = await apiFetch('/api/admin/coupon/reset', { method: 'POST', body: JSON.stringify({ code }) });
     if (r.ok) {
       alert(`✓ 리셋 완료: ${r.code}`);
-      loadSubscribers();
+      // 현재 탭에 따라 갱신
+      if (document.getElementById('panel-coupons').classList.contains('active')) loadCoupons();
+      else loadSubscribers();
     } else {
       alert('리셋 실패: ' + (r.msg || '알 수 없는 오류'));
     }
