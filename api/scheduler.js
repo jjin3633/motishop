@@ -86,6 +86,21 @@ async function chargeSubscriber(sub) {
       notifySlack(`⚠️ 결제·해지 race: ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원 결제 직전에 해지됨. 환불 검토 필요 (moid=${moid})`);
     } else {
       console.log(`[✓ 결제성공] ${sub.company} / ${sub.charge_amount.toLocaleString()}원 → 다음: ${next}`);
+      // 쿠폰 → 유료 전환 감지 (첫 결제 성공 + coupons 이력 있음)
+      try {
+        const wasCoupon = db.prepare(`SELECT code FROM coupons WHERE used_by_id=?`).get(sub.id);
+        if (wasCoupon) {
+          const prior = db.prepare(`SELECT change_type FROM subscriber_changes WHERE subscriber_id=? AND change_type='coupon_to_paid' LIMIT 1`).get(sub.id);
+          if (!prior) {
+            db.prepare(`
+              INSERT INTO subscriber_changes
+                (subscriber_id, change_type, before_features, after_features, before_billing_type, after_billing_type, before_amount, after_amount)
+              VALUES (?, 'coupon_to_paid', ?, ?, 'coupon', ?, 0, ?)
+            `).run(sub.id, sub.features, sub.features, sub.billing_type, sub.charge_amount);
+            notifySlack(`💰 쿠폰→유료 전환: ${sub.company} (id=${sub.id}) / ${sub.charge_amount.toLocaleString()}원 · ${sub.billing_type==='annual'?'연':'월'}구독`);
+          }
+        }
+      } catch (e) { console.error('[coupon_to_paid 기록 실패]', e.message); }
     }
   } else {
     // 실패 — billing_logs에 실패 로그 (cycle_date 포함, 향후 통계용)
@@ -155,9 +170,15 @@ function runBillingPass() {
     if (daysLeft <= 0) dueCount++;
   }
 
-  const due = db.prepare(
-    `SELECT * FROM subscribers WHERE next_billing_date <= ? AND status IN ('trial', 'active')`
-  ).all(today);
+  // 결제 대상: 일반 회원 + 카드 등록된 쿠폰 회원 (bill_key 진짜 값)
+  // 카드 미등록 쿠폰 회원(bill_key='COUPON_...')은 결제 대상 제외 → 만료 스케줄러가 별도 처리
+  const due = db.prepare(`
+    SELECT * FROM subscribers
+    WHERE next_billing_date <= ?
+      AND status IN ('trial', 'active')
+      AND (billing_type != 'coupon'
+           OR (billing_type = 'coupon' AND bill_key NOT LIKE 'COUPON\\_%' ESCAPE '\\'))
+  `).all(today);
 
   console.log(`[스케줄러] ${today} — 결제 대상 ${due.length}건 / 전체 대상 ${targets.length}건`);
   return due;
@@ -320,6 +341,65 @@ function scheduleAutoDelete() {
   console.log('자동 익명화 cron 시작 (매일 03:00 KST · 해지 후 30일 경과 가입자 개인정보 마스킹)');
 }
 
+// ── 쿠폰 만료 처리 (2026-08-10) ──
+// 00:00 KST: 만료일 도래한 카드 미등록 쿠폰 회원 → status='cancelled'
+// 09:00 KST: 오늘 만료된 회원에게 안내 SMS 발송 (당일 1회)
+function scheduleCouponExpiry() {
+  // Step 1: 매일 00:00 KST — status 변경 (카드 미등록 쿠폰 회원만)
+  cron.schedule('0 0 * * *', () => {
+    try {
+      const today = kstDateOnly();
+      const targets = db.prepare(`
+        SELECT id, company, name FROM subscribers
+        WHERE billing_type = 'coupon' AND status = 'active'
+          AND next_billing_date <= ?
+          AND bill_key LIKE 'COUPON\\_%' ESCAPE '\\'
+      `).all(today);
+      if (targets.length === 0) return;
+      const stmt = db.prepare(`UPDATE subscribers SET status='cancelled', cancelled_at=datetime('now', '+9 hours') WHERE id=? AND status='active'`);
+      const tx = db.transaction(() => { targets.forEach(t => stmt.run(t.id)); });
+      tx();
+      const summary = targets.map(t => `${t.company}(id=${t.id})`).join(', ');
+      console.log(`[쿠폰 만료] ${targets.length}건 status→cancelled: ${summary}`);
+      notifySlack(`⏰ 쿠폰 만료 자동 처리: ${targets.length}건 · ${summary}`);
+    } catch (e) {
+      console.error('[쿠폰 만료 cron 오류]', e.message);
+      notifySlack(`🔴 쿠폰 만료 cron 예외: ${e.message}`);
+    }
+  }, { timezone: 'Asia/Seoul' });
+
+  // Step 2: 매일 09:00 KST — 오늘 만료된 회원에게 SMS
+  cron.schedule('0 9 * * *', async () => {
+    try {
+      const today = kstDateOnly();
+      // 오늘 만료 & 아직 미익명화 & 카드 미등록 쿠폰 회원
+      const targets = db.prepare(`
+        SELECT id, company, name, phone FROM subscribers
+        WHERE billing_type = 'coupon'
+          AND status = 'cancelled'
+          AND anonymized_at IS NULL
+          AND DATE(cancelled_at) = ?
+          AND bill_key LIKE 'COUPON\\_%' ESCAPE '\\'
+      `).all(today);
+      for (const t of targets) {
+        const smsText = `[Moti Shop] ${t.company} ${t.name}님, 90일 무료 쿠폰이 만료되었어요.\n\n기능이 마음에 드셨다면 마이페이지에서 카드 등록 후 계속 사용 가능해요!\nhttps://shop.motiphysio.com/mypage`;
+        try {
+          const r = await sendSMS({ to: t.phone, text: smsText, subject: '[Moti Shop] 쿠폰 만료 안내' });
+          if (!r.ok) notifySlack(`⚠️ 쿠폰 만료 SMS 실패: ${t.company} (id=${t.id}) — ${r.resultCode} ${r.resultMsg}`);
+        } catch (e) {
+          console.error(`[쿠폰 만료 SMS 예외] id=${t.id} — ${e.message}`);
+          notifySlack(`⚠️ 쿠폰 만료 SMS 예외: ${t.company} (id=${t.id}) — ${e.message}`);
+        }
+      }
+      if (targets.length > 0) console.log(`[쿠폰 만료 SMS] ${targets.length}건 발송`);
+    } catch (e) {
+      console.error('[쿠폰 만료 SMS cron 오류]', e.message);
+    }
+  }, { timezone: 'Asia/Seoul' });
+
+  console.log('쿠폰 만료 cron 시작 (매일 00:00 KST · status 변경 · 09:00 KST · 안내 SMS)');
+}
+
 function scheduleBilling() {
   // 매일 KST 10:00 실행
   cron.schedule('0 10 * * *', async () => {
@@ -466,4 +546,4 @@ function scheduleAnalyticsCleanup() {
   console.log('Analytics 정리 cron 시작 (매일 04:00 KST · 90일 retention)');
 }
 
-module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleAutoDeletePreNotice, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, chargeSubscriber, processDueBillings, addPeriod };
+module.exports = { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleAutoDeletePreNotice, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, scheduleCouponExpiry, chargeSubscriber, processDueBillings, addPeriod };

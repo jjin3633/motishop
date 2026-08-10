@@ -64,6 +64,30 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN anonymized_at TEXT`); } catch(
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN phone_hash TEXT`); } catch(e) {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_phone_hash ON subscribers(phone_hash)`); } catch(e) {}
 
+// 쿠폰 테이블 (2026-08-10 — From The Ground 01~100 사전 발급)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS coupons (
+    code       TEXT PRIMARY KEY,
+    used       INTEGER DEFAULT 0,
+    used_at    TEXT,
+    used_by_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now', '+9 hours'))
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_coupons_used ON coupons(used)`); } catch(e) {}
+
+// 서버 시작 시 100개 코드 자동 등록 (idempotent · INSERT OR IGNORE)
+try {
+  const { COUPON_CODES } = require('./coupons');
+  const stmt = db.prepare(`INSERT OR IGNORE INTO coupons (code) VALUES (?)`);
+  const tx = db.transaction(() => {
+    COUPON_CODES.forEach(c => stmt.run(c));
+  });
+  tx();
+} catch (e) {
+  console.warn('[db] 쿠폰 초기화 실패:', e.message);
+}
+
 // 변경 이력 테이블 (기능/구독유형 변경 추적)
 db.exec(`
   CREATE TABLE IF NOT EXISTS subscriber_changes (

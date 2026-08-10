@@ -314,6 +314,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       <div class="stat-card"><div class="lbl">전체 고객</div><div class="val" id="st-total">—</div></div>
       <div class="stat-card"><div class="lbl">체험 중</div><div class="val" id="st-trial">—</div></div>
       <div class="stat-card"><div class="lbl">구독 중</div><div class="val" id="st-active">—</div></div>
+      <div class="stat-card" style="background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.2);"><div class="lbl">🎟️ 쿠폰 사용</div><div class="val" id="st-coupon-used">—<small>/ 100</small></div></div>
       <div class="stat-card"><div class="lbl">이번 달 수익</div><div class="val" id="st-month">—<small>원</small></div></div>
       <div class="stat-card accent"><div class="lbl">전체 누적 수익</div><div class="val" id="st-all">—<small>원</small></div></div>
     </div>
@@ -367,6 +368,7 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
           <option value="">전체 타입</option>
           <option value="monthly">월구독</option>
           <option value="annual">연구독</option>
+          <option value="coupon">🎟️ 쿠폰</option>
         </select>
         <div class="toolbar-right">
           <button class="btn-sm" onclick="exportCSV()">CSV 내보내기</button>
@@ -1403,7 +1405,30 @@ async function loadAll(btn) {
 async function loadSubscribers() {
   allSubscribers = await apiFetch('/api/subscribers').catch(() => []);
   updateTopStats();
+  loadCouponStats();
   filterSubscribers();
+}
+
+async function loadCouponStats() {
+  try {
+    const r = await apiFetch('/api/admin/coupons/stats');
+    const el = document.getElementById('st-coupon-used');
+    if (el && r) el.innerHTML = `${r.used}<small>/ ${r.total}</small>`;
+  } catch (e) { /* silent */ }
+}
+
+async function resetCoupon(code) {
+  const display = code.replace(/fromtheground(\d+)/, 'From The Ground $1');
+  if (!confirm(`쿠폰 "${display}"을 리셋합니다.\n\n연결된 테스트 회원은 즉시 익명화 처리됩니다.\n진행하시겠습니까?`)) return;
+  try {
+    const r = await apiFetch('/api/admin/coupon/reset', { method: 'POST', body: JSON.stringify({ code }) });
+    if (r.ok) {
+      alert(`✓ 리셋 완료: ${r.code}`);
+      loadSubscribers();
+    } else {
+      alert('리셋 실패: ' + (r.msg || '알 수 없는 오류'));
+    }
+  } catch (e) { alert('오류: ' + e.message); }
 }
 
 // 같은 phone의 row들 중 "대표" 1개를 뽑음 (활성 우선, 그 다음 id 큰 것)
@@ -1451,15 +1476,22 @@ function renderSubscribers(rows) {
     const reSub = r._groupSize > 1
       ? ` <span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(26,107,255,.1);color:var(--blue2);margin-left:4px;">재가입 ${r._groupSize}회</span>`
       : '';
+    // 쿠폰 회원 배지 — billing_type='coupon' OR bill_key='COUPON_...'
+    const isCoupon = r.billing_type === 'coupon' || (r.bill_key && String(r.bill_key).startsWith('COUPON_'));
+    const couponBadge = isCoupon
+      ? ` <span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(251,191,36,.15);color:#b45309;margin-left:4px;">🎟️ 쿠폰</span>`
+      : '';
+    const rowBg = isCoupon ? 'background:rgba(251,191,36,.04);' : '';
+    const billingLabel = r.billing_type === 'coupon' ? '쿠폰' : (r.billing_type === 'monthly' ? '월구독' : '연구독');
     return `
-    <tr class="tbl-row-clickable" onclick="openDetail(${r.id})">
+    <tr class="tbl-row-clickable" onclick="openDetail(${r.id})" style="${rowBg}">
       <td style="color:var(--gray400)">${r.joinNumber || (idx + 1)}</td>
-      <td><strong>${esc(r.company)}</strong>${reSub}</td>
+      <td><strong>${esc(r.company)}</strong>${reSub}${couponBadge}</td>
       <td>${esc(r.name)}</td>
       <td>${esc(r.phone)}</td>
       <td style="max-width:180px;font-size:12px;color:var(--gray600);line-height:1.6">${esc(displayFeatures(r.features))}</td>
-      <td><span class="badge b-${r.billing_type}">${r.billing_type==='monthly'?'월구독':'연구독'}</span></td>
-      <td class="fw700">${fmt(r.charge_amount)}원</td>
+      <td><span class="badge b-${r.billing_type}">${billingLabel}</span></td>
+      <td class="fw700">${isCoupon && r.charge_amount === 0 ? '—' : fmt(r.charge_amount) + '원'}</td>
       <td><span class="badge b-${r.status}">${{trial:'체험중',active:'구독중',cancelled:'해지'}[r.status]||r.status}</span></td>
       <td>${(r.next_billing_date||'').slice(0,10)}</td>
       <td style="color:var(--gray400)">${(r.created_at||'').slice(0,10)}</td>

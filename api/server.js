@@ -5,9 +5,10 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
-const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleAutoDeletePreNotice, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, addPeriod } = require('./scheduler');
+const { scheduleBilling, scheduleHealthCheck, scheduleAutoDelete, scheduleAutoDeletePreNotice, scheduleSolapiBalance, scheduleDbBackup, scheduleAnalyticsCleanup, scheduleSitemapUpdate, scheduleCouponExpiry, addPeriod } = require('./scheduler');
 const { deleteBillKey, notifySlack, refundBillKey } = require('./innopay');
 const { sendSMS } = require('./sms');
+const { normalizeCouponCode, displayCouponCode } = require('./coupons');
 
 // PII 마스킹 헬퍼 — 로그/Slack용 (전화 010-****-1234, 이름 양*진)
 function maskPhone(p) {
@@ -361,8 +362,145 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
   }
 }
 
+// 쿠폰 유효성 검증 — Step 1 실시간 판별용 (개인정보 전송 전)
+// rate-limit는 subscribeLimiter 재사용 (brute-force 방어)
+app.post('/api/coupon/validate', subscribeLimiter, (req, res) => {
+  const { coupon, phone } = req.body || {};
+  const code = normalizeCouponCode(coupon);
+  if (!code) return res.json({ ok: false, msg: '쿠폰 코드를 입력해주세요' });
+
+  const c = db.prepare(`SELECT code, used FROM coupons WHERE code=?`).get(code);
+  if (!c) return res.json({ ok: false, msg: '유효하지 않은 쿠폰 코드입니다' });
+  if (c.used) return res.json({ ok: false, msg: '이미 사용된 코드입니다. 다른 코드를 확인해주세요' });
+
+  // phone 이력 체크 — 같은 phone 이 이미 쿠폰 사용한 이력 있으면 차단
+  if (phone) {
+    const cleanPhone = String(phone).replace(/[^0-9]/g, '');
+    if (cleanPhone.length >= 10) {
+      const phoneHash = hashPhone(cleanPhone);
+      const prior = db.prepare(`
+        SELECT s.id FROM subscribers s
+        JOIN coupons c ON c.used_by_id = s.id
+        WHERE (s.phone = ? OR s.phone_hash = ?) AND c.used = 1
+        LIMIT 1
+      `).get(cleanPhone, phoneHash);
+      if (prior) return res.json({ ok: false, msg: '이미 쿠폰으로 가입한 이력이 있습니다' });
+    }
+  }
+
+  return res.json({ ok: true, msg: '사용 가능한 쿠폰입니다' });
+});
+
+// ── 쿠폰 가입 처리 (billKey·amount 없이 90일 무료) ──
+// billing_type='coupon' · bill_key='COUPON_<timestamp>' · charge_amount=0
+// next_billing_date = 90일 후 (만료일)
+// 원자적 트랜잭션: coupons UPDATE + subscribers INSERT + terms_consents
+async function handleCouponSubscribe(req, res) {
+  let { company, name, phone, businessNumber, features, coupon, termsAgreed } = req.body;
+  if (!company || !name || !phone || !features || !coupon)
+    return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
+
+  // 입력 정제
+  company = String(company).replace(/[\r\n\t]/g, ' ').trim().slice(0, 100);
+  name = String(name).replace(/[\r\n\t]/g, ' ').trim().slice(0, 50);
+  if (!company || !name) return res.status(400).json({ ok: false, msg: '회사명·이름이 비어있습니다.' });
+
+  const cleanBizNum = (businessNumber && /^\d{10}$/.test(String(businessNumber))) ? String(businessNumber) : null;
+
+  // 약관 동의 검증 (일반 가입과 동일 · 법적 안전선)
+  const REQUIRED_TERMS = ['모티샵서비스이용약관', '전자금융거래기본약관', '자동결제이용약관', '개인정보수집이용', '개인정보제3자제공'];
+  if (!Array.isArray(termsAgreed) || REQUIRED_TERMS.some(k => !termsAgreed.includes(k))) {
+    return res.status(400).json({ ok: false, msg: '필수 약관 동의가 누락되었습니다.' });
+  }
+
+  // 기능 유효성 검증
+  const featList = String(features).split(',').map(f => f.trim()).filter(Boolean);
+  const prices = FEATURE_PRICES.monthly;
+  const unknownFeats = featList.filter(f => !(f in prices));
+  if (unknownFeats.length > 0) {
+    return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
+  }
+  const subBundle = getBundle(featList);
+  const monthlyAmount = subBundle ? prices[subBundle] : featList.reduce((s, f) => s + prices[f], 0);
+  if (monthlyAmount <= 0) return res.status(400).json({ ok: false, msg: '유효하지 않은 기능 선택' });
+
+  const cleanPhone = String(phone).replace(/[^0-9]/g, '');
+  const phoneHash = hashPhone(cleanPhone);
+  const couponCode = normalizeCouponCode(coupon);
+
+  // 재가입 방지: phone·phone_hash 이력 있으면 차단
+  const priorSub = db.prepare(`
+    SELECT id FROM subscribers WHERE phone=? OR (phone_hash IS NOT NULL AND phone_hash=?) LIMIT 1
+  `).get(cleanPhone, phoneHash);
+  if (priorSub) {
+    return res.status(400).json({ ok: false, msg: '이미 가입 이력이 있는 연락처입니다. 마이페이지에서 로그인해주세요.' });
+  }
+
+  // 임시 비번 준비
+  const tempPw = genTempPw();
+  const salt = genSalt();
+  const hash = hashPw(tempPw, salt);
+  const now = Date.now();
+  const placeholder = `COUPON_${now}`;
+  const trialStart = kstDateOnly();
+  // 만료일 = 90일 후 (다음 결제일 필드에 저장 → 만료 스케줄러가 참조)
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + 90);
+  const expiryDateStr = kstDateOnly(expiryDate);
+
+  let insertedId = null;
+
+  try {
+    const tx = db.transaction(() => {
+      // 1) 쿠폰 소비 시도 (원자적) — 이미 사용된 코드면 changes=0 반환 → 에러
+      const upd = db.prepare(`UPDATE coupons SET used=1, used_at=datetime('now', '+9 hours') WHERE code=? AND used=0`).run(couponCode);
+      if (upd.changes === 0) {
+        throw new Error('COUPON_UNAVAILABLE');
+      }
+
+      // 2) 회원 INSERT
+      const r = db.prepare(`
+        INSERT INTO subscribers
+          (company, name, phone, business_number, features, billing_type, bill_key, moid, charge_amount, trial_start, next_billing_date, pw_hash, pw_salt, phone_hash, status)
+        VALUES (?, ?, ?, ?, ?, 'coupon', ?, ?, 0, ?, ?, ?, ?, ?, 'active')
+      `).run(company, name, cleanPhone, cleanBizNum, features, placeholder, placeholder, trialStart, expiryDateStr, hash, salt, phoneHash);
+      insertedId = r.lastInsertRowid;
+
+      // 3) 쿠폰의 used_by_id 연결
+      db.prepare(`UPDATE coupons SET used_by_id=? WHERE code=?`).run(insertedId, couponCode);
+    });
+    tx();
+  } catch (e) {
+    if (e.message === 'COUPON_UNAVAILABLE') {
+      return res.status(400).json({ ok: false, msg: '이미 사용된 쿠폰이거나 유효하지 않은 코드입니다' });
+    }
+    console.error('[쿠폰 가입 실패]', e.message);
+    return res.status(500).json({ ok: false, msg: '가입 처리 실패: ' + e.message });
+  }
+
+  // 약관 동의 저장 (트랜잭션 밖에서 · 실패해도 가입 유지)
+  saveTermsConsent(insertedId, termsAgreed, req);
+
+  // SMS 발송 — 임시 비번
+  const smsText = `[Moti Shop] ${company} ${name}님, 쿠폰 가입을 환영해요!\n\n90일간 무료 이용 가능합니다.\n\n마이페이지 로그인 정보:\n- 아이디: ${cleanPhone}\n- 임시 비밀번호: ${tempPw}\n\n로그인 후 비밀번호를 변경해주세요.\nhttps://shop.motiphysio.com/mypage`;
+  sendSMS({ to: cleanPhone, text: smsText, subject: '[Moti Shop] 쿠폰 가입 환영' }).then(r => {
+    if (!r.ok) notifySlack(`⚠️ 쿠폰 임시비번 SMS 실패: ${company} (${maskPhone(cleanPhone)})`);
+  }).catch(() => {});
+
+  console.log(`[쿠폰 가입 ✓] id=${insertedId} ${company} / ${maskName(name)} / ${displayCouponCode(couponCode)} / 만료: ${expiryDateStr}`);
+  notifySlack(`🎟️ 쿠폰 가입: ${company} (id=${insertedId}, ${maskName(name)}) / 코드: ${displayCouponCode(couponCode)} / 기능: ${displayFeatures(features)} / 만료: ${expiryDateStr}`);
+
+  res.json({ ok: true, coupon: true, subscriberId: insertedId, expiryDate: expiryDateStr });
+}
+
 app.post('/api/subscribe', subscribeLimiter, async (req, res) => {
-  let { company, name, phone, businessNumber, features, billingType, billKey, amount, termsAgreed } = req.body;
+  let { company, name, phone, businessNumber, features, billingType, billKey, amount, termsAgreed, coupon } = req.body;
+
+  // ── 쿠폰 가입 분기 (billKey·amount 우회, 무료 90일) ──
+  if (coupon) {
+    return handleCouponSubscribe(req, res);
+  }
+
   if (!company || !name || !phone || !features || !billingType || !billKey || !amount)
     return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
   if (!['monthly', 'annual'].includes(billingType))
@@ -583,7 +721,7 @@ app.get('/api/subscribers', adminAuth, (req, res) => {
   // 가입 순서대로 가져와 joinNumber 부여 (가장 먼저 가입한 사람 = 1, 이후 +1)
   // 그 다음 화면 표시는 최신순(신순)으로 reverse
   const rows = db.prepare(`
-    SELECT id, company, name, phone, features, billing_type,
+    SELECT id, company, name, phone, features, billing_type, bill_key,
            charge_amount, trial_start, next_billing_date, status, created_at,
            CASE WHEN pw_hash IS NOT NULL THEN 1 ELSE 0 END as has_password
     FROM subscribers ORDER BY created_at ASC
@@ -1064,7 +1202,7 @@ app.post('/api/cancel', adminAuth, async (req, res) => {
 
   // 빌키 삭제 (InnoPay) — 실패해도 해지는 유지
   let billkeyResult = { ok: false, resultMsg: 'skipped' };
-  if (sub.bill_key && !sub.billkey_deleted) {
+  if (sub.bill_key && !sub.billkey_deleted && !String(sub.bill_key).startsWith('COUPON_')) {
     billkeyResult = await deleteBillKey({ billKey: sub.bill_key, userId: sub.phone });
     if (billkeyResult.ok) {
       db.prepare(`UPDATE subscribers SET billkey_deleted = 1 WHERE id = ?`).run(id);
@@ -1160,7 +1298,7 @@ app.post('/api/admin/refund', adminAuth, async (req, res) => {
         last_failed_at = NULL
         WHERE id = ?`).run(todayKst, id);
       // InnoPay 빌키 삭제 — await로 결과 확인 (best-effort 였던 거 보강)
-      if (sub.bill_key) {
+      if (sub.bill_key && !String(sub.bill_key).startsWith('COUPON_')) {
         try {
           const { deleteBillKey } = require('./innopay');
           const dr = await deleteBillKey({ billKey: sub.bill_key, userId: sub.phone });
@@ -1249,6 +1387,85 @@ app.post('/api/admin/reset-password', adminAuth, (req, res) => {
 
   // 임시비번은 SMS로만 전달 (응답·로그·어드민 화면에 평문 노출 금지)
   res.json({ ok: true, smsSent: true });
+});
+
+// 관리자 — 쿠폰 KPI 조회
+app.get('/api/admin/coupons/stats', adminAuth, (req, res) => {
+  const total = db.prepare(`SELECT COUNT(*) as c FROM coupons`).get().c;
+  const used = db.prepare(`SELECT COUNT(*) as c FROM coupons WHERE used=1`).get().c;
+  const unused = total - used;
+  const activeCoupon = db.prepare(`SELECT COUNT(*) as c FROM subscribers WHERE billing_type='coupon' AND status='active'`).get().c;
+  const expiredCoupon = db.prepare(`SELECT COUNT(*) as c FROM subscribers WHERE billing_type='coupon' AND status='cancelled'`).get().c;
+  const convertedToPaid = db.prepare(`
+    SELECT COUNT(*) as c FROM subscriber_changes WHERE change_type='coupon_to_paid'
+  `).get().c;
+  res.json({ total, used, unused, activeCoupon, expiredCoupon, convertedToPaid });
+});
+
+// 관리자 — 쿠폰 리셋 (테스트 후 재사용용 · 연결된 subscriber 익명화)
+app.post('/api/admin/coupon/reset', adminAuth, (req, res) => {
+  const rawCode = req.body?.code;
+  const code = normalizeCouponCode(rawCode);
+  if (!code) return res.status(400).json({ ok: false, msg: '쿠폰 코드 누락' });
+
+  const c = db.prepare(`SELECT code, used, used_by_id FROM coupons WHERE code=?`).get(code);
+  if (!c) return res.status(404).json({ ok: false, msg: '존재하지 않는 쿠폰' });
+  if (!c.used) return res.json({ ok: true, msg: '이미 미사용 상태입니다', noop: true });
+
+  const usedById = c.used_by_id;
+  try {
+    const tx = db.transaction(() => {
+      // 1) 연결된 회원 익명화 (개인정보 마스킹)
+      if (usedById) {
+        const sub = db.prepare(`SELECT id, name, phone FROM subscribers WHERE id=? AND anonymized_at IS NULL`).get(usedById);
+        if (sub) {
+          const maskedName = sub.name && sub.name.length > 1 ? sub.name[0] + '**' : '익명';
+          const rawPhone = String(sub.phone || '').replace(/[^0-9]/g, '');
+          const maskedPhone = rawPhone.length >= 4 ? '010-****-' + rawPhone.slice(-4) : '010-****-0000';
+          db.prepare(`
+            UPDATE subscribers SET
+              name=?, phone=?, business_number=NULL, pw_hash=NULL, pw_salt=NULL,
+              status='cancelled', anonymized_at=datetime('now', '+9 hours'),
+              cancelled_at=COALESCE(cancelled_at, datetime('now', '+9 hours'))
+            WHERE id=?
+          `).run(maskedName, maskedPhone, sub.id);
+          // 세션 정리
+          try { db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(sub.id); } catch(e) {}
+        }
+      }
+      // 2) 쿠폰 리셋
+      db.prepare(`UPDATE coupons SET used=0, used_at=NULL, used_by_id=NULL WHERE code=?`).run(code);
+    });
+    tx();
+  } catch (e) {
+    console.error('[쿠폰 리셋 실패]', e.message);
+    return res.status(500).json({ ok: false, msg: '리셋 실패: ' + e.message });
+  }
+
+  notifySlack(`🔄 쿠폰 리셋: ${displayCouponCode(code)}${usedById ? ` (연결 회원 id=${usedById} 익명화)` : ''}`);
+  res.json({ ok: true, code: displayCouponCode(code), anonymizedSubscriberId: usedById });
+});
+
+// 관리자 — 쿠폰 목록 조회 (표시용 · 사용 상태 포함)
+app.get('/api/admin/coupons', adminAuth, (req, res) => {
+  const rows = db.prepare(`
+    SELECT c.code, c.used, c.used_at, c.used_by_id,
+           s.company, s.name, s.status, s.next_billing_date, s.bill_key
+    FROM coupons c
+    LEFT JOIN subscribers s ON s.id = c.used_by_id
+    ORDER BY c.code
+  `).all();
+  res.json({ coupons: rows.map(r => ({
+    code: r.code,
+    display: displayCouponCode(r.code),
+    used: !!r.used,
+    used_at: r.used_at,
+    subscriber: r.used_by_id ? {
+      id: r.used_by_id, company: r.company, name: r.name,
+      status: r.status, expiry: r.next_billing_date,
+      cardRegistered: r.bill_key && !String(r.bill_key).startsWith('COUPON_'),
+    } : null,
+  })) });
 });
 
 // 관리자 — 기능 활성화 안내 SMS (서버에서 셀프 활성화 처리 후 회원에게 통보)
@@ -1376,7 +1593,7 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
 
 app.get('/api/mypage/me', mypageAuth, (req, res) => {
   const sub = db.prepare(`
-    SELECT id, company, name, phone, business_number, features, billing_type, charge_amount,
+    SELECT id, company, name, phone, business_number, features, billing_type, bill_key, charge_amount,
            trial_start, next_billing_date, status, created_at, cancelled_at
     FROM subscribers WHERE id=?
   `).get(req.subscriberId);
@@ -1588,6 +1805,48 @@ app.post('/api/mypage/resubscribe', paymentActionLimiter, mypageAuth, async (req
 
 // 카드 정보 갱신 — 결제 실패·카드 변경 시 사용 (해지·재구독 불필요)
 // 흐름: 클라이언트가 새 카드로 InnoPay 빌키 발급 → 서버에 새 billKey 전송 → 기존 빌키 삭제 + DB 갱신
+// 쿠폰 회원 — 카드 등록 (예약 결제) · 만료일에 자동 결제로 유료 전환
+app.post('/api/mypage/coupon-register-card', paymentActionLimiter, mypageAuth, async (req, res) => {
+  const { billKey, features, billingType, amount } = req.body;
+  if (!billKey || !features || !billingType || !amount)
+    return res.status(400).json({ ok: false, msg: '필수 파라미터 누락' });
+  if (!['monthly', 'annual'].includes(billingType))
+    return res.status(400).json({ ok: false, msg: 'billingType은 monthly 또는 annual' });
+
+  const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
+  if (sub.billing_type !== 'coupon' || sub.status !== 'active') {
+    return res.status(400).json({ ok: false, msg: '쿠폰 회원만 이 API를 사용할 수 있습니다' });
+  }
+
+  // 가격 서버 재검증
+  const featList = String(features).split(',').map(f => f.trim()).filter(Boolean);
+  const prices = FEATURE_PRICES[billingType];
+  const unknownFeats = featList.filter(f => !(f in prices));
+  if (unknownFeats.length > 0) return res.status(400).json({ ok: false, msg: `알 수 없는 기능: ${unknownFeats.join(', ')}` });
+  const subBundle = getBundle(featList);
+  const monthlyAmount = subBundle ? prices[subBundle] : featList.reduce((s, f) => s + prices[f], 0);
+  if (monthlyAmount <= 0) return res.status(400).json({ ok: false, msg: '유효하지 않은 기능 선택' });
+  const chargeAmount = billingType === 'annual' ? monthlyAmount * 12 : monthlyAmount;
+  if (Number(amount) !== monthlyAmount) return res.status(400).json({ ok: false, msg: '결제 금액 불일치' });
+
+  const serverMoid = kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000);
+
+  // 이 시점엔 결제 안 함 — bill_key·billing_type만 저장, next_billing_date(만료일)에 스케줄러가 자동 결제
+  // billing_type을 즉시 monthly/annual로 변경 → 만료일에 addPeriod 정상 계산 · 결제 성공 시 자연스러운 유료 회원 전환
+  // 쿠폰 출신 판별은 coupons.used_by_id 조인으로 어드민에서 확인
+  db.prepare(`
+    UPDATE subscribers SET
+      bill_key=?, moid=?, features=?, billing_type=?, charge_amount=?
+    WHERE id=?
+  `).run(billKey, serverMoid, features, billingType, chargeAmount, sub.id);
+
+  console.log(`[쿠폰 예약 결제 등록] id=${sub.id} ${sub.company} / ${billingType} / ${chargeAmount.toLocaleString()}원 / 결제 예정: ${sub.next_billing_date}`);
+  notifySlack(`💳 쿠폰 카드 등록 (예약 결제): ${sub.company} (id=${sub.id}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 결제일: ${sub.next_billing_date} (쿠폰 만료일)`);
+
+  res.json({ ok: true, expiryDate: sub.next_billing_date, chargeAmount, billingType });
+});
+
 app.post('/api/mypage/update-card', paymentActionLimiter, mypageAuth, async (req, res) => {
   const { billKey, moid } = req.body;
   if (!billKey) return res.status(400).json({ ok: false, msg: '빌키 누락' });
@@ -1607,7 +1866,7 @@ app.post('/api/mypage/update-card', paymentActionLimiter, mypageAuth, async (req
     WHERE id=?`).run(billKey, newMoid, req.subscriberId);
 
   // 기존 빌키 삭제 (best-effort, 실패해도 무시)
-  if (oldBillKey && oldBillKey !== billKey) {
+  if (oldBillKey && oldBillKey !== billKey && !String(oldBillKey).startsWith('COUPON_')) {
     deleteBillKey({ billKey: oldBillKey, userId: sub.phone })
       .then(r => console.log(`[빌키 삭제 ${r.ok ? '✓' : '✗'}] old=${String(oldBillKey).slice(0, 8)}... ${r.resultCode || ''}`))
       .catch(e => console.error('[빌키 삭제 오류]', e.message));
@@ -2045,6 +2304,7 @@ _safeStart('scheduleSolapiBalance', scheduleSolapiBalance);
 _safeStart('scheduleDbBackup', scheduleDbBackup);
 _safeStart('scheduleAnalyticsCleanup', scheduleAnalyticsCleanup);
 _safeStart('scheduleSitemapUpdate', scheduleSitemapUpdate);
+_safeStart('scheduleCouponExpiry', scheduleCouponExpiry);
 
 app.listen(3001, '127.0.0.1', () => {
   console.log(`MotiShop API listening on port 3001 (MID=${cfg.INNOPAY_MID}, CORS=${cfg.CORS_ORIGIN})`);

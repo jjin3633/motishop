@@ -702,6 +702,38 @@ function renderStatusPeriod(s) {
   const nextDate = (s.next_billing_date||'').slice(0,10);
   const trialEnd = (s.next_billing_date||'').slice(0,10);  // trial 종료일 = 첫 결제일
 
+  // 쿠폰 회원 (billing_type='coupon' OR bill_key='COUPON_...') 판별
+  const isCouponMember = s.billing_type === 'coupon' || (s.bill_key && String(s.bill_key).startsWith('COUPON_'));
+  const cardRegistered = s.bill_key && !String(s.bill_key).startsWith('COUPON_');
+
+  if (isCouponMember && s.status === 'active') {
+    // 쿠폰 활성 (만료 전)
+    const dLeft = s.next_billing_date ? Math.max(0, Math.ceil((new Date(s.next_billing_date + 'T00:00:00+09:00') - Date.now()) / (1000*60*60*24))) : 0;
+    if (cardRegistered) {
+      // 카드 등록 완료 · 만료일 예약 결제 대기
+      el.innerHTML = `
+        <div class="period-headline">🎟️ 쿠폰 회원 · 예약 결제 등록됨</div>
+        <div class="period-main"><span class="accent">${trialEnd}</span> (D-${dLeft}일) 만료 후 자동 결제</div>
+        <div class="period-sub">${cycleLabel} <span class="period-amount">${amount}</span> · 만료일에 결제 후 유료 구독 시작</div>
+      `;
+    } else {
+      el.innerHTML = `
+        <div class="period-headline">🎟️ 쿠폰 회원 · 90일 무료 이용 중</div>
+        <div class="period-main"><span class="accent">${trialEnd}</span> (D-${dLeft}일) 까지 무료 사용</div>
+        <div class="period-sub">기능이 마음에 드시면 카드 등록해 계속 사용하실 수 있어요.</div>
+      `;
+    }
+    return;
+  }
+  if (isCouponMember && s.status === 'cancelled') {
+    el.innerHTML = `
+      <div class="period-headline">🎟️ 쿠폰 만료됨</div>
+      <div class="period-main">쿠폰 기간이 종료되었어요</div>
+      <div class="period-sub">카드 등록으로 계속 사용하실 수 있어요.</div>
+    `;
+    return;
+  }
+
   if (s.status === 'trial') {
     el.innerHTML = `
       <div class="period-headline">무료 체험 중</div>
