@@ -1602,7 +1602,8 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
 app.get('/api/mypage/me', mypageAuth, (req, res) => {
   const sub = db.prepare(`
     SELECT id, company, name, phone, business_number, features, billing_type, bill_key, charge_amount,
-           trial_start, next_billing_date, status, created_at, cancelled_at
+           trial_start, next_billing_date, status, created_at, cancelled_at,
+           pending_billing_type, pending_features, pending_charge_amount
     FROM subscribers WHERE id=?
   `).get(req.subscriberId);
 
@@ -1840,14 +1841,15 @@ app.post('/api/mypage/coupon-register-card', paymentActionLimiter, mypageAuth, a
 
   const serverMoid = kstDateOnly().replace(/-/g, '') + Math.floor(1000 + Math.random() * 9000);
 
-  // 이 시점엔 결제 안 함 — bill_key·billing_type만 저장, next_billing_date(만료일)에 스케줄러가 자동 결제
-  // billing_type을 즉시 monthly/annual로 변경 → 만료일에 addPeriod 정상 계산 · 결제 성공 시 자연스러운 유료 회원 전환
-  // 쿠폰 출신 판별은 coupons.used_by_id 조인으로 어드민에서 확인
+  // 이 시점엔 결제 안 함 — bill_key만 저장 + 사용자 선택은 pending_*에 저장
+  // billing_type='coupon' · features='원래 쿠폰 기능' 유지 → 만료 전까지 쿠폰 회원 판별 유지
+  // 만료일 스케줄러가 pending_* 값으로 결제 성공 시 실 컬럼으로 승격 (2026-08-10 재설계)
   db.prepare(`
     UPDATE subscribers SET
-      bill_key=?, moid=?, features=?, billing_type=?, charge_amount=?
+      bill_key=?, moid=?,
+      pending_billing_type=?, pending_features=?, pending_charge_amount=?
     WHERE id=?
-  `).run(billKey, serverMoid, features, billingType, chargeAmount, sub.id);
+  `).run(billKey, serverMoid, billingType, features, chargeAmount, sub.id);
 
   console.log(`[쿠폰 예약 결제 등록] id=${sub.id} ${sub.company} / ${billingType} / ${chargeAmount.toLocaleString()}원 / 결제 예정: ${sub.next_billing_date}`);
   notifySlack(`💳 쿠폰 카드 등록 (예약 결제): ${sub.company} (id=${sub.id}) / ${billingType==='annual'?'연':'월'}구독 ${chargeAmount.toLocaleString()}원 / 결제일: ${sub.next_billing_date} (쿠폰 만료일)`);
@@ -1897,10 +1899,10 @@ app.post('/api/mypage/update-features', paymentActionLimiter, mypageAuth, async 
   if (!features || !Array.isArray(features) || features.length === 0)
     return res.status(400).json({ ok: false, msg: '기능을 하나 이상 선택해주세요.' });
 
-  // 쿠폰 카드 미등록 회원 차단 (예약 결제 오염 방지 · 카드 등록 후 재선택 가능)
-  const preCheck = db.prepare(`SELECT bill_key FROM subscribers WHERE id=?`).get(req.subscriberId);
-  if (preCheck?.bill_key && String(preCheck.bill_key).startsWith('COUPON_')) {
-    return res.status(403).json({ ok: false, msg: '쿠폰 회원은 카드 등록 후 기능을 변경할 수 있어요.' });
+  // 쿠폰 회원 전체 차단 (카드 미등록/등록 무관 · 예약 결제 오염 방지)
+  const preCheck = db.prepare(`SELECT bill_key, billing_type FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (preCheck?.billing_type === 'coupon' || (preCheck?.bill_key && String(preCheck.bill_key).startsWith('COUPON_'))) {
+    return res.status(403).json({ ok: false, msg: '쿠폰 회원은 만료 후 유료 전환 완료 이후 기능을 변경할 수 있어요.' });
   }
 
   // 동시 호출 차단 (같은 가입자 이중 결제 방지)
@@ -2082,9 +2084,9 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
   if (sub.status === 'cancelled') return res.status(403).json({ ok: false, msg: '해지된 계정은 변경할 수 없습니다.' });
-  // 쿠폰 카드 미등록 회원 차단 (예약 결제 오염 방지)
-  if (sub.bill_key && String(sub.bill_key).startsWith('COUPON_')) {
-    return res.status(403).json({ ok: false, msg: '쿠폰 회원은 카드 등록 후 구독 유형을 변경할 수 있어요.' });
+  // 쿠폰 회원 전체 차단 (카드 미등록/등록 무관 · 예약 결제 오염 방지)
+  if (sub.billing_type === 'coupon' || (sub.bill_key && String(sub.bill_key).startsWith('COUPON_'))) {
+    return res.status(403).json({ ok: false, msg: '쿠폰 회원은 만료 후 유료 전환 완료 이후 구독 유형을 변경할 수 있어요.' });
   }
   if (sub.billing_type === billingType) {
     return res.json({ ok: true, billing_type: billingType, charge_amount: sub.charge_amount, changed: false });

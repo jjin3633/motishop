@@ -63,6 +63,10 @@ try { db.exec(`ALTER TABLE subscribers ADD COLUMN anonymized_at TEXT`); } catch(
 // phone HMAC-SHA256 (2026-08-05 정책 — 익명화 후 재가입 판별용, 무료체험 loophole 방어)
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN phone_hash TEXT`); } catch(e) {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_phone_hash ON subscribers(phone_hash)`); } catch(e) {}
+// 쿠폰 회원 예약 결제 대기 정보 (2026-08-10) — 카드 등록 시 저장, 만료일 스케줄러가 실 컬럼으로 승격
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN pending_billing_type TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN pending_features TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN pending_charge_amount INTEGER`); } catch(e) {}
 
 // 쿠폰 테이블 (2026-08-10 — From The Ground 01~100 사전 발급)
 db.exec(`

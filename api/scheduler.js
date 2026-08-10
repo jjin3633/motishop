@@ -54,11 +54,14 @@ async function chargeSubscriber(sub) {
   }
 
   const moid = genMoid();
+  // 쿠폰 카드 등록 회원(billing_type='coupon' + bill_key=진짜 + pending 값 있음) → pending 값으로 결제
+  const isCouponPaidTransition = sub.billing_type === 'coupon' && sub.pending_charge_amount && sub.pending_billing_type;
+  const chargeAmount = isCouponPaidTransition ? sub.pending_charge_amount : sub.charge_amount;
 
   const result = await chargeWithRetry({
     billKey: sub.bill_key,
     moid,
-    amount: sub.charge_amount,
+    amount: chargeAmount,
     goodsName: '모티샵 구독',
     buyerName: sub.name,
     userId: sub.phone,
@@ -69,10 +72,24 @@ async function chargeSubscriber(sub) {
   if (result.ok) {
     // 성공 — billing_logs INSERT + subscribers UPDATE를 원자적 트랜잭션으로 처리
     // 크래시 시 둘 다 rollback → 다음 cron에서 cycle_date 멱등성으로 재처리 안전
-    const next = addPeriod(sub.next_billing_date, sub.billing_type);
+    // 쿠폰→유료 전환 시 pending 값을 실 컬럼으로 승격
+    const effectiveBillingType = isCouponPaidTransition ? sub.pending_billing_type : sub.billing_type;
+    const next = addPeriod(sub.next_billing_date, effectiveBillingType);
     const txResult = db.transaction(() => {
       db.prepare(`INSERT INTO billing_logs (subscriber_id, moid, amount, result_code, result_msg, trans_seq, cycle_date) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-        .run(sub.id, moid, sub.charge_amount, result.resultCode, result.resultMsg || '', tid, cycleDate);
+        .run(sub.id, moid, chargeAmount, result.resultCode, result.resultMsg || '', tid, cycleDate);
+      if (isCouponPaidTransition) {
+        // 쿠폰 → 유료 전환: pending → 실 컬럼 승격 + pending 클리어
+        const upd = db.prepare(`
+          UPDATE subscribers SET
+            billing_type=?, features=?, charge_amount=?,
+            pending_billing_type=NULL, pending_features=NULL, pending_charge_amount=NULL,
+            next_billing_date=?, status='active',
+            notified_7d=0, notified_1d=0, failed_count=0, last_failed_at=NULL
+          WHERE id=? AND status IN ('trial','active')
+        `).run(sub.pending_billing_type, sub.pending_features, sub.pending_charge_amount, next, sub.id);
+        return upd.changes;
+      }
       // 낙관적 잠금: 결제 진행 중 사용자가 해지했다면 cancelled 상태 유지
       const upd = db.prepare(`
         UPDATE subscribers SET next_billing_date = ?, status = 'active', notified_7d = 0, notified_1d = 0, failed_count = 0, last_failed_at = NULL
