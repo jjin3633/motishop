@@ -70,10 +70,18 @@ const loginLimiter = rateLimit({
 });
 const subscribeLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,  // 1시간
-  max: 5,                     // IP당 1시간에 5회 가입까지 (봇 가입 방지)
+  max: 20,                    // IP당 1시간에 20회 (테스트·정상 가입 여유 + 봇 방어 유지)
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, msg: '가입 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+});
+// 쿠폰 코드 검증 (read-only DB 조회) — 실시간 입력 검증용 · 관대한 제한
+const couponValidateLimiter = rateLimit({
+  windowMs: 60 * 1000,        // 1분
+  max: 30,                    // IP당 분당 30회 (실시간 타이핑 검증 여유)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, msg: '검증 요청이 너무 많아요. 잠시 후 다시 시도해주세요.' },
 });
 // 결제 발생·카드 등록 액션 — 가입과 동급 보호 (재구독·카드갱신 abuse 방지)
 const paymentActionLimiter = rateLimit({
@@ -363,8 +371,8 @@ function saveTermsConsent(subscriberId, agreedKeys, req) {
 }
 
 // 쿠폰 유효성 검증 — Step 1 실시간 판별용 (개인정보 전송 전)
-// rate-limit는 subscribeLimiter 재사용 (brute-force 방어)
-app.post('/api/coupon/validate', subscribeLimiter, (req, res) => {
+// couponValidateLimiter: 실시간 타이핑 검증용 관대한 rate-limit (subscribeLimiter와 분리)
+app.post('/api/coupon/validate', couponValidateLimiter, (req, res) => {
   const { coupon, phone } = req.body || {};
   const code = normalizeCouponCode(coupon);
   if (!code) return res.json({ ok: false, msg: '쿠폰 코드를 입력해주세요' });
