@@ -1897,6 +1897,12 @@ app.post('/api/mypage/update-features', paymentActionLimiter, mypageAuth, async 
   if (!features || !Array.isArray(features) || features.length === 0)
     return res.status(400).json({ ok: false, msg: '기능을 하나 이상 선택해주세요.' });
 
+  // 쿠폰 카드 미등록 회원 차단 (예약 결제 오염 방지 · 카드 등록 후 재선택 가능)
+  const preCheck = db.prepare(`SELECT bill_key FROM subscribers WHERE id=?`).get(req.subscriberId);
+  if (preCheck?.bill_key && String(preCheck.bill_key).startsWith('COUPON_')) {
+    return res.status(403).json({ ok: false, msg: '쿠폰 회원은 카드 등록 후 기능을 변경할 수 있어요.' });
+  }
+
   // 동시 호출 차단 (같은 가입자 이중 결제 방지)
   if (updateFeaturesInFlight.has(req.subscriberId)) {
     return res.status(409).json({ ok: false, msg: '이전 요청을 처리 중입니다. 잠시 후 다시 시도해주세요.' });
@@ -2076,6 +2082,10 @@ app.post('/api/mypage/change-billing-type', mypageAuth, (req, res) => {
   const sub = db.prepare(`SELECT * FROM subscribers WHERE id=?`).get(req.subscriberId);
   if (!sub) return res.status(404).json({ ok: false, msg: '가입자 없음' });
   if (sub.status === 'cancelled') return res.status(403).json({ ok: false, msg: '해지된 계정은 변경할 수 없습니다.' });
+  // 쿠폰 카드 미등록 회원 차단 (예약 결제 오염 방지)
+  if (sub.bill_key && String(sub.bill_key).startsWith('COUPON_')) {
+    return res.status(403).json({ ok: false, msg: '쿠폰 회원은 카드 등록 후 구독 유형을 변경할 수 있어요.' });
+  }
   if (sub.billing_type === billingType) {
     return res.json({ ok: true, billing_type: billingType, charge_amount: sub.charge_amount, changed: false });
   }

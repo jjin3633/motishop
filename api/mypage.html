@@ -962,6 +962,12 @@ function renderFeatList() {
     .filter(Boolean);
   let availFeats = ALL_FEATURES.filter(f => !subscribed.includes(f.key));
 
+  // 쿠폰 회원(카드 미등록) — 기능 추가/변경 UI 전면 차단 (예약 결제 오염 방지)
+  const isCouponCardless = s.bill_key && String(s.bill_key).startsWith('COUPON_');
+  if (isCouponCardless) {
+    availFeats = [];
+  }
+
   // 요금제별 추가 가능 항목 필터
   // 묶음 가입자(PLUS / LITE)는 자동 변경 전면 차단 — 변경 원하면 해지 후 재가입
   const currentBundle = getBundle(subscribed);
@@ -1036,6 +1042,10 @@ function renderFeatList() {
 function renderBillingSwitch() {
   const s = currentSubscriber;
   if (!s || s.status === 'cancelled') { document.getElementById('billingSwitchBox').style.display = 'none'; return; }
+
+  // 쿠폰 회원(카드 미등록) — 구독 유형 변경 UI 차단 (예약 결제 오염 방지)
+  const isCouponCardless = s.bill_key && String(s.bill_key).startsWith('COUPON_');
+  if (isCouponCardless) { document.getElementById('billingSwitchBox').style.display = 'none'; return; }
 
   const isMonthly = s.billing_type !== 'annual';
   const targetType = isMonthly ? 'annual' : 'monthly';
@@ -1467,10 +1477,10 @@ async function submitResub() {
     return;
   }
 
-  // 2) 케이스 분기 — 쿠폰 활성(카드 미등록) 회원은 예약 결제 · 그 외는 즉시 결제
+  // 2) 케이스 분기 — bill_key 접두어로만 쿠폰 카드 미등록 판별
+  // billing_type이 다른 액션으로 변경되어도 bill_key가 COUPON_이면 예약 결제 (버그 방어)
   const isCouponActiveCardless =
     currentSubscriber?.status === 'active' &&
-    currentSubscriber?.billing_type === 'coupon' &&
     currentSubscriber?.bill_key &&
     String(currentSubscriber.bill_key).startsWith('COUPON_');
 
