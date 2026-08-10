@@ -381,18 +381,18 @@ app.post('/api/coupon/validate', couponValidateLimiter, (req, res) => {
   if (!c) return res.json({ ok: false, msg: '유효하지 않은 쿠폰 코드입니다' });
   if (c.used) return res.json({ ok: false, msg: '이미 사용된 코드입니다. 다른 코드를 확인해주세요' });
 
-  // phone 이력 체크 — 같은 phone 이 이미 쿠폰 사용한 이력 있으면 차단
+  // phone 이력 체크 — subscribers 이력 자체로 판별 (쿠폰 리셋으로 coupons.used_by_id가 NULL 되어도 phone_hash로 방어)
+  // 익명화된 회원도 phone_hash는 유지되므로 재가입 시 자동 감지
   if (phone) {
     const cleanPhone = String(phone).replace(/[^0-9]/g, '');
     if (cleanPhone.length >= 10) {
       const phoneHash = hashPhone(cleanPhone);
       const prior = db.prepare(`
-        SELECT s.id FROM subscribers s
-        JOIN coupons c ON c.used_by_id = s.id
-        WHERE (s.phone = ? OR s.phone_hash = ?) AND c.used = 1
+        SELECT id FROM subscribers
+        WHERE phone = ? OR (phone_hash IS NOT NULL AND phone_hash = ?)
         LIMIT 1
       `).get(cleanPhone, phoneHash);
-      if (prior) return res.json({ ok: false, msg: '이미 쿠폰으로 가입한 이력이 있습니다' });
+      if (prior) return res.json({ ok: false, msg: '이미 가입 이력이 있는 연락처입니다. 마이페이지에서 로그인해주세요.' });
     }
   }
 
