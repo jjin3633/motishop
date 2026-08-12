@@ -1461,8 +1461,10 @@ async function refundFromDetail(id, billingLogId, originalAmount) {
 
 const fmt = n => Number(n || 0).toLocaleString();
 
-async function apiFetch(path) {
-  const res = await fetch(path, { headers: { 'x-admin-pw': ADMIN_PW } });
+async function apiFetch(path, options = {}) {
+  const headers = { 'x-admin-pw': ADMIN_PW, ...(options.headers || {}) };
+  if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  const res = await fetch(path, { ...options, headers });
   if (!res.ok) throw new Error(res.status);
   return res.json();
 }
