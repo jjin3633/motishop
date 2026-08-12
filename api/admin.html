@@ -314,7 +314,6 @@ td.actions-cell .btn-cancel { white-space:nowrap; }
       <div class="stat-card"><div class="lbl">전체 고객</div><div class="val" id="st-total">—</div></div>
       <div class="stat-card"><div class="lbl">체험 중</div><div class="val" id="st-trial">—</div></div>
       <div class="stat-card"><div class="lbl">구독 중</div><div class="val" id="st-active">—</div></div>
-      <div class="stat-card" style="background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.2);"><div class="lbl">🎟️ 쿠폰 사용</div><div class="val" id="st-coupon-used">—<small>/ 100</small></div></div>
       <div class="stat-card"><div class="lbl">이번 달 수익</div><div class="val" id="st-month">—<small>원</small></div></div>
       <div class="stat-card accent"><div class="lbl">전체 누적 수익</div><div class="val" id="st-all">—<small>원</small></div></div>
     </div>
@@ -1480,16 +1479,7 @@ async function loadAll(btn) {
 async function loadSubscribers() {
   allSubscribers = await apiFetch('/api/subscribers').catch(() => []);
   updateTopStats();
-  loadCouponStats();
   filterSubscribers();
-}
-
-async function loadCouponStats() {
-  try {
-    const r = await apiFetch('/api/admin/coupons/stats');
-    const el = document.getElementById('st-coupon-used');
-    if (el && r) el.innerHTML = `${r.used}<small>/ ${r.total}</small>`;
-  } catch (e) { /* silent */ }
 }
 
 async function resetCoupon(code) {
