@@ -409,6 +409,26 @@ function scheduleCouponExpiry() {
         }
       }
       if (targets.length > 0) console.log(`[쿠폰 만료 SMS] ${targets.length}건 발송`);
+
+      // D-1 사전 안내: 내일 만료 · 카드 미등록 쿠폰 회원
+      const tomorrow = kstDateOnly(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      const preTargets = db.prepare(`
+        SELECT id, company, name, phone FROM subscribers
+        WHERE billing_type = 'coupon'
+          AND status = 'active'
+          AND next_billing_date = ?
+          AND bill_key LIKE 'COUPON\\_%' ESCAPE '\\'
+      `).all(tomorrow);
+      for (const t of preTargets) {
+        const smsText = `[Moti Shop] ${t.company} ${t.name}님, 내일(${tomorrow}) 90일 무료 쿠폰이 만료됩니다.\n\n마음에 드셨다면 마이페이지에서 카드 등록해두시면 만료 후 자동으로 이어져요.\nhttps://shop.motiphysio.com/mypage`;
+        try {
+          const r = await sendSMS({ to: t.phone, text: smsText, subject: '[Moti Shop] 쿠폰 만료 하루 전 안내' });
+          if (!r.ok) notifySlack(`⚠️ 쿠폰 D-1 SMS 실패: ${t.company} (id=${t.id}) — ${r.resultCode} ${r.resultMsg}`);
+        } catch (e) {
+          console.error(`[쿠폰 D-1 SMS 예외] id=${t.id} — ${e.message}`);
+        }
+      }
+      if (preTargets.length > 0) console.log(`[쿠폰 D-1 SMS] ${preTargets.length}건 발송`);
     } catch (e) {
       console.error('[쿠폰 만료 SMS cron 오류]', e.message);
     }
