@@ -36,9 +36,35 @@ app.set('trust proxy', 1);  // nginx 뒤 → req.ip가 실제 클라이언트 IP
 
 // 보안 헤더 — webhook은 contentSecurityPolicy 영향 안 받음 (JSON 응답)
 // HSTS: 1년 + includeSubDomains + preload (HTTPS 강제, MITM 방어)
-// nginx에서 80→443 redirect 별도 필요 (운영 시 확인)
+// CSP: XSS 잔여 방어 · unsafe-inline은 기존 인라인 스크립트/스타일 다수라 유지 (nonce는 필요 시)
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        'https://cdn.jsdelivr.net',
+        'https://www.googletagmanager.com',
+        'https://www.google-analytics.com',
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: [
+        "'self'",
+        'https://api.innopay.co.kr',
+        'https://www.google-analytics.com',
+        'https://analytics.google.com',
+      ],
+      frameSrc: ["'self'", 'https://pgweb.innopay.co.kr'],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
   crossOriginEmbedderPolicy: false,
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
