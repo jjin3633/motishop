@@ -48,6 +48,7 @@ app.use(helmet({
         'https://www.googletagmanager.com',
         'https://www.google-analytics.com',
       ],
+      scriptSrcAttr: ["'unsafe-inline'"],  // onclick 등 인라인 이벤트 핸들러 허용 (기존 코드 다수)
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
       imgSrc: ["'self'", 'data:', 'https:'],
