@@ -67,6 +67,11 @@ try { db.exec(`CREATE INDEX IF NOT EXISTS idx_sub_phone_hash ON subscribers(phon
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN pending_billing_type TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN pending_features TEXT`); } catch(e) {}
 try { db.exec(`ALTER TABLE subscribers ADD COLUMN pending_charge_amount INTEGER`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN pw_expires_at TEXT`); } catch(e) {}  // deprecated, 미사용 유지
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN reset_code_hash TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN reset_code_expires_at TEXT`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN reset_attempts INTEGER DEFAULT 0`); } catch(e) {}
+try { db.exec(`ALTER TABLE subscribers ADD COLUMN reset_last_sent_at TEXT`); } catch(e) {}
 
 // 쿠폰 테이블 (2026-08-10 — From The Ground 01~100 사전 발급)
 db.exec(`

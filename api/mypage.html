@@ -283,7 +283,42 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 72px; ba
     <input type="password" id="loginPw" placeholder="비밀번호" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()" />
     <button onclick="login()">로그인</button>
     <div class="login-err" id="loginErr"></div>
+    <div style="text-align:center; margin-top:14px;">
+      <a href="javascript:void(0)" onclick="openForgotModal()" style="color:var(--blue); font-size:13px; text-decoration:none; font-weight:500;">비밀번호를 잊으셨나요?</a>
+    </div>
     <div class="login-note">초기 비밀번호는 담당자에게 문의해주세요.<br>070-4365-7740</div>
+  </div>
+</div>
+
+<!-- 비밀번호 찾기 모달 (OTP 2단계) -->
+<div class="modal-overlay" id="forgotModal" onclick="if(event.target===this)closeForgotModal()">
+  <div class="modal">
+    <h3 id="forgotTitle">비밀번호 찾기</h3>
+    <!-- 1단계: 전화번호 → OTP 요청 -->
+    <div id="forgotStep1">
+      <p>가입하신 전화번호를 입력하시면 6자리 인증 코드를 SMS로 보내드려요.</p>
+      <input type="tel" id="forgotPhone" placeholder="전화번호 (숫자만)" inputmode="numeric" autocomplete="tel" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')requestOtp()" />
+      <div class="modal-err" id="forgotErr1"></div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeForgotModal()">취소</button>
+        <button class="modal-confirm" onclick="requestOtp()">인증 코드 받기</button>
+      </div>
+    </div>
+    <!-- 2단계: OTP + 새 비번 -->
+    <div id="forgotStep2" style="display:none;">
+      <p>SMS로 받으신 6자리 인증 코드와 새 비밀번호를 입력해주세요.</p>
+      <input type="text" id="forgotCode" placeholder="인증 코드 6자리" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+      <input type="password" id="forgotNewPw" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password" />
+      <input type="password" id="forgotNewPw2" placeholder="새 비밀번호 확인" autocomplete="new-password" onkeydown="if(event.key==='Enter')verifyOtp()" />
+      <div class="modal-err" id="forgotErr2"></div>
+      <div style="text-align:center; margin-top:10px;">
+        <a href="javascript:void(0)" onclick="backToStep1()" style="color:var(--text-muted); font-size:13px; text-decoration:underline;">인증 코드 다시 받기</a>
+      </div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeForgotModal()">취소</button>
+        <button class="modal-confirm" onclick="verifyOtp()">비밀번호 재설정</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -692,6 +727,83 @@ async function login() {
   } else {
     track('mypage_login_failed', { reason: (data.msg || '').slice(0, 50) });
     err.textContent = data.msg;
+    err.style.display = 'block';
+  }
+}
+
+// ───── 비밀번호 찾기 (OTP 2단계) ─────
+// 보안: 기존 비번은 OTP 검증 통과 전까지 그대로. SIM swap/SMS 피싱 DoS 방지.
+function openForgotModal() {
+  document.getElementById('forgotPhone').value = document.getElementById('loginPhone').value || '';
+  ['forgotCode','forgotNewPw','forgotNewPw2'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('forgotErr1').style.display = 'none';
+  document.getElementById('forgotErr2').style.display = 'none';
+  document.getElementById('forgotStep1').style.display = '';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotTitle').textContent = '비밀번호 찾기';
+  document.getElementById('forgotModal').classList.add('open');
+  lockBody();
+}
+function closeForgotModal() {
+  document.getElementById('forgotModal').classList.remove('open');
+  unlockBody();
+}
+function backToStep1() {
+  // 2단계 → 1단계 복귀 (전화번호 유지, 코드·비번 비움)
+  ['forgotCode','forgotNewPw','forgotNewPw2'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('forgotErr1').style.display = 'none';
+  document.getElementById('forgotErr2').style.display = 'none';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotStep1').style.display = '';
+  document.getElementById('forgotTitle').textContent = '비밀번호 찾기';
+  document.getElementById('forgotPhone').focus();
+}
+async function requestOtp() {
+  const phone = document.getElementById('forgotPhone').value.trim();
+  const err = document.getElementById('forgotErr1');
+  err.style.display = 'none';
+  if (!phone || phone.length < 10) { err.textContent = '전화번호를 올바르게 입력해주세요.'; err.style.display = 'block'; return; }
+
+  const data = await fetch('/api/mypage/forgot-password-request', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone })
+  }).then(r => r.json()).catch(() => ({ ok: false, msg: '네트워크 오류' }));
+
+  if (data.ok) {
+    alert(data.msg || '인증 코드를 SMS로 보내드렸어요.');
+    // 2단계로 전환
+    document.getElementById('forgotStep1').style.display = 'none';
+    document.getElementById('forgotStep2').style.display = '';
+    document.getElementById('forgotTitle').textContent = '인증 코드 입력';
+    document.getElementById('forgotCode').focus();
+  } else {
+    err.textContent = data.msg || '처리 중 오류가 발생했어요.';
+    err.style.display = 'block';
+  }
+}
+async function verifyOtp() {
+  const phone = document.getElementById('forgotPhone').value.trim();
+  const code  = document.getElementById('forgotCode').value.trim();
+  const nw    = document.getElementById('forgotNewPw').value;
+  const nw2   = document.getElementById('forgotNewPw2').value;
+  const err   = document.getElementById('forgotErr2');
+  err.style.display = 'none';
+
+  if (!code || code.length !== 6) { err.textContent = '인증 코드 6자리를 입력해주세요.'; err.style.display = 'block'; return; }
+  if (nw.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 합니다.'; err.style.display = 'block'; return; }
+  if (nw !== nw2) { err.textContent = '새 비밀번호가 일치하지 않습니다.'; err.style.display = 'block'; return; }
+
+  const data = await fetch('/api/mypage/reset-password-verify', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code, newPw: nw })
+  }).then(r => r.json()).catch(() => ({ ok: false, msg: '네트워크 오류' }));
+
+  if (data.ok) {
+    alert(data.msg || '비밀번호가 변경되었어요. 새 비밀번호로 로그인해주세요.');
+    closeForgotModal();
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginPw').focus();
+  } else {
+    err.textContent = data.msg || '처리 중 오류가 발생했어요.';
     err.style.display = 'block';
   }
 }

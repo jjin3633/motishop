@@ -1626,6 +1626,107 @@ app.post('/api/mypage/login', loginLimiter, (req, res) => {
   res.json({ ok: true, token });
 });
 
+// ───────── 비밀번호 찾기 (OTP 2단계) ─────────
+// 설계: 기존 비번·세션은 OTP 검증 통과 전까지 절대 안 건드림 (SIM swap/SMS 피싱 DoS 방지)
+// 1) /forgot-password-request → 6자리 OTP SMS 발송 (기존 비번 유지)
+// 2) /reset-password-verify → OTP + 새 비번 검증 → 통과 시 비번 교체 + 세션 전부 삭제
+
+app.post('/api/mypage/forgot-password-request', loginLimiter, async (req, res) => {
+  const phone = String(req.body?.phone || '').replace(/[^0-9]/g, '');
+  const GENERIC_MSG = '등록된 번호면 인증 코드를 SMS로 보내드려요. 10분 안에 입력해주세요.';
+  if (!phone || phone.length < 10) return res.status(400).json({ ok: false, msg: '전화번호를 올바르게 입력해주세요.' });
+
+  const sub = db.prepare(`
+    SELECT * FROM subscribers WHERE phone = ?
+    ORDER BY CASE status WHEN 'trial' THEN 0 WHEN 'active' THEN 0 WHEN 'cancelled' THEN 1 ELSE 2 END, id DESC
+    LIMIT 1
+  `).get(phone);
+
+  if (!sub || sub.anonymized_at) return res.json({ ok: true, msg: GENERIC_MSG });  // enumeration 방지
+
+  // per-phone throttle: 1시간 3회
+  const recentCount = db.prepare(`
+    SELECT COUNT(*) as c FROM subscriber_changes
+    WHERE subscriber_id=? AND change_type='forgot_password_request' AND changed_at >= datetime('now','-1 hour','+9 hours')
+  `).get(sub.id).c;
+  if (recentCount >= 3) {
+    return res.json({ ok: true, msg: GENERIC_MSG });  // throttle도 응답 동일 (enumeration 방지)
+  }
+
+  // 6자리 숫자 OTP
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+  const codeHash = hashPw(code, cfg.PHONE_HASH_SECRET);  // 저장은 해시만 (DB 유출 대비)
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().replace('T', ' ').replace(/\..+/, '');
+
+  db.prepare(`
+    UPDATE subscribers SET reset_code_hash=?, reset_code_expires_at=?, reset_attempts=0, reset_last_sent_at=datetime('now','+9 hours')
+    WHERE id=?
+  `).run(codeHash, expiresAt, sub.id);
+
+  // throttle 집계용 로그 (기존 subscriber_changes 재사용)
+  db.prepare(`
+    INSERT INTO subscriber_changes (subscriber_id, change_type, before_features, after_features, changed_at)
+    VALUES (?, 'forgot_password_request', '', '', datetime('now','+9 hours'))
+  `).run(sub.id);
+
+  const smsText = `[Moti Shop] 비밀번호 재설정 인증 코드: ${code}\n마이페이지에서 10분 안에 입력해주세요.\n요청하지 않으셨다면 이 메시지를 무시해주세요.`;
+  sendSMS({ to: sub.phone, text: smsText, subject: '[Moti Shop] 비밀번호 재설정 인증' })
+    .catch(e => console.error('[forgot-password SMS 실패]', e.message));
+  notifySlack(`🔑 비밀번호 재설정 요청: ${sub.company} (id=${sub.id})`);
+
+  res.json({ ok: true, msg: GENERIC_MSG });
+});
+
+app.post('/api/mypage/reset-password-verify', loginLimiter, (req, res) => {
+  const phone = String(req.body?.phone || '').replace(/[^0-9]/g, '');
+  const code = String(req.body?.code || '').replace(/[^0-9]/g, '');
+  const newPw = String(req.body?.newPw || '');
+  const GENERIC_FAIL = '인증 코드가 올바르지 않거나 만료되었어요. 다시 요청해주세요.';
+  if (!phone || !code || !newPw) return res.status(400).json({ ok: false, msg: '필수값 누락' });
+  if (newPw.length < 6) return res.status(400).json({ ok: false, msg: '비밀번호는 6자 이상이어야 합니다.' });
+
+  const sub = db.prepare(`
+    SELECT * FROM subscribers WHERE phone = ?
+    ORDER BY CASE status WHEN 'trial' THEN 0 WHEN 'active' THEN 0 WHEN 'cancelled' THEN 1 ELSE 2 END, id DESC
+    LIMIT 1
+  `).get(phone);
+  if (!sub || sub.anonymized_at || !sub.reset_code_hash) return res.status(401).json({ ok: false, msg: GENERIC_FAIL });
+
+  // 만료 체크
+  if (!sub.reset_code_expires_at || new Date(sub.reset_code_expires_at) < new Date()) {
+    db.prepare(`UPDATE subscribers SET reset_code_hash=NULL, reset_code_expires_at=NULL, reset_attempts=0 WHERE id=?`).run(sub.id);
+    return res.status(401).json({ ok: false, msg: GENERIC_FAIL });
+  }
+
+  // 시도 횟수 체크 (5회 초과 시 코드 무효화 — 브루트포스 차단)
+  if ((sub.reset_attempts || 0) >= 5) {
+    db.prepare(`UPDATE subscribers SET reset_code_hash=NULL, reset_code_expires_at=NULL, reset_attempts=0 WHERE id=?`).run(sub.id);
+    return res.status(401).json({ ok: false, msg: GENERIC_FAIL });
+  }
+
+  // timing-safe 비교
+  const expectedHash = hashPw(code, cfg.PHONE_HASH_SECRET);
+  let valid = false;
+  try { valid = crypto.timingSafeEqual(Buffer.from(expectedHash), Buffer.from(sub.reset_code_hash)); } catch (e) { valid = false; }
+  if (!valid) {
+    db.prepare(`UPDATE subscribers SET reset_attempts=COALESCE(reset_attempts,0)+1 WHERE id=?`).run(sub.id);
+    return res.status(401).json({ ok: false, msg: GENERIC_FAIL });
+  }
+
+  // 검증 통과 → 비번 교체 + OTP 초기화 + 세션 전부 삭제 (다른 디바이스 포함)
+  const salt = genSalt();
+  const hash = hashPw(newPw, salt);
+  db.prepare(`
+    UPDATE subscribers SET pw_hash=?, pw_salt=?,
+      reset_code_hash=NULL, reset_code_expires_at=NULL, reset_attempts=0, pw_expires_at=NULL
+    WHERE id=?
+  `).run(hash, salt, sub.id);
+  db.prepare(`DELETE FROM sessions WHERE subscriber_id=?`).run(sub.id);
+
+  notifySlack(`✅ 비밀번호 재설정 완료: ${sub.company} (id=${sub.id})`);
+  res.json({ ok: true, msg: '비밀번호가 변경되었어요. 새 비밀번호로 로그인해주세요.' });
+});
+
 app.get('/api/mypage/me', mypageAuth, (req, res) => {
   const sub = db.prepare(`
     SELECT id, company, name, phone, business_number, features, billing_type, bill_key, charge_amount,
@@ -1700,7 +1801,7 @@ app.post('/api/mypage/change-password', mypageAuth, (req, res) => {
   const salt = genSalt();
   const hash = hashPw(newPw, salt);
   const newToken = req.headers['x-session-token'];
-  db.prepare(`UPDATE subscribers SET pw_hash=?, pw_salt=? WHERE id=?`).run(hash, salt, req.subscriberId);
+  db.prepare(`UPDATE subscribers SET pw_hash=?, pw_salt=?, pw_expires_at=NULL WHERE id=?`).run(hash, salt, req.subscriberId);
   // 보안: 비밀번호 변경 시 현 세션 외 모든 세션 무효화 (다른 디바이스 강제 로그아웃)
   db.prepare(`DELETE FROM sessions WHERE subscriber_id=? AND token != ?`).run(req.subscriberId, newToken);
   res.json({ ok: true });
