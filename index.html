@@ -212,6 +212,12 @@
       text-decoration: none; transition: opacity .2s, transform .2s;
     }
     .nav-cta:hover { opacity: .88; transform: translateY(-1px); }
+    .nav-link {
+      color: rgba(255,255,255,.78); font-size: 15px; font-weight: 500;
+      text-decoration: none; padding: 6px 12px; border-radius: 8px;
+      transition: color .2s, background .2s;
+    }
+    .nav-link:hover { color: #fff; background: rgba(255,255,255,.06); }
 
     /* ── Hero ── */
     .hero {
@@ -1725,6 +1731,7 @@
   <div class="nav-inner">
     <a class="nav-logo" href="#" aria-label="Moti Shop"><img src="assets/logo-blue.png" alt="Moti Shop" /></a>
     <div class="nav-right">
+      <a class="nav-link" href="/mypage">마이페이지</a>
       <a class="nav-cta" href="#trial">무료 체험 신청</a>
     </div>
   </div>
